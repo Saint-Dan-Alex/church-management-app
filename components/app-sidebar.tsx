@@ -8,6 +8,7 @@ import {
   FileText,
   Video,
   ImageIcon,
+  BookOpen,
   Settings,
   LogOut,
   ChevronDown,
@@ -56,6 +57,11 @@ const menuItems = [
     title: "Activités",
     url: "/activities",
     icon: Calendar,
+  },
+  {
+    title: "Enseignements",
+    url: "/teachings",
+    icon: BookOpen,
   },
   {
     title: "Blog",
