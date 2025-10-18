@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,60 +20,24 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Upload } from "lucide-react"
-import type { ChildFormData } from "@/types/child"
+import type { Child } from "@/types/child"
 
-interface AddChildDialogProps {
+interface EditChildDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  child: Child | null
 }
 
-export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
-  const [formData, setFormData] = useState<Partial<ChildFormData>>({
-    // Identification
-    nom: "",
-    postNom: "",
-    prenom: "",
-    dateNaissance: "",
-    genre: "Masculin",
-    etatCivil: "Célibataire",
-    adresse: "",
-    telephone: "",
-    email: "",
-    photo: "",
-    // Famille
-    nomPere: "",
-    nomMere: "",
-    telephoneParent1: "",
-    telephoneParent2: "",
-    emailParents: "",
-    contactUrgence: "",
-    lienContactUrgence: "",
-    // Parcours spirituel
-    dateConversion: "",
-    dateBapteme: "",
-    baptiseSaintEsprit: "NSP",
-    vieDonneeAJesus: "Je ne sais pas",
-    estOuvrier: false,
-    commissionActuelle: "",
-    commissionSouhaitee: "",
-    dateAdhesion: "",
-    // Santé
-    allergiesConnues: false,
-    allergiesDetails: "",
-    maladies: "",
-    traitement: "",
-    autorisationSoins: false,
-    // Évaluation
-    vieChretienne: undefined,
-    viePriere: undefined,
-    comprehensionBible: undefined,
-    gagneUneAme: "Je ne sais pas",
-    encadreur: "NSP",
-    qualiteEnseignements: undefined,
-    sujetSouhaite: "",
-    besoinSuggestion: "",
-  })
+export function EditChildDialog({ open, onOpenChange, child }: EditChildDialogProps) {
+  const [formData, setFormData] = useState<Partial<Child>>({})
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (child) {
+      setFormData(child)
+      setPhotoPreview(child.photo || null)
+    }
+  }, [child])
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -89,21 +53,19 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Calculer le nom complet
-    const nomComplet = `${formData.prenom} ${formData.postNom} ${formData.nom}`.trim()
-    const dataToSubmit = { ...formData, nomComplet }
-    console.log("Enfant ajouté:", dataToSubmit)
+    console.log("Enfant modifié:", formData)
     // Ici vous enregistrerez dans la base de données
     onOpenChange(false)
-    setPhotoPreview(null)
   }
+
+  if (!child) return null
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Ajouter un Enfant</DialogTitle>
-          <DialogDescription>Remplissez les informations de l'enfant et de son parent/tuteur</DialogDescription>
+          <DialogTitle>Modifier l'Enfant</DialogTitle>
+          <DialogDescription>Modifiez les informations de l'enfant</DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[75vh]">
           <form onSubmit={handleSubmit}>
@@ -117,13 +79,13 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <Label htmlFor="photo" className="cursor-pointer">
+                  <Label htmlFor="photo-edit" className="cursor-pointer">
                     <div className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
                       <Upload className="h-4 w-4" />
-                      Ajouter une photo
+                      Modifier la photo
                     </div>
                   </Label>
-                  <Input id="photo" type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                  <Input id="photo-edit" type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
                 </div>
               </div>
 
@@ -214,7 +176,7 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="lienContactUrgence">Lien avec l'enfant *</Label>
-                    <Input id="lienContactUrgence" placeholder="Ex: oncle, voisin..." value={formData.lienContactUrgence} onChange={(e) => setFormData({ ...formData, lienContactUrgence: e.target.value })} required />
+                    <Input id="lienContactUrgence" value={formData.lienContactUrgence} onChange={(e) => setFormData({ ...formData, lienContactUrgence: e.target.value })} required />
                   </div>
                 </div>
               </div>
@@ -240,22 +202,22 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
                   <div className="grid gap-2">
                     <Label>Es-tu baptisé du Saint-Esprit ? *</Label>
                     <RadioGroup value={formData.baptiseSaintEsprit} onValueChange={(value: any) => setFormData({ ...formData, baptiseSaintEsprit: value })}>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="bse-oui" /><Label htmlFor="bse-oui" className="font-normal cursor-pointer">Oui</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="bse-non" /><Label htmlFor="bse-non" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="NSP" id="bse-nsp" /><Label htmlFor="bse-nsp" className="font-normal cursor-pointer">NSP</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="bse-oui-edit" /><Label htmlFor="bse-oui-edit" className="font-normal cursor-pointer">Oui</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="bse-non-edit" /><Label htmlFor="bse-non-edit" className="font-normal cursor-pointer">Non</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="NSP" id="bse-nsp-edit" /><Label htmlFor="bse-nsp-edit" className="font-normal cursor-pointer">NSP</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="grid gap-2">
                     <Label>As-tu donné ta vie à Jésus ? *</Label>
                     <RadioGroup value={formData.vieDonneeAJesus} onValueChange={(value: any) => setFormData({ ...formData, vieDonneeAJesus: value })}>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="vie-oui" /><Label htmlFor="vie-oui" className="font-normal cursor-pointer">Oui</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="vie-non" /><Label htmlFor="vie-non" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Je ne sais pas" id="vie-nsp" /><Label htmlFor="vie-nsp" className="font-normal cursor-pointer">Je ne sais pas</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="vie-oui-edit" /><Label htmlFor="vie-oui-edit" className="font-normal cursor-pointer">Oui</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="vie-non-edit" /><Label htmlFor="vie-non-edit" className="font-normal cursor-pointer">Non</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Je ne sais pas" id="vie-nsp-edit" /><Label htmlFor="vie-nsp-edit" className="font-normal cursor-pointer">Je ne sais pas</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="estOuvrier" checked={formData.estOuvrier} onCheckedChange={(checked) => setFormData({ ...formData, estOuvrier: checked as boolean })} />
-                    <Label htmlFor="estOuvrier" className="cursor-pointer">Es-tu ouvrier / ouvrière ?</Label>
+                    <Checkbox id="estOuvrier-edit" checked={formData.estOuvrier} onCheckedChange={(checked) => setFormData({ ...formData, estOuvrier: checked as boolean })} />
+                    <Label htmlFor="estOuvrier-edit" className="cursor-pointer">Es-tu ouvrier / ouvrière ?</Label>
                   </div>
                   {formData.estOuvrier && (
                     <div className="grid gap-2">
@@ -286,8 +248,8 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
                 <h3 className="font-semibold text-gray-900">4. Santé & besoins spécifiques</h3>
                 <div className="grid gap-4">
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="allergiesConnues" checked={formData.allergiesConnues} onCheckedChange={(checked) => setFormData({ ...formData, allergiesConnues: checked as boolean })} />
-                    <Label htmlFor="allergiesConnues" className="cursor-pointer">Allergies connues ?</Label>
+                    <Checkbox id="allergiesConnues-edit" checked={formData.allergiesConnues} onCheckedChange={(checked) => setFormData({ ...formData, allergiesConnues: checked as boolean })} />
+                    <Label htmlFor="allergiesConnues-edit" className="cursor-pointer">Allergies connues ?</Label>
                   </div>
                   {formData.allergiesConnues && (
                     <div className="grid gap-2">
@@ -304,15 +266,15 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
                     <Input id="traitement" value={formData.traitement} onChange={(e) => setFormData({ ...formData, traitement: e.target.value })} />
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="autorisationSoins" checked={formData.autorisationSoins} onCheckedChange={(checked) => setFormData({ ...formData, autorisationSoins: checked as boolean })} />
-                    <Label htmlFor="autorisationSoins" className="cursor-pointer">Autorisation de soins d'urgence</Label>
+                    <Checkbox id="autorisationSoins-edit" checked={formData.autorisationSoins} onCheckedChange={(checked) => setFormData({ ...formData, autorisationSoins: checked as boolean })} />
+                    <Label htmlFor="autorisationSoins-edit" className="cursor-pointer">Autorisation de soins d'urgence</Label>
                   </div>
                 </div>
               </div>
 
               {/* 5. ÉVALUATION PERSONNELLE */}
               <div className="space-y-4 border-t pt-4">
-                <h3 className="font-semibold text-gray-900">5. Évaluation personnelle (adolescents / pré-ados)</h3>
+                <h3 className="font-semibold text-gray-900">5. Évaluation personnelle</h3>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="grid gap-2">
                     <Label htmlFor="vieChretienne">Vie chrétienne</Label>
@@ -369,33 +331,33 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
                   <div className="grid gap-2">
                     <Label>As-tu déjà gagné une âme ?</Label>
                     <RadioGroup value={formData.gagneUneAme} onValueChange={(value: any) => setFormData({ ...formData, gagneUneAme: value })}>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="ame-oui" /><Label htmlFor="ame-oui" className="font-normal cursor-pointer">Oui</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="ame-non" /><Label htmlFor="ame-non" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Je ne sais pas" id="ame-nsp" /><Label htmlFor="ame-nsp" className="font-normal cursor-pointer">Je ne sais pas</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="ame-oui-edit" /><Label htmlFor="ame-oui-edit" className="font-normal cursor-pointer">Oui</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="ame-non-edit" /><Label htmlFor="ame-non-edit" className="font-normal cursor-pointer">Non</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Je ne sais pas" id="ame-nsp-edit" /><Label htmlFor="ame-nsp-edit" className="font-normal cursor-pointer">Je ne sais pas</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="grid gap-2">
                     <Label>As-tu un encadreur ?</Label>
                     <RadioGroup value={formData.encadreur} onValueChange={(value: any) => setFormData({ ...formData, encadreur: value })}>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="enc-oui" /><Label htmlFor="enc-oui" className="font-normal cursor-pointer">Oui</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="enc-non" /><Label htmlFor="enc-non" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="NSP" id="enc-nsp" /><Label htmlFor="enc-nsp" className="font-normal cursor-pointer">NSP</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="enc-oui-edit" /><Label htmlFor="enc-oui-edit" className="font-normal cursor-pointer">Oui</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="enc-non-edit" /><Label htmlFor="enc-non-edit" className="font-normal cursor-pointer">Non</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="NSP" id="enc-nsp-edit" /><Label htmlFor="enc-nsp-edit" className="font-normal cursor-pointer">NSP</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="sujetSouhaite">Sujet souhaité</Label>
-                    <Input id="sujetSouhaite" value={formData.sujetSouhaite} onChange={(e) => setFormData({ ...formData, sujetSouhaite: e.target.value })} placeholder="Sujet à aborder..." />
+                    <Input id="sujetSouhaite" value={formData.sujetSouhaite} onChange={(e) => setFormData({ ...formData, sujetSouhaite: e.target.value })} />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="besoinSuggestion">Besoin / Suggestion</Label>
-                    <Textarea id="besoinSuggestion" value={formData.besoinSuggestion} onChange={(e) => setFormData({ ...formData, besoinSuggestion: e.target.value })} rows={3} placeholder="Vos suggestions..." />
+                    <Textarea id="besoinSuggestion" value={formData.besoinSuggestion} onChange={(e) => setFormData({ ...formData, besoinSuggestion: e.target.value })} rows={3} />
                   </div>
                 </div>
               </div>
             </div>
             <DialogFooter className="pr-4 border-t pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
-              <Button type="submit">Ajouter</Button>
+              <Button type="submit">Enregistrer les modifications</Button>
             </DialogFooter>
           </form>
         </ScrollArea>

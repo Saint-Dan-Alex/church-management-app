@@ -1,11 +1,14 @@
 "use client"
 
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MoreVertical, Edit, Trash, Eye, Calendar } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { EditChildDialog } from "@/components/children/edit-child-dialog"
 
 const children = [
   {
@@ -76,6 +79,21 @@ interface ChildrenListProps {
 }
 
 export function ChildrenList({ searchQuery, onSelectChild }: ChildrenListProps) {
+  const router = useRouter()
+  const [editingChild, setEditingChild] = useState<any | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  const handleEdit = (child: any) => {
+    setEditingChild(child)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleDelete = (childId: string, childName: string) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer ${childName} ?`)) {
+      console.log("Suppression de l'enfant:", childId)
+      // Logique de suppression ici
+    }
+  }
   const filteredChildren = children.filter(
     (child) =>
       child.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -85,9 +103,14 @@ export function ChildrenList({ searchQuery, onSelectChild }: ChildrenListProps) 
   )
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {filteredChildren.map((child) => (
-        <Card key={child.id} className="p-4">
+    <>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredChildren.map((child) => (
+          <Card 
+            key={child.id} 
+            className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => router.push(`/children/${child.id}`)}
+          >
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               <Avatar className="h-12 w-12">
@@ -113,15 +136,27 @@ export function ChildrenList({ searchQuery, onSelectChild }: ChildrenListProps) 
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onSelectChild(child.id)}>
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation()
+                  router.push(`/children/${child.id}`)
+                }}>
                   <Eye className="mr-2 h-4 w-4" />
-                  Voir la fiche
+                  Voir détails
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation()
+                  handleEdit(child)
+                }}>
                   <Edit className="mr-2 h-4 w-4" />
                   Modifier
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">
+                <DropdownMenuItem 
+                  className="text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDelete(child.id, `${child.firstName} ${child.lastName}`)
+                  }}
+                >
                   <Trash className="mr-2 h-4 w-4" />
                   Supprimer
                 </DropdownMenuItem>
@@ -153,8 +188,15 @@ export function ChildrenList({ searchQuery, onSelectChild }: ChildrenListProps) 
               </Badge>
             </div>
           )}
-        </Card>
-      ))}
-    </div>
+          </Card>
+        ))}
+      </div>
+
+      <EditChildDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen}
+        child={editingChild}
+      />
+    </>
   )
 }
