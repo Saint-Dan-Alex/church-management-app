@@ -1,11 +1,15 @@
 "use client"
 
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { QrCode, Mail, Phone, MoreVertical, Edit, Trash } from "lucide-react"
+import { QrCode, Mail, Phone, MoreVertical, Edit, Trash, Eye } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { EditMonitorDialog } from "@/components/monitors/edit-monitor-dialog"
+import type { Monitor } from "@/types/monitor"
 
 // Mock data
 const monitors = [
@@ -61,6 +65,21 @@ interface MonitorListProps {
 }
 
 export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
+  const router = useRouter()
+  const [editingMonitor, setEditingMonitor] = useState<any | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  const handleEdit = (monitor: any) => {
+    setEditingMonitor(monitor)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleDelete = (monitorId: string, monitorName: string) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer ${monitorName} ?`)) {
+      console.log("Suppression du moniteur:", monitorId)
+      // Logique de suppression ici
+    }
+  }
   const filteredMonitors = monitors.filter(
     (monitor) =>
       monitor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -69,9 +88,14 @@ export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
   )
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {filteredMonitors.map((monitor) => (
-        <Card key={monitor.id} className="p-4">
+    <>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredMonitors.map((monitor) => (
+          <Card 
+            key={monitor.id} 
+            className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => router.push(`/monitors/${monitor.id}`)}
+          >
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               <Avatar className="h-12 w-12">
@@ -97,15 +121,34 @@ export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation()
+                  router.push(`/monitors/${monitor.id}`)
+                }}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Voir détails
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation()
+                  handleEdit(monitor)
+                }}>
                   <Edit className="mr-2 h-4 w-4" />
                   Modifier
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onGenerateQR(monitor.id)}>
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation()
+                  onGenerateQR(monitor.id)
+                }}>
                   <QrCode className="mr-2 h-4 w-4" />
                   Générer QR Code
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">
+                <DropdownMenuItem 
+                  className="text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDelete(monitor.id, monitor.name)
+                  }}
+                >
                   <Trash className="mr-2 h-4 w-4" />
                   Supprimer
                 </DropdownMenuItem>
@@ -134,8 +177,15 @@ export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
               <p className="text-sm font-medium">{monitor.lastAttendance}</p>
             </div>
           </div>
-        </Card>
-      ))}
-    </div>
+          </Card>
+        ))}
+      </div>
+
+      <EditMonitorDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen}
+        monitor={editingMonitor}
+      />
+    </>
   )
 }

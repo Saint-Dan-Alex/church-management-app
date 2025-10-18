@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,30 +18,24 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Upload } from "lucide-react"
-import type { MonitorFormData } from "@/types/monitor"
+import type { Monitor } from "@/types/monitor"
 
-interface AddMonitorDialogProps {
+interface EditMonitorDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  monitor: Monitor | null
 }
 
-export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) {
-  const [formData, setFormData] = useState<Partial<MonitorFormData>>({
-    nom: "",
-    postNom: "",
-    prenom: "",
-    dateNaissance: "",
-    email: "",
-    telephone: "",
-    adresse: "",
-    photo: "",
-    dateConversion: "",
-    dateBapteme: "",
-    baptiseSaintEsprit: false,
-    etatCivil: "Célibataire",
-    dateAdhesion: "",
-  })
+export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDialogProps) {
+  const [formData, setFormData] = useState<Partial<Monitor>>({})
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (monitor) {
+      setFormData(monitor)
+      setPhotoPreview(monitor.photo || null)
+    }
+  }, [monitor])
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -57,34 +51,19 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Formulaire soumis:", formData)
+    console.log("Moniteur modifié:", formData)
     // Ici vous enregistrerez dans la base de données
     onOpenChange(false)
-    // Réinitialiser le formulaire
-    setFormData({
-      nom: "",
-      postNom: "",
-      prenom: "",
-      dateNaissance: "",
-      email: "",
-      telephone: "",
-      adresse: "",
-      photo: "",
-      dateConversion: "",
-      dateBapteme: "",
-      baptiseSaintEsprit: false,
-      etatCivil: "Célibataire",
-      dateAdhesion: "",
-    })
-    setPhotoPreview(null)
   }
+
+  if (!monitor) return null
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ajouter un Moniteur</DialogTitle>
-          <DialogDescription>Remplissez les informations du nouveau moniteur</DialogDescription>
+          <DialogTitle>Modifier le Moniteur</DialogTitle>
+          <DialogDescription>Modifiez les informations du moniteur</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 py-4">
@@ -97,14 +76,14 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                 </AvatarFallback>
               </Avatar>
               <div>
-                <Label htmlFor="photo" className="cursor-pointer">
+                <Label htmlFor="photo-edit" className="cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
                     <Upload className="h-4 w-4" />
-                    Ajouter une photo
+                    Modifier la photo
                   </div>
                 </Label>
                 <Input
-                  id="photo"
+                  id="photo-edit"
                   type="file"
                   accept="image/*"
                   className="hidden"
@@ -121,7 +100,6 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                   id="nom"
                   value={formData.nom}
                   onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                  placeholder="Dupont"
                   required
                 />
               </div>
@@ -131,7 +109,6 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                   id="postNom"
                   value={formData.postNom}
                   onChange={(e) => setFormData({ ...formData, postNom: e.target.value })}
-                  placeholder="Martin"
                 />
               </div>
               <div className="grid gap-2">
@@ -140,7 +117,6 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                   id="prenom"
                   value={formData.prenom}
                   onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-                  placeholder="Jean"
                   required
                 />
               </div>
@@ -165,7 +141,6 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="jean.dupont@email.com"
                   required
                 />
               </div>
@@ -176,7 +151,6 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                   type="tel"
                   value={formData.telephone}
                   onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-                  placeholder="+33 6 12 34 56 78"
                   required
                 />
               </div>
@@ -188,7 +162,6 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                 id="adresse"
                 value={formData.adresse}
                 onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
-                placeholder="123 Rue de l'Église, 75001 Paris"
                 rows={2}
                 required
               />
@@ -225,12 +198,12 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                   onValueChange={(value) => setFormData({ ...formData, baptiseSaintEsprit: value === "oui" })}
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="oui" id="oui" />
-                    <Label htmlFor="oui" className="font-normal cursor-pointer">Oui</Label>
+                    <RadioGroupItem value="oui" id="oui-edit" />
+                    <Label htmlFor="oui-edit" className="font-normal cursor-pointer">Oui</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="non" id="non" />
-                    <Label htmlFor="non" className="font-normal cursor-pointer">Non</Label>
+                    <RadioGroupItem value="non" id="non-edit" />
+                    <Label htmlFor="non-edit" className="font-normal cursor-pointer">Non</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -271,7 +244,7 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Annuler
             </Button>
-            <Button type="submit">Ajouter</Button>
+            <Button type="submit">Enregistrer les modifications</Button>
           </DialogFooter>
         </form>
       </DialogContent>
