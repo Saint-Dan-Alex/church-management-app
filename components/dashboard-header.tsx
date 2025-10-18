@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 
 export function DashboardHeader() {
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
+    <div className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
       </div>
