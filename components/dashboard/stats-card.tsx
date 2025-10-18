@@ -62,18 +62,16 @@ export function StatsCard({
   const colors = colorClasses[color]
 
   return (
-    <Card className={`dashboard-card border ${colors.border} ${colors.bg}`}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600">{title}</CardTitle>
-        <Icon className={`h-4 w-4 ${colors.icon}`} />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-blue-900">{value}</div>
-        <div className="flex items-center gap-1 text-xs text-gray-600">
-          <TrendIcon
-            className={cn("h-3 w-3", trend === "up" && "text-green-600", trend === "down" && "text-red-600")}
-          />
-          <span>{description}</span>
+    <Card className="dashboard-card border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-gray-600">{title}</p>
+            <p className="text-3xl font-bold text-gray-900">{value}</p>
+          </div>
+          <div className={`flex h-14 w-14 items-center justify-center rounded-xl ${colors.bg}`}>
+            <Icon className={`h-7 w-7 ${colors.icon}`} />
+          </div>
         </div>
       </CardContent>
     </Card>

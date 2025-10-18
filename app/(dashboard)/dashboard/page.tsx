@@ -8,30 +8,18 @@ import { UpcomingEvents } from "@/components/dashboard/upcoming-events"
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-blue-900">Tableau de Bord</h1>
-        <p className="text-gray-600">Vue d'ensemble de votre ministère - Gloire à Dieu</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Tableau de Bord</h1>
+          <p className="text-sm text-gray-600">Vue d'ensemble de votre ministère</p>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Moniteurs Actifs" value="24" description="+2 ce mois" icon={Users} trend="up" color="blue" />
-        <StatsCard
-          title="Enfants Inscrits"
-          value="156"
-          description="+12 ce mois"
-          icon={Baby}
-          trend="up"
-          color="purple"
-        />
-        <StatsCard
-          title="Présence Moyenne"
-          value="87%"
-          description="+5% vs mois dernier"
-          icon={UserCheck}
-          trend="up"
-          color="green"
-        />
-        <StatsCard title="Cultes ce Mois" value="8" description="2 à venir" icon={Church} trend="neutral" color="sky" />
+        <StatsCard title="Moniteurs Actifs" value="24" description="" icon={Users} trend="neutral" color="blue" />
+        <StatsCard title="Enfants Inscrits" value="156" description="" icon={Baby} trend="neutral" color="green" />
+        <StatsCard title="Présence Moyenne" value="87%" description="" icon={UserCheck} trend="neutral" color="orange" />
+        <StatsCard title="Cultes ce Mois" value="8" description="" icon={Church} trend="neutral" color="purple" />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
