@@ -7,7 +7,7 @@ import { PublicFooter } from "@/components/public/public-footer"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900 dark:from-slate-950 dark:via-blue-950 dark:to-slate-950">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
       <PublicHeader />
       <main>
         <HeroSection />

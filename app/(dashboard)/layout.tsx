@@ -12,9 +12,9 @@ export default function DashboardLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <div className="flex flex-col min-h-screen bg-white">
+        <div className="flex flex-col min-h-screen">
           <DashboardHeader />
-          <main className="flex-1 p-6 bg-white">{children}</main>
+          <main className="flex-1 p-6">{children}</main>
         </div>
       </SidebarInset>
     </SidebarProvider>

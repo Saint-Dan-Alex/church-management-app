@@ -40,8 +40,8 @@ export function RecentActivity() {
     <div className="space-y-4">
       {activities.map((activity) => (
         <div key={activity.id} className="flex items-start gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary">
-            <activity.icon className="h-4 w-4 text-secondary-foreground" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100">
+            <activity.icon className="h-4 w-4 text-blue-600" />
           </div>
           <div className="flex-1 space-y-1">
             <p className="text-sm">

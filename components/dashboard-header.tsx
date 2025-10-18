@@ -15,9 +15,9 @@ export function DashboardHeader() {
   }
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+    <div className="flex items-center justify-between p-4 border-b border-gray-200">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">Espace Administration</h2>
+        <h2 className="text-lg font-semibold text-blue-900">Espace Administration</h2>
         <p className="text-sm text-gray-600">Gestion de l'église</p>
       </div>
       <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-700 hover:bg-gray-100">

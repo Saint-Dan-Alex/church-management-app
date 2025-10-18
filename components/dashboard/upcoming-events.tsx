@@ -40,10 +40,10 @@ export function UpcomingEvents() {
   return (
     <div className="space-y-4">
       {events.map((event) => (
-        <div key={event.id} className="space-y-2 rounded-lg border border-gray-200 p-3 bg-gray-50">
+        <div key={event.id} className="space-y-2 rounded-lg border border-blue-200 p-3 bg-blue-50">
           <div className="flex items-start justify-between">
-            <h4 className="font-medium text-sm text-gray-900">{event.title}</h4>
-            <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+            <h4 className="font-medium text-sm text-blue-900">{event.title}</h4>
+            <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
               {event.type}
             </Badge>
           </div>
