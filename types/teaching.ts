@@ -67,7 +67,6 @@ export interface Teaching {
   pointsDevelopper?: PointDeveloppement[]
   
   // Développement (si typeContenu = "developpement")
-  developpement?: string
   evenements?: Evenement[]
   
   // Conclusion

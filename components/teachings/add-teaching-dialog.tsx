@@ -43,7 +43,6 @@ export function AddTeachingDialog({ open, onOpenChange }: AddTeachingDialogProps
     reponseDecouverte: "",
     typeContenu: "points_developper",
     pointsDevelopper: [],
-    developpement: "",
     evenements: [],
     conclusion: "",
   })
@@ -528,27 +527,15 @@ export function AddTeachingDialog({ open, onOpenChange }: AddTeachingDialogProps
               {/* DÉVELOPPEMENT */}
               {formData.typeContenu === "developpement" && (
                 <div className="space-y-4 border-t pt-4">
-                  <h3 className="font-semibold text-gray-900">Développement</h3>
-                  <div className="grid gap-2">
-                    <Label htmlFor="developpement">Contenu du développement</Label>
-                    <Textarea
-                      id="developpement"
-                      value={formData.developpement}
-                      onChange={(e) => setFormData({ ...formData, developpement: e.target.value })}
-                      rows={5}
-                      placeholder="Développez le contenu de la leçon..."
-                    />
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                      📚 Développement
+                    </h3>
+                    <Button type="button" variant="outline" size="sm" onClick={addEvenement}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      Ajouter un événement
+                    </Button>
                   </div>
-
-                  {/* ÉVÉNEMENTS ET ENSEIGNEMENTS */}
-                  <div className="space-y-4 mt-6">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-gray-900">Événements et enseignements</h4>
-                      <Button type="button" variant="outline" size="sm" onClick={addEvenement}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Ajouter un événement
-                      </Button>
-                    </div>
                     <div className="space-y-4">
                       {formData.evenements?.map((evenement, evtIndex) => (
                         <Card key={evenement.id} className="p-4">
@@ -608,7 +595,6 @@ export function AddTeachingDialog({ open, onOpenChange }: AddTeachingDialogProps
                         </Card>
                       ))}
                     </div>
-                  </div>
                 </div>
               )}
 

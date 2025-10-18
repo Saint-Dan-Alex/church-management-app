@@ -323,51 +323,45 @@ export default function TeachingDetailsPage({ params }: { params: { id: string }
             </Card>
           )}
 
-          {/* Développement avec événements */}
-          {teaching.typeContenu === "developpement" && (
+          {/* Développement */}
+          {teaching.typeContenu === "developpement" && teaching.evenements && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-blue-600" />
+                  <List className="h-5 w-5 text-blue-600" />
                   Développement
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {teaching.developpement && (
-                    <div>
-                      <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                        {teaching.developpement}
-                      </p>
-                    </div>
-                  )}
-
-                  {teaching.evenements && teaching.evenements.length > 0 && (
-                    <div className="border-t pt-6">
-                      <h4 className="font-semibold text-gray-900 mb-4">
-                        Événements et enseignements
-                      </h4>
-                      <div className="space-y-4">
-                        {teaching.evenements.map((evenement, evtIndex) => (
-                          <div key={evenement.id} className="bg-gray-50 p-4 rounded-lg">
-                            <div className="flex items-center gap-2 mb-3">
-                              <Badge className="bg-green-600">{evtIndex + 1}</Badge>
-                              <h5 className="font-medium text-gray-900">{evenement.titre}</h5>
-                            </div>
-                            {evenement.enseignements.length > 0 && (
-                              <ul className="space-y-2 ml-8">
-                                {evenement.enseignements.map((ens) => (
-                                  <li key={ens.id} className="text-sm text-gray-700">
-                                    • {ens.contenu}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        ))}
+                  {teaching.evenements.map((evenement, index) => (
+                    <div key={evenement.id} className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <Badge className="bg-green-600 text-white mt-1">
+                          {index + 1}
+                        </Badge>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 mb-3">{evenement.titre}</h4>
+                          {evenement.enseignements.length > 0 && (
+                            <ul className="space-y-2 ml-4">
+                              {evenement.enseignements.map((enseignement) => (
+                                <li
+                                  key={enseignement.id}
+                                  className="flex items-start gap-2 text-sm text-gray-700"
+                                >
+                                  <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                  <span>{enseignement.contenu}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       </div>
+                      {index < teaching.evenements!.length - 1 && (
+                        <div className="border-t"></div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
               </CardContent>
             </Card>
