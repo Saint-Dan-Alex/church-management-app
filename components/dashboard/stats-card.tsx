@@ -24,23 +24,23 @@ export function StatsCard({
   const colorClasses = {
     blue: {
       bg: "bg-blue-50",
-      icon: "text-[#3B4FE4]",
+      icon: "text-blue-600",
       border: "border-blue-200",
     },
     yellow: {
-      bg: "bg-blue-50",
-      icon: "text-[#3B4FE4]",
-      border: "border-blue-200",
+      bg: "bg-yellow-50",
+      icon: "text-yellow-600",
+      border: "border-yellow-200",
     },
     red: {
-      bg: "bg-blue-50",
-      icon: "text-[#3B4FE4]",
-      border: "border-blue-200",
+      bg: "bg-red-50",
+      icon: "text-red-600",
+      border: "border-red-200",
     },
     green: {
-      bg: "bg-blue-50",
-      icon: "text-[#3B4FE4]",
-      border: "border-blue-200",
+      bg: "bg-green-50",
+      icon: "text-green-600",
+      border: "border-green-200",
     },
   }
 

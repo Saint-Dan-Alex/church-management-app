@@ -26,7 +26,7 @@ export function AttendanceChart() {
           }}
           labelStyle={{ color: "#374151" }}
         />
-        <Bar dataKey="present" fill="#3B4FE4" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="present" fill="#3b82f6" radius={[4, 4, 0, 0]} />
         <Bar dataKey="absent" fill="#e5e7eb" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>

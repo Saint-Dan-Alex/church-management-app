@@ -15,12 +15,12 @@ export function DashboardHeader() {
   }
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-[#2A3BB7] bg-[#3B4FE4]">
+    <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
       <div>
-        <h2 className="text-lg font-semibold text-white">Espace Administration</h2>
-        <p className="text-sm text-blue-100">Gestion de l'église</p>
+        <h2 className="text-lg font-semibold text-gray-900">Espace Administration</h2>
+        <p className="text-sm text-gray-600">Gestion de l'église</p>
       </div>
-      <Button variant="ghost" size="sm" onClick={handleLogout} className="text-white hover:bg-[#2A3BB7]">
+      <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-700 hover:bg-gray-100">
         <LogOut className="h-4 w-4 mr-2" />
         Déconnexion
       </Button>

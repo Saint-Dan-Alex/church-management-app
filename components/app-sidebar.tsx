@@ -78,21 +78,21 @@ export function AppSidebar() {
   const pathname = usePathname()
 
   return (
-    <Sidebar className="bg-[#3B4FE4] border-r border-[#2A3BB7]">
-      <SidebarHeader className="border-b border-[#2A3BB7] bg-[#3B4FE4]">
+    <Sidebar className="bg-white border-r border-gray-200">
+      <SidebarHeader className="border-b border-gray-200 bg-white">
         <div className="flex items-center gap-2 px-4 py-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-[#3B4FE4]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white">
             <Church className="h-6 w-6" />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-white">Gestion Église</span>
-            <span className="text-xs text-blue-100">Gloire à Dieu</span>
+            <span className="text-sm font-semibold text-gray-900">Gestion Église</span>
+            <span className="text-xs text-gray-500">Gloire à Dieu</span>
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-blue-100">Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-600">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -100,7 +100,7 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.url}
-                    className={pathname === item.url ? "bg-white text-[#3B4FE4]" : "text-white hover:bg-[#2A3BB7]"}
+                    className={pathname === item.url ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50"}
                   >
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
@@ -113,18 +113,18 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-[#2A3BB7] bg-[#3B4FE4]">
+      <SidebarFooter className="border-t border-gray-200 bg-white">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="w-full text-white hover:bg-[#2A3BB7]">
+                <SidebarMenuButton className="w-full text-gray-900 hover:bg-gray-50">
                   <Avatar className="h-6 w-6">
-                    <AvatarFallback className="bg-white text-[#3B4FE4] text-xs">AD</AvatarFallback>
+                    <AvatarFallback className="bg-blue-600 text-white text-xs">AD</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start text-left">
-                    <span className="text-sm font-medium text-white">Admin</span>
-                    <span className="text-xs text-blue-100">admin@eglise.com</span>
+                    <span className="text-sm font-medium text-gray-900">Admin</span>
+                    <span className="text-xs text-gray-500">admin@eglise.com</span>
                   </div>
                   <ChevronDown className="ml-auto h-4 w-4" />
                 </SidebarMenuButton>
