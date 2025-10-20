@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { EditSalleDialog } from "./edit-salle-dialog"
 import type { Salle } from "@/types/salle"
 
 // Données mockées
@@ -31,7 +33,7 @@ const mockSalles: Salle[] = [
         prenom: "Marie",
         nomComplet: "Marie LENGE",
         role: "responsable",
-        dateAffectation: new Date("2023-01-15"),
+        dateAffectation: "2023-01-15" as any,
       },
       {
         id: "2",
@@ -39,7 +41,7 @@ const mockSalles: Salle[] = [
         prenom: "Paul",
         nomComplet: "Paul NGEA",
         role: "adjoint",
-        dateAffectation: new Date("2023-01-15"),
+        dateAffectation: "2023-01-15" as any,
       },
       {
         id: "3",
@@ -47,12 +49,12 @@ const mockSalles: Salle[] = [
         prenom: "Jean",
         nomComplet: "Jean NFEO",
         role: "membre",
-        dateAffectation: new Date("2023-03-20"),
+        dateAffectation: "2023-03-20" as any,
       },
     ],
     actif: true,
-    createdAt: new Date("2023-01-15"),
-    updatedAt: new Date("2024-10-20"),
+    createdAt: "2023-01-15" as any,
+    updatedAt: "2024-10-20" as any,
   },
   {
     id: "2",
@@ -70,7 +72,7 @@ const mockSalles: Salle[] = [
         prenom: "Sarah",
         nomComplet: "Sarah JEMMA",
         role: "responsable",
-        dateAffectation: new Date("2023-02-01"),
+        dateAffectation: "2023-02-01" as any,
       },
       {
         id: "5",
@@ -78,12 +80,12 @@ const mockSalles: Salle[] = [
         prenom: "Marc",
         nomComplet: "Marc CHRISTIAN",
         role: "adjoint",
-        dateAffectation: new Date("2023-02-01"),
+        dateAffectation: "2023-02-01" as any,
       },
     ],
     actif: true,
-    createdAt: new Date("2023-02-01"),
-    updatedAt: new Date("2024-10-20"),
+    createdAt: "2023-02-01" as any,
+    updatedAt: "2024-10-20" as any,
   },
   {
     id: "3",
@@ -97,17 +99,25 @@ const mockSalles: Salle[] = [
         prenom: "David",
         nomComplet: "David MUKEBA",
         role: "membre",
-        dateAffectation: new Date("2023-06-10"),
+        dateAffectation: "2023-06-10" as any,
       },
     ],
     actif: true,
-    createdAt: new Date("2023-06-10"),
-    updatedAt: new Date("2024-10-20"),
+    createdAt: "2023-06-10" as any,
+    updatedAt: "2024-10-20" as any,
   },
 ]
 
 export function SalleList() {
   const router = useRouter()
+  const [editingSalle, setEditingSalle] = useState<Salle | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  const handleEdit = (salle: Salle, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingSalle(salle)
+    setIsEditDialogOpen(true)
+  }
 
   const handleDelete = (id: string, nom: string) => {
     if (confirm(`Êtes-vous sûr de vouloir supprimer la salle "${nom}" ?`)) {
@@ -162,12 +172,7 @@ export function SalleList() {
                   <Eye className="mr-2 h-4 w-4" />
                   Voir détails
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    // TODO: Ouvrir le dialog d'édition
-                  }}
-                >
+                <DropdownMenuItem onClick={(e) => handleEdit(salle, e)}>
                   <Edit className="mr-2 h-4 w-4" />
                   Modifier
                 </DropdownMenuItem>
@@ -229,6 +234,14 @@ export function SalleList() {
           </div>
         </Card>
       ))}
+
+      {editingSalle && (
+        <EditSalleDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          salle={editingSalle}
+        />
+      )}
     </div>
   )
 }

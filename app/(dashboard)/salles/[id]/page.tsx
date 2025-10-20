@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
+import { EditSalleDialog } from "@/components/salles/edit-salle-dialog"
 import type { Salle, MoniteurSalleHistorique } from "@/types/salle"
 
 // Données mockées
@@ -40,7 +41,7 @@ const mockSalle: Salle = {
       prenom: "Marie",
       nomComplet: "Marie LENGE",
       role: "responsable",
-      dateAffectation: new Date("2023-01-15"),
+      dateAffectation: "2023-01-15" as any,
     },
     {
       id: "2",
@@ -48,7 +49,7 @@ const mockSalle: Salle = {
       prenom: "Paul",
       nomComplet: "Paul NGEA",
       role: "adjoint",
-      dateAffectation: new Date("2023-01-15"),
+      dateAffectation: "2023-01-15" as any,
     },
     {
       id: "3",
@@ -56,12 +57,12 @@ const mockSalle: Salle = {
       prenom: "Jean",
       nomComplet: "Jean NFEO",
       role: "membre",
-      dateAffectation: new Date("2023-03-20"),
+      dateAffectation: "2023-03-20" as any,
     },
   ],
   actif: true,
-  createdAt: new Date("2023-01-15"),
-  updatedAt: new Date("2024-10-20"),
+  createdAt: "2023-01-15" as any,
+  updatedAt: "2024-10-20" as any,
 }
 
 // Historique des moniteurs
@@ -75,10 +76,10 @@ const mockHistorique: MoniteurSalleHistorique[] = [
     salleId: "1",
     salleNom: "Adolescents",
     role: "responsable",
-    dateDebut: new Date("2023-01-15"),
+    dateDebut: "2023-01-15" as any,
     dateFin: undefined,
     actif: true,
-    createdAt: new Date("2023-01-15"),
+    createdAt: "2023-01-15" as any,
   },
   {
     id: "2",
@@ -89,10 +90,10 @@ const mockHistorique: MoniteurSalleHistorique[] = [
     salleId: "1",
     salleNom: "Adolescents",
     role: "adjoint",
-    dateDebut: new Date("2023-01-15"),
+    dateDebut: "2023-01-15" as any,
     dateFin: undefined,
     actif: true,
-    createdAt: new Date("2023-01-15"),
+    createdAt: "2023-01-15" as any,
   },
   {
     id: "3",
@@ -103,10 +104,10 @@ const mockHistorique: MoniteurSalleHistorique[] = [
     salleId: "1",
     salleNom: "Adolescents",
     role: "membre",
-    dateDebut: new Date("2023-03-20"),
+    dateDebut: "2023-03-20" as any,
     dateFin: undefined,
     actif: true,
-    createdAt: new Date("2023-03-20"),
+    createdAt: "2023-03-20" as any,
   },
   {
     id: "4",
@@ -117,11 +118,11 @@ const mockHistorique: MoniteurSalleHistorique[] = [
     salleId: "1",
     salleNom: "Adolescents",
     role: "membre",
-    dateDebut: new Date("2022-09-01"),
-    dateFin: new Date("2023-01-10"),
+    dateDebut: "2022-09-01" as any,
+    dateFin: "2023-01-10" as any,
     actif: false,
     motifChangement: "Mutation vers la salle Juniors",
-    createdAt: new Date("2022-09-01"),
+    createdAt: "2022-09-01" as any,
   },
   {
     id: "5",
@@ -132,11 +133,11 @@ const mockHistorique: MoniteurSalleHistorique[] = [
     salleId: "1",
     salleNom: "Adolescents",
     role: "membre",
-    dateDebut: new Date("2022-06-15"),
-    dateFin: new Date("2022-12-31"),
+    dateDebut: "2022-06-15" as any,
+    dateFin: "2022-12-31" as any,
     actif: false,
     motifChangement: "Départ du ministère",
-    createdAt: new Date("2022-06-15"),
+    createdAt: "2022-06-15" as any,
   },
 ]
 
@@ -146,6 +147,7 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
   const [historique] = useState<MoniteurSalleHistorique[]>(mockHistorique)
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const itemsPerPage = 10
 
   const getSalleBadgeColor = (nom: string) => {
@@ -179,7 +181,7 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
     })
   }
 
-  const calculateDuree = (dateDebut: Date, dateFin?: Date) => {
+  const calculateDuree = (dateDebut: Date | string, dateFin?: Date | string) => {
     const debut = new Date(dateDebut)
     const fin = dateFin ? new Date(dateFin) : new Date()
     const diffTime = Math.abs(fin.getTime() - debut.getTime())
@@ -253,7 +255,7 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => {/* TODO: ouvrir edit dialog */}}>
+          <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
             <Edit className="mr-2 h-4 w-4" />
             Modifier
           </Button>
@@ -477,6 +479,12 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
           </Card>
         </div>
       </div>
+
+      <EditSalleDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen}
+        salle={salle}
+      />
     </div>
   )
 }
