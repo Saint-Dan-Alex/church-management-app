@@ -4,6 +4,7 @@ import {
   Users,
   Baby,
   Church,
+  Building2,
   Calendar,
   FileText,
   Video,
@@ -52,6 +53,11 @@ const menuItems = [
     title: "Cultes",
     url: "/worship",
     icon: Church,
+  },
+  {
+    title: "Salles",
+    url: "/salles",
+    icon: Building2,
   },
   {
     title: "Activités",
