@@ -15,6 +15,7 @@ import {
   FileText,
   List,
   CheckCircle2,
+  Download,
 } from "lucide-react"
 import { EditTeachingDialog } from "@/components/teachings/edit-teaching-dialog"
 import type { Teaching } from "@/types/teaching"
@@ -94,6 +95,152 @@ export default function TeachingDetailsPage({ params }: { params: { id: string }
     }
   }
 
+  const handleDownloadPDF = () => {
+    // Créer une nouvelle fenêtre pour l'impression
+    const printWindow = window.open('', '', 'width=800,height=600')
+    if (!printWindow) return
+
+    // Générer le contenu HTML pour le PDF
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Enseignement - ${teaching.theme}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+            h1 { color: #1e40af; font-size: 28px; margin-bottom: 10px; }
+            h2 { color: #2563eb; font-size: 20px; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 5px; }
+            h3 { color: #1e40af; font-size: 18px; margin-top: 20px; margin-bottom: 10px; }
+            h4 { color: #374151; font-size: 16px; margin-top: 15px; margin-bottom: 8px; }
+            p { margin-bottom: 10px; }
+            .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #3b82f6; padding-bottom: 20px; }
+            .date { color: #6b7280; font-size: 14px; margin-bottom: 5px; }
+            .subtitle { color: #6b7280; font-size: 16px; }
+            .section { margin-bottom: 25px; page-break-inside: avoid; }
+            .var-box { background: #dbeafe; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; font-style: italic; }
+            .chant-list { list-style: none; }
+            .chant-item { padding: 8px; background: #f9fafb; margin-bottom: 5px; border-radius: 4px; }
+            .point { margin-bottom: 20px; padding-left: 20px; }
+            .point-title { font-weight: bold; color: #1e40af; margin-bottom: 10px; }
+            .sous-point { padding-left: 20px; margin-bottom: 8px; display: flex; align-items: start; }
+            .sous-point:before { content: "✓"; color: #10b981; margin-right: 8px; font-weight: bold; }
+            .conclusion-box { background: #d1fae5; border: 2px solid #10b981; padding: 20px; margin-top: 30px; border-radius: 8px; }
+            @media print {
+              body { padding: 20px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="date">📅 ${formatDate(teaching.dateSeance)}</div>
+            <h1>${teaching.theme}</h1>
+            ${teaching.sousTheme ? `<div class="subtitle">${teaching.sousTheme}</div>` : ''}
+            <h3>${teaching.sujet}</h3>
+          </div>
+
+          <div class="section">
+            <p><strong>Textes bibliques :</strong> ${teaching.textesBibliques}</p>
+            <p><strong>But pédagogique :</strong> ${teaching.butPedagogique}</p>
+          </div>
+
+          <div class="var-box">
+            <strong>📖 Verset à retenir (V.A.R) :</strong><br>
+            ${teaching.versetRetenir}
+          </div>
+
+          ${teaching.chants.length > 0 ? `
+            <div class="section">
+              <h2>🎶 Chants</h2>
+              <ul class="chant-list">
+                ${teaching.chants.map(chant => `
+                  <li class="chant-item">
+                    ${chant.titre}${chant.numero ? ` (N° ${chant.numero})` : ''}
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          ` : ''}
+
+          ${teaching.materielDidactique || teaching.sujetRevision ? `
+            <div class="section">
+              <h2>📝 Préparation</h2>
+              ${teaching.materielDidactique ? `
+                <div>
+                  <h4>Matériel didactique (M/D) :</h4>
+                  <p>${teaching.materielDidactique}</p>
+                </div>
+              ` : ''}
+              ${teaching.sujetRevision ? `
+                <div>
+                  <h4>Sujet de révision (S/R) :</h4>
+                  <p>${teaching.sujetRevision}</p>
+                </div>
+              ` : ''}
+            </div>
+          ` : ''}
+
+          ${teaching.sensibilisation || teaching.questionsReponses || teaching.questionDecouverte || teaching.reponseDecouverte ? `
+            <div class="section">
+              <h2>🔍 Introduction</h2>
+              ${teaching.sensibilisation ? `<div><h4>Sensibilisation :</h4><p>${teaching.sensibilisation}</p></div>` : ''}
+              ${teaching.questionsReponses ? `<div><h4>Questions/Réponses (Q.R) :</h4><p>${teaching.questionsReponses}</p></div>` : ''}
+              ${teaching.questionDecouverte ? `<div><h4>Question de découverte (Q.D) :</h4><p>${teaching.questionDecouverte}</p></div>` : ''}
+              ${teaching.reponseDecouverte ? `<div><h4>Réponse de découverte (R) :</h4><p>${teaching.reponseDecouverte}</p></div>` : ''}
+            </div>
+          ` : ''}
+
+          ${teaching.typeContenu === 'points_developper' && teaching.pointsDevelopper ? `
+            <div class="section">
+              <h2>📚 Points à développer</h2>
+              ${teaching.pointsDevelopper.map((point, index) => `
+                <div class="point">
+                  <div class="point-title">${index + 1}. ${point.titre}</div>
+                  ${point.sousPoints.map(sp => `
+                    <div class="sous-point">${sp.contenu}</div>
+                  `).join('')}
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          ${teaching.typeContenu === 'developpement' && teaching.evenements ? `
+            <div class="section">
+              <h2>📚 Développement</h2>
+              ${teaching.evenements.map((evt, index) => `
+                <div class="point">
+                  <div class="point-title">${index + 1}. ${evt.titre}</div>
+                  ${evt.enseignements.map(ens => `
+                    <div class="sous-point">${ens.contenu}</div>
+                  `).join('')}
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          ${teaching.conclusion ? `
+            <div class="conclusion-box">
+              <h2>✅ Conclusion</h2>
+              <p>${teaching.conclusion}</p>
+            </div>
+          ` : ''}
+        </body>
+      </html>
+    `
+
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+    
+    // Attendre que le contenu soit chargé avant d'imprimer
+    printWindow.onload = () => {
+      printWindow.focus()
+      printWindow.print()
+      printWindow.close()
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -108,6 +255,10 @@ export default function TeachingDetailsPage({ params }: { params: { id: string }
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleDownloadPDF}>
+            <Download className="mr-2 h-4 w-4" />
+            Télécharger PDF
+          </Button>
           <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
             <Edit className="mr-2 h-4 w-4" />
             Modifier

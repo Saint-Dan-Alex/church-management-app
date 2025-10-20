@@ -1,51 +1,72 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Plus, Download } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { WorshipList } from "@/components/worship/worship-list"
-import { RoomManagement } from "@/components/worship/room-management"
-import { AddWorshipDialog } from "@/components/worship/add-worship-dialog"
+import { Plus, FileText, BarChart3 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { WorshipReportList } from "@/components/worship/worship-report-list"
+import { AddWorshipReportDialog } from "@/components/worship/add-worship-report-dialog"
 
 export default function WorshipPage() {
+  const router = useRouter()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Cultes</h1>
-          <p className="text-muted-foreground">Gestion des cultes et salles</p>
+          <h1 className="text-3xl font-bold tracking-tight text-blue-900">Rapports de Culte</h1>
+          <p className="text-gray-600">Gestion des rapports dominicaux par salle</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Exporter Rapports
-          </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nouveau Culte
-          </Button>
-        </div>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nouveau Rapport
+        </Button>
       </div>
 
-      <Tabs defaultValue="services" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="services">Cultes</TabsTrigger>
-          <TabsTrigger value="rooms">Salles</TabsTrigger>
-        </TabsList>
+      {/* Statistiques rapides et navigation vers rapports */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Button
+          variant="outline"
+          className="h-24 flex-col gap-2"
+          onClick={() => router.push("/worship/reports/global")}
+        >
+          <BarChart3 className="h-6 w-6 text-blue-600" />
+          <div className="text-center">
+            <div className="font-semibold">Rapport Global</div>
+            <div className="text-xs text-gray-500">Statistiques toutes salles confondues</div>
+          </div>
+        </Button>
 
-        <TabsContent value="services">
-          <WorshipList />
-        </TabsContent>
+        <Button
+          variant="outline"
+          className="h-24 flex-col gap-2"
+          onClick={() => router.push("/worship/reports/by-room")}
+        >
+          <FileText className="h-6 w-6 text-green-600" />
+          <div className="text-center">
+            <div className="font-semibold">Rapports par Salle</div>
+            <div className="text-xs text-gray-500">Statistiques détaillées par salle</div>
+          </div>
+        </Button>
+      </div>
 
-        <TabsContent value="rooms">
-          <RoomManagement />
-        </TabsContent>
-      </Tabs>
+      {/* Barre de recherche */}
+      <div className="flex items-center gap-4">
+        <Input
+          placeholder="Rechercher par salle, date..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-md"
+        />
+      </div>
 
-      <AddWorshipDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      {/* Liste des rapports */}
+      <WorshipReportList searchQuery={searchQuery} />
+
+      <AddWorshipReportDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
     </div>
   )
 }
