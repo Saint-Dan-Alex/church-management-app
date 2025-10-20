@@ -1,3 +1,5 @@
+import type { RoleMoniteur } from "./salle"
+
 export interface Monitor {
   id: string
   nom: string
@@ -13,6 +15,11 @@ export interface Monitor {
   baptiseSaintEsprit: boolean
   etatCivil: "Célibataire" | "Marié(e)" | "Veuf(ve)" | "Divorcé(e)"
   dateAdhesion: Date | string
+  // Affectation actuelle
+  salleActuelleId?: string
+  salleActuelleNom?: string
+  roleActuel?: RoleMoniteur
+  dateAffectationActuelle?: Date | string
   createdAt?: Date
   updatedAt?: Date
 }

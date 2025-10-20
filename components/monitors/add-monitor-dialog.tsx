@@ -19,6 +19,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Upload } from "lucide-react"
 import type { MonitorFormData } from "@/types/monitor"
+import type { RoleMoniteur } from "@/types/salle"
+
+// Données mockées des salles disponibles
+const sallesDisponibles = [
+  { id: "1", nom: "Adolescents" },
+  { id: "2", nom: "Juniors" },
+  { id: "3", nom: "Jardin" },
+  { id: "4", nom: "Ainés" },
+  { id: "5", nom: "Cadets" },
+]
 
 interface AddMonitorDialogProps {
   open: boolean
@@ -40,6 +50,10 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
     baptiseSaintEsprit: false,
     etatCivil: "Célibataire",
     dateAdhesion: "",
+    salleActuelleId: undefined,
+    salleActuelleNom: undefined,
+    roleActuel: undefined,
+    dateAffectationActuelle: "",
   })
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
 
@@ -75,6 +89,10 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
       baptiseSaintEsprit: false,
       etatCivil: "Célibataire",
       dateAdhesion: "",
+      salleActuelleId: undefined,
+      salleActuelleNom: undefined,
+      roleActuel: undefined,
+      dateAffectationActuelle: "",
     })
     setPhotoPreview(null)
   }
@@ -264,6 +282,57 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                   onChange={(e) => setFormData({ ...formData, dateAdhesion: e.target.value })}
                   required
                 />
+              </div>
+            </div>
+
+            {/* Affectation à une salle */}
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="font-semibold text-gray-900">🏢 Affectation à une salle (Optionnel)</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="salle">Salle</Label>
+                  <Select
+                    value={formData.salleActuelleId}
+                    onValueChange={(value) => {
+                      const salle = sallesDisponibles.find(s => s.id === value)
+                      setFormData({
+                        ...formData,
+                        salleActuelleId: value,
+                        salleActuelleNom: salle?.nom,
+                        dateAffectationActuelle: new Date().toISOString().split('T')[0],
+                      })
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une salle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sallesDisponibles.map((salle) => (
+                        <SelectItem key={salle.id} value={salle.id}>
+                          {salle.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {formData.salleActuelleId && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="role">Rôle</Label>
+                    <Select
+                      value={formData.roleActuel}
+                      onValueChange={(value: RoleMoniteur) => setFormData({ ...formData, roleActuel: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un rôle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="responsable">Responsable</SelectItem>
+                        <SelectItem value="adjoint">Adjoint</SelectItem>
+                        <SelectItem value="membre">Membre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
           </div>
