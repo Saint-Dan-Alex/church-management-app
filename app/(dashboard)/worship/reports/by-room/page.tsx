@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ArrowLeft, Calendar, Users, TrendingUp, Download, TrendingDown } from "lucide-react"
+import { ArrowLeft, Calendar, Users, TrendingUp, Download, TrendingDown, DollarSign } from "lucide-react"
 import type { SalleType, SalleStats } from "@/types/worship-report"
 
 const salles: SalleType[] = ["Jardin", "Ainés", "Juniors", "Cadets", "Adolescents"]
@@ -38,6 +38,17 @@ export default function RoomReportPage() {
     moyenneFreres: 16.63,
     moyenneSoeurs: 34.63,
     moyenneNouveauxVenus: 0.38,
+    offrandes: [
+      "171,700 FC + 1 GN",
+      "85,000 FC",
+      "120,500 FC",
+      "95,200 FC + 2 GN",
+      "148,300 FC",
+      "102,800 FC + 1 GN",
+      "156,400 FC",
+      "205,500 FC + 3 GN",
+    ],
+    totalOffrandes: "1,085,400 FC + 7 GN",
     meilleurePresence: {
       date: "2023-12-03",
       effectif: 410,
@@ -119,6 +130,13 @@ export default function RoomReportPage() {
               <div class="stat-value">${stats.totalSoeurs}</div>
               <div class="stat-subtitle">${((stats.totalSoeurs / stats.totalEffectif) * 100).toFixed(1)}% de l'effectif</div>
             </div>
+          </div>
+
+          <h2>💰 Offrandes</h2>
+          <div class="stat-card" style="background: #d1fae5; border: 2px solid #10b981;">
+            <div class="stat-label" style="color: #047857;">Total des Offrandes</div>
+            <div class="stat-value" style="color: #065f46; font-size: 28px;">${stats.totalOffrandes}</div>
+            <div class="stat-subtitle" style="color: #059669;">${stats.offrandes.length} culte${stats.offrandes.length > 1 ? "s" : ""}</div>
           </div>
 
           <h2>📊 Moyennes</h2>
@@ -279,7 +297,7 @@ export default function RoomReportPage() {
       {/* Statistiques Totales */}
       <div>
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Statistiques Totales</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -323,6 +341,19 @@ export default function RoomReportPage() {
               <p className="text-xs text-gray-500 mt-1">
                 {((stats.totalSoeurs / stats.totalEffectif) * 100).toFixed(1)}% de l'effectif
               </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-green-700">Total Offrandes</p>
+                  <p className="text-2xl font-bold text-green-900">{stats.totalOffrandes}</p>
+                  <p className="text-xs text-green-600 mt-1">{stats.offrandes.length} cultes</p>
+                </div>
+                <DollarSign className="h-10 w-10 text-green-600" />
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -67,6 +67,8 @@ export interface SalleStats {
   moyenneFreres: number
   moyenneSoeurs: number
   moyenneNouveauxVenus: number
+  offrandes: string[] // Liste de toutes les offrandes
+  totalOffrandes: string // Texte formaté du total
   meilleurePresence: {
     date: string
     effectif: number
