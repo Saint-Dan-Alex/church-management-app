@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { AddExpenseDialog } from "./add-expense-dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -66,6 +67,8 @@ export function ExpenseManager({
 }: ExpenseManagerProps) {
   const [expenses, setExpenses] = useState<Expense[]>(mockExpenses)
   const [searchQuery, setSearchQuery] = useState("")
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
 
   // Calculer le total des dépenses
   const totalDepenses = expenses.reduce((sum, expense) => {
@@ -95,6 +98,24 @@ export function ExpenseManager({
   const getCategoryLabel = (categorie: string) => {
     const category = EXPENSE_CATEGORIES.find((c) => c.value === categorie)
     return category ? `${category.icon} ${category.label}` : categorie
+  }
+
+  const handleDelete = (id: string) => {
+    if (confirm("Êtes-vous sûr de vouloir supprimer cette dépense ?")) {
+      setExpenses(expenses.filter((e) => e.id !== id))
+      alert("Dépense supprimée avec succès")
+    }
+  }
+
+  const handleEdit = (expense: Expense) => {
+    setSelectedExpense(expense)
+    // TODO: Ouvrir le dialog d'édition
+    alert(`Édition de : ${expense.description}\n(Fonctionnalité à venir)`)
+  }
+
+  const handleExport = () => {
+    // TODO: Implémenter l'export
+    alert("Export des dépenses\n(Fonctionnalité à venir)")
   }
 
   return (
@@ -141,21 +162,17 @@ export function ExpenseManager({
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-sm ${bilan >= 0 ? "text-blue-700" : "text-orange-700"}`}>
+                <p className={bilan >= 0 ? "text-sm text-blue-700" : "text-sm text-orange-700"}>
                   Bilan
                 </p>
-                <p
-                  className={`text-2xl font-bold ${
-                    bilan >= 0 ? "text-blue-900" : "text-orange-900"
-                  }`}
-                >
+                <p className={bilan >= 0 ? "text-2xl font-bold text-blue-900" : "text-2xl font-bold text-orange-900"}>
                   {formatCurrency(bilan, devisePaiements)}
                 </p>
-                <p className={`text-xs mt-1 ${bilan >= 0 ? "text-blue-600" : "text-orange-600"}`}>
+                <p className={bilan >= 0 ? "text-xs mt-1 text-blue-600" : "text-xs mt-1 text-orange-600"}>
                   {bilan >= 0 ? "Excédent" : "Déficit"}
                 </p>
               </div>
-              <DollarSign className={`h-10 w-10 ${bilan >= 0 ? "text-blue-600" : "text-orange-600"}`} />
+              <DollarSign className={bilan >= 0 ? "h-10 w-10 text-blue-600" : "h-10 w-10 text-orange-600"} />
             </div>
           </CardContent>
         </Card>
@@ -170,11 +187,11 @@ export function ExpenseManager({
               Dépenses de l'activité
             </CardTitle>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" onClick={handleExport}>
                 <Download className="mr-2 h-4 w-4" />
                 Exporter
               </Button>
-              <Button size="sm">
+              <Button size="sm" onClick={() => setShowAddDialog(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Ajouter Dépense
               </Button>
@@ -235,10 +252,21 @@ export function ExpenseManager({
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEdit(expense)}
+                        title="Modifier"
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-red-600">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDelete(expense.id)}
+                        title="Supprimer"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -249,6 +277,15 @@ export function ExpenseManager({
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog Ajouter Dépense */}
+      <AddExpenseDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        activiteId={activiteId}
+        activiteNom={activiteNom}
+        devise={devisePaiements}
+      />
     </div>
   )
 }
