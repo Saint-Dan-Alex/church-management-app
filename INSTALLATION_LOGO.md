@@ -75,6 +75,11 @@ npm run dev
 
 Le logo sera affiché dans les endroits suivants :
 
+### ✅ Onglet du navigateur (Favicon)
+- Icône dans l'onglet du navigateur
+- Titre : "CEAA - Centre Evangélique Arche de l'Alliance"
+- Visible dans tous les favoris
+
 ### ✅ Reçus de paiement
 - En haut du reçu
 - Avec le nom de l'église et du ministère
@@ -88,6 +93,10 @@ Le logo sera affiché dans les endroits suivants :
 ### ✅ Documents PDF exportés
 - Inclus automatiquement dans les exports
 - Qualité optimale pour l'impression
+
+### ✅ Partages sur réseaux sociaux
+- Métadonnées Open Graph configurées
+- Logo affiché lors du partage sur Facebook, Twitter, etc.
 
 ---
 
@@ -247,9 +256,14 @@ Dans `lib/config/church-info.ts`, pensez à compléter :
 - [ ] Dossier `public/` créé
 - [ ] Fichier `logo-arche.png` copié dans `public/`
 - [ ] Serveur redémarré
+- [ ] Cache du navigateur vidé (Ctrl+Shift+Delete)
+- [ ] Logo visible dans l'onglet du navigateur
 - [ ] Logo visible dans les reçus
 - [ ] Logo visible dans les rapports
+- [ ] Titre correct : "CEAA - Centre Evangélique..."
 - [ ] Informations de l'église complétées dans `church-info.ts`
+
+**Note :** Si le favicon ne s'affiche pas immédiatement, videz le cache du navigateur et rechargez la page (Ctrl+F5)
 
 ---
 

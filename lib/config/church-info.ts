@@ -42,7 +42,7 @@ export const CHURCH_INFO = {
   // Signature pour les documents officiels
   signature: {
     title: "Le Responsable du Ministère",
-    name: "",
+    name: "Jean Semeki",
   },
   
   // Slogan ou devise
