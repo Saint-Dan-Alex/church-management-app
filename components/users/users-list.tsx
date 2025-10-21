@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical, Edit, Trash, Lock, Mail, Phone, Shield } from "lucide-react"
 import { UserRole, getRoleLabel } from "@/lib/permissions"
+import { EditUserDialog } from "./edit-user-dialog"
 
 // Données mockées
 const mockUsers = [
@@ -91,6 +92,7 @@ interface UsersListProps {
 
 export function UsersList({ searchQuery, roleFilter }: UsersListProps) {
   const [selectedUser, setSelectedUser] = useState<typeof mockUsers[0] | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   const filteredUsers = mockUsers.filter((user) => {
     const matchesSearch =
@@ -104,8 +106,8 @@ export function UsersList({ searchQuery, roleFilter }: UsersListProps) {
   })
 
   const handleEdit = (user: typeof mockUsers[0]) => {
-    console.log("Modifier utilisateur:", user)
-    alert(`✏️ Édition de: ${user.prenom} ${user.nom}\n\n(Dialog d'édition à implémenter)`)
+    setSelectedUser(user)
+    setIsEditDialogOpen(true)
   }
 
   const handleDelete = (user: typeof mockUsers[0]) => {
@@ -235,6 +237,11 @@ export function UsersList({ searchQuery, roleFilter }: UsersListProps) {
           ))}
         </div>
       )}
+      <EditUserDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        user={selectedUser}
+      />
     </div>
   )
 }
