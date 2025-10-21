@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronDown,
   Shield,
+  Wallet,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -84,6 +85,11 @@ const menuItems = [
     title: "Photothèque",
     url: "/photos",
     icon: ImageIcon,
+  },
+  {
+    title: "Caisse",
+    url: "/caisse",
+    icon: Wallet,
   },
   {
     title: "Utilisateurs",

@@ -56,6 +56,12 @@ export enum Permission {
   DEPENSES_UPDATE = "depenses.update",
   DEPENSES_DELETE = "depenses.delete",
 
+  // Caisse (Cotisations)
+  CAISSE_CREATE = "caisse.create",
+  CAISSE_READ = "caisse.read",
+  CAISSE_UPDATE = "caisse.update",
+  CAISSE_DELETE = "caisse.delete",
+
   // Blog
   BLOG_CREATE = "blog.create",
   BLOG_READ = "blog.read",
@@ -122,6 +128,10 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     Permission.DEPENSES_READ,
     Permission.DEPENSES_UPDATE,
     Permission.DEPENSES_DELETE,
+    Permission.CAISSE_CREATE,
+    Permission.CAISSE_READ,
+    Permission.CAISSE_UPDATE,
+    Permission.CAISSE_DELETE,
     Permission.BLOG_CREATE,
     Permission.BLOG_READ,
     Permission.BLOG_UPDATE,
@@ -173,6 +183,10 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     Permission.DEPENSES_CREATE,
     Permission.DEPENSES_READ,
     Permission.DEPENSES_UPDATE,
+    Permission.CAISSE_CREATE,
+    Permission.CAISSE_READ,
+    Permission.CAISSE_UPDATE,
+    Permission.CAISSE_DELETE,
     Permission.BLOG_CREATE,
     Permission.BLOG_READ,
     Permission.BLOG_UPDATE,
@@ -328,6 +342,10 @@ export function getPermissionLabel(permission: Permission): string {
     [Permission.DEPENSES_READ]: "Voir les dépenses",
     [Permission.DEPENSES_UPDATE]: "Modifier les dépenses",
     [Permission.DEPENSES_DELETE]: "Supprimer les dépenses",
+    [Permission.CAISSE_CREATE]: "Enregistrer des cotisations",
+    [Permission.CAISSE_READ]: "Voir la caisse",
+    [Permission.CAISSE_UPDATE]: "Modifier la caisse",
+    [Permission.CAISSE_DELETE]: "Supprimer des entrées caisse",
     [Permission.BLOG_CREATE]: "Créer des articles",
     [Permission.BLOG_READ]: "Voir les articles",
     [Permission.BLOG_UPDATE]: "Modifier les articles",
@@ -419,6 +437,15 @@ export const permissionGroups = {
       Permission.DEPENSES_READ,
       Permission.DEPENSES_UPDATE,
       Permission.DEPENSES_DELETE,
+    ],
+  },
+  caisse: {
+    label: "Caisse (Cotisations)",
+    permissions: [
+      Permission.CAISSE_CREATE,
+      Permission.CAISSE_READ,
+      Permission.CAISSE_UPDATE,
+      Permission.CAISSE_DELETE,
     ],
   },
   blog: {
