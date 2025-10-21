@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef } from "react"
-import Image from "next/image"
+/* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/ui/button"
 import { CHURCH_INFO } from "@/lib/config/church-info"
 import {
@@ -102,13 +102,12 @@ export function ReceiptGenerator({
           {/* En-tête avec logo */}
           <div className="text-center border-b-2 border-gray-800 pb-6 mb-6">
             <div className="flex flex-col items-center gap-3 mb-4">
-              <div className="relative w-32 h-32">
-                <Image
+              <div className="w-32 h-32 flex items-center justify-center">
+                <img
                   src={CHURCH_INFO.logo}
                   alt={CHURCH_INFO.logoAlt}
-                  fill
-                  className="object-contain"
-                  priority
+                  className="max-w-full max-h-full object-contain"
+                  style={{ width: '128px', height: '128px' }}
                 />
               </div>
               <div>

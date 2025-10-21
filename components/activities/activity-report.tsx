@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
+/* eslint-disable @next/next/no-img-element */
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -103,13 +103,12 @@ export function ActivityReport({
       <Card className="border-t-4 border-t-blue-600">
         <CardContent className="pt-6">
           <div className="flex items-center gap-6 pb-4 border-b">
-            <div className="relative w-20 h-20 flex-shrink-0">
-              <Image
+            <div className="w-20 h-20 flex-shrink-0 flex items-center justify-center">
+              <img
                 src={CHURCH_INFO.logo}
                 alt={CHURCH_INFO.logoAlt}
-                fill
-                className="object-contain"
-                priority
+                className="max-w-full max-h-full object-contain"
+                style={{ width: '80px', height: '80px' }}
               />
             </div>
             <div>
