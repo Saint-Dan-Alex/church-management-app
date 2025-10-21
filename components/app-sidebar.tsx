@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Shield,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -83,6 +84,11 @@ const menuItems = [
     title: "Photothèque",
     url: "/photos",
     icon: ImageIcon,
+  },
+  {
+    title: "Utilisateurs",
+    url: "/users",
+    icon: Shield,
   },
 ]
 
