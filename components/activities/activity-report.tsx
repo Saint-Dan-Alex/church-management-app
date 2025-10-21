@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import type { Payment, PaymentStats } from "@/types/payment"
 import type { Presence } from "@/types/presence"
+import type { Expense } from "@/types/expense"
 
 interface ActivityReportProps {
   activite: {
@@ -46,6 +47,7 @@ interface ActivityReportProps {
     montantAlternatif?: number
     deviseAlternative?: string
   }
+  expenses?: Expense[]
 }
 
 export function ActivityReport({
@@ -54,6 +56,7 @@ export function ActivityReport({
   payments = [],
   paymentStats,
   paymentConfig,
+  expenses = [],
 }: ActivityReportProps) {
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString("fr-FR", {
@@ -73,6 +76,18 @@ export function ActivityReport({
   const retardsCount = presences.filter((p) => p.statut === "retard").length
   const absentsCount = presences.filter((p) => p.statut === "absent").length
   const tauxPresence = presences.length > 0 ? (presentsCount / presences.length) * 100 : 0
+
+  // Calcul du bilan financier
+  const totalDepenses = expenses.reduce((sum, expense) => {
+    if (paymentConfig && expense.devise === paymentConfig.devise) {
+      return sum + expense.montant
+    }
+    return sum
+  }, 0)
+  
+  const totalEntrees = paymentStats?.totalPaye || 0
+  const bilan = totalEntrees - totalDepenses
+  const tauxCouverture = totalDepenses > 0 ? (totalEntrees / totalDepenses) * 100 : 0
 
   const [isExporting, setIsExporting] = useState(false)
 
@@ -421,6 +436,93 @@ export function ActivityReport({
           </Card>
         )}
       </div>
+
+      {/* Bilan financier */}
+      {(expenses.length > 0 || (paymentStats && paymentStats.totalPaye > 0)) && paymentConfig && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Bilan Financier
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Résumé */}
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <p className="text-sm text-green-700 font-medium">Total Entrées</p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {formatCurrency(totalEntrees, paymentConfig.devise)}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">Paiements collectés</p>
+                </div>
+                
+                <div className="p-4 bg-red-50 rounded-lg">
+                  <p className="text-sm text-red-700 font-medium">Total Dépenses</p>
+                  <p className="text-2xl font-bold text-red-900">
+                    {formatCurrency(totalDepenses, paymentConfig.devise)}
+                  </p>
+                  <p className="text-xs text-red-600 mt-1">{expenses.length} dépenses</p>
+                </div>
+                
+                <div className={`p-4 rounded-lg ${bilan >= 0 ? 'bg-blue-50' : 'bg-orange-50'}`}>
+                  <p className={`text-sm font-medium ${bilan >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+                    Bilan
+                  </p>
+                  <p className={`text-2xl font-bold ${bilan >= 0 ? 'text-blue-900' : 'text-orange-900'}`}>
+                    {formatCurrency(bilan, paymentConfig.devise)}
+                  </p>
+                  <p className={`text-xs mt-1 ${bilan >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                    {bilan >= 0 ? 'Excédent' : 'Déficit'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Liste des dépenses */}
+              {expenses.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Détail des dépenses</h4>
+                  <div className="space-y-2">
+                    {expenses.map((expense) => (
+                      <div key={expense.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{expense.description}</p>
+                          <p className="text-sm text-gray-600">
+                            {expense.categorie} • {new Date(expense.date).toLocaleDateString("fr-FR")}
+                            {expense.beneficiaire && ` • ${expense.beneficiaire}`}
+                          </p>
+                        </div>
+                        <p className="font-bold text-red-700">
+                          {formatCurrency(expense.montant, expense.devise)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Indicateurs */}
+              <div className="border-t pt-4">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Taux de couverture</span>
+                    <span className={`font-semibold ${tauxCouverture >= 100 ? 'text-green-600' : 'text-orange-600'}`}>
+                      {tauxCouverture.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Situation</span>
+                    <Badge variant="outline" className={bilan >= 0 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}>
+                      {bilan >= 0 ? '✓ Équilibré' : '⚠ Attention'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Note de bas de page */}
       <Card className="print:block">

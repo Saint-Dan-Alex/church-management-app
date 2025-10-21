@@ -24,6 +24,7 @@ import { PresenceManager } from "@/components/activities/presence-manager"
 import { EditActivityDialog } from "@/components/activities/edit-activity-dialog"
 import { PaymentManager } from "@/components/activities/payment-manager"
 import { ActivityReport } from "@/components/activities/activity-report"
+import { ExpenseManager } from "@/components/activities/expense-manager"
 
 // Données mockées
 const mockActivity = {
@@ -196,6 +197,10 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
                 <DollarSign className="mr-2 h-4 w-4" />
                 Paiements
               </TabsTrigger>
+              <TabsTrigger value="finances">
+                <DollarSign className="mr-2 h-4 w-4" />
+                Finances
+              </TabsTrigger>
               <TabsTrigger value="rapport">
                 <FileTextIcon className="mr-2 h-4 w-4" />
                 Rapport
@@ -261,6 +266,15 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
               />
             </TabsContent>
 
+            <TabsContent value="finances">
+              <ExpenseManager
+                activiteId={activity.id}
+                activiteNom={activity.titre}
+                totalPaiementsCollectes={13000}
+                devisePaiements="CDF"
+              />
+            </TabsContent>
+
             <TabsContent value="rapport">
               <ActivityReport
                 activite={activity}
@@ -283,6 +297,36 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
                   montantAlternatif: 3,
                   deviseAlternative: "USD",
                 }}
+                expenses={[
+                  {
+                    id: "1",
+                    activiteId: "1",
+                    activiteNom: "Réunion des moniteurs",
+                    categorie: "repas",
+                    description: "Rafraîchissements pour les participants",
+                    montant: 15000,
+                    devise: "CDF",
+                    date: "2025-01-20",
+                    beneficiaire: "Restaurant La Paix",
+                    ajoutePar: "user1",
+                    ajouteParNom: "Admin",
+                    createdAt: new Date(),
+                  },
+                  {
+                    id: "2",
+                    activiteId: "1",
+                    activiteNom: "Réunion des moniteurs",
+                    categorie: "materiel",
+                    description: "Cahiers et stylos",
+                    montant: 8000,
+                    devise: "CDF",
+                    date: "2025-01-19",
+                    beneficiaire: "Librairie Centrale",
+                    ajoutePar: "user1",
+                    ajouteParNom: "Admin",
+                    createdAt: new Date(),
+                  },
+                ]}
               />
             </TabsContent>
 

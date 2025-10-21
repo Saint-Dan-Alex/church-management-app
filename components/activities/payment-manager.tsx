@@ -466,16 +466,14 @@ export function PaymentManager({ activiteId, activiteNom, dateActivite }: Paymen
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    {payment.numeroRecu && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleGenerateReceipt(payment)}
-                      >
-                        <Receipt className="mr-2 h-4 w-4" />
-                        Voir Reçu
-                      </Button>
-                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleGenerateReceipt(payment)}
+                    >
+                      <Receipt className="mr-2 h-4 w-4" />
+                      {payment.numeroRecu ? "Voir Reçu" : "Générer Reçu"}
+                    </Button>
                     <Badge variant="outline" className={getStatutBadge(payment.statut)}>
                       <span className="mr-1">{getStatutIcon(payment.statut)}</span>
                       {payment.statut === "paid"
