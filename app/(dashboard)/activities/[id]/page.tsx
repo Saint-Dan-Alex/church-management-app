@@ -25,17 +25,21 @@ import { EditActivityDialog } from "@/components/activities/edit-activity-dialog
 import { PaymentManager } from "@/components/activities/payment-manager"
 import { ActivityReport } from "@/components/activities/activity-report"
 import { ExpenseManager } from "@/components/activities/expense-manager"
+import { UnifiedParticipantsView } from "@/components/activities/unified-participants-view"
 
 // Données mockées
 const mockActivity = {
   id: "1",
   titre: "Réunion des moniteurs",
   description: "Réunion mensuelle de coordination des moniteurs",
+  type: "payante" as const,
+  montantRequis: 5000,
+  devise: "CDF" as const,
   date: new Date("2025-01-25"),
   heureDebut: "14:00",
   heureFin: "16:00",
   lieu: "Salle principale",
-  type: "reunion",
+  categorie: "reunion",
   statut: "planifie",
   responsable: "Marie LENGE",
   participants: ["Marie LENGE", "Paul NGEA", "Jean NFEO"],
@@ -221,41 +225,13 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
             </TabsContent>
 
             <TabsContent value="participants">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Gestion des Participants ({activity.participants.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {activity.participants.map((participant, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-semibold">
-                            {participant.split(" ").map(n => n.charAt(0)).join("")}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-900">{participant}</p>
-                            <p className="text-sm text-gray-600">Participant</p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                  <Button className="w-full mt-4">
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Ajouter un participant
-                  </Button>
-                </CardContent>
-              </Card>
+              <UnifiedParticipantsView
+                activiteId={activity.id}
+                activiteNom={activity.titre}
+                activiteType={activity.type}
+                montantRequis={activity.montantRequis}
+                devise={activity.devise}
+              />
             </TabsContent>
 
             <TabsContent value="paiements">

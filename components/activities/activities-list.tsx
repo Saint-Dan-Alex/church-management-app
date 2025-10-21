@@ -19,6 +19,7 @@ const activities = [
     duration: "1h",
     location: "Salle Enfants",
     category: "Enfants",
+    type: "gratuite" as const,
     participants: 56,
     maxParticipants: 80,
     status: "upcoming",
@@ -33,6 +34,7 @@ const activities = [
     duration: "1h30",
     location: "Salle Principale",
     category: "Prière",
+    type: "gratuite" as const,
     participants: 45,
     maxParticipants: 100,
     status: "upcoming",
@@ -47,6 +49,9 @@ const activities = [
     duration: "2h",
     location: "Salle Jeunesse",
     category: "Jeunesse",
+    type: "payante" as const,
+    montantRequis: 2000,
+    devise: "CDF" as const,
     participants: 34,
     maxParticipants: 50,
     status: "upcoming",
@@ -61,10 +66,30 @@ const activities = [
     duration: "2h",
     location: "Salle Principale",
     category: "Louange",
+    type: "gratuite" as const,
     participants: 22,
     maxParticipants: 30,
     status: "upcoming",
     organizer: "Marie Dupont",
+  },
+  {
+    id: "5",
+    title: "Sortie au Zoo",
+    description: "Visite du zoo de Kinshasa avec les enfants",
+    date: "2024-10-25",
+    time: "08:00",
+    duration: "8h",
+    location: "Zoo de Kinshasa",
+    category: "Sortie",
+    type: "payante" as const,
+    montantRequis: 10000,
+    devise: "CDF" as const,
+    montantAlternatif: 6,
+    deviseAlternative: "USD" as const,
+    participants: 15,
+    maxParticipants: 30,
+    status: "upcoming",
+    organizer: "Paul NGEA",
   },
 ]
 
@@ -106,9 +131,18 @@ export function ActivitiesList() {
             <div className="space-y-3 flex-1">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-lg font-semibold">{activity.title}</h3>
                     <Badge className={categoryColors[activity.category]}>{activity.category}</Badge>
+                    {activity.type === "gratuite" ? (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+                        🎉 Gratuite
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                        💰 {activity.montantRequis?.toLocaleString("fr-FR")} {activity.devise}
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
                 </div>

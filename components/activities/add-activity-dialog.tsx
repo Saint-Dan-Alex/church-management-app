@@ -16,6 +16,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Badge } from "@/components/ui/badge"
+import type { ActivityType } from "@/types/activity"
 
 interface AddActivityDialogProps {
   open: boolean
@@ -26,6 +29,7 @@ export function AddActivityDialog({ open, onOpenChange }: AddActivityDialogProps
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    type: "gratuite" as ActivityType,
     date: "",
     time: "",
     duration: "",
@@ -33,6 +37,11 @@ export function AddActivityDialog({ open, onOpenChange }: AddActivityDialogProps
     category: "",
     maxParticipants: "",
     organizer: "",
+    // Champs pour activité payante
+    montantRequis: "",
+    devise: "CDF" as "CDF" | "USD",
+    montantAlternatif: "",
+    deviseAlternative: "USD" as "CDF" | "USD",
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -42,6 +51,7 @@ export function AddActivityDialog({ open, onOpenChange }: AddActivityDialogProps
     setFormData({
       title: "",
       description: "",
+      type: "gratuite" as ActivityType,
       date: "",
       time: "",
       duration: "",
@@ -49,6 +59,10 @@ export function AddActivityDialog({ open, onOpenChange }: AddActivityDialogProps
       category: "",
       maxParticipants: "",
       organizer: "",
+      montantRequis: "",
+      devise: "CDF" as "CDF" | "USD",
+      montantAlternatif: "",
+      deviseAlternative: "USD" as "CDF" | "USD",
     })
   }
 
@@ -81,6 +95,111 @@ export function AddActivityDialog({ open, onOpenChange }: AddActivityDialogProps
                 rows={3}
               />
             </div>
+
+            {/* Type d'activité */}
+            <div className="grid gap-2 border-t pt-4">
+              <Label>Type d'activité *</Label>
+              <RadioGroup
+                value={formData.type}
+                onValueChange={(value: ActivityType) => setFormData({ ...formData, type: value })}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2 flex-1">
+                  <RadioGroupItem value="gratuite" id="gratuite" />
+                  <Label htmlFor="gratuite" className="font-normal cursor-pointer flex items-center gap-2">
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+                      🎉 Gratuite
+                    </Badge>
+                    <span className="text-sm text-gray-600">Accès libre</span>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 flex-1">
+                  <RadioGroupItem value="payante" id="payante" />
+                  <Label htmlFor="payante" className="font-normal cursor-pointer flex items-center gap-2">
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                      💰 Payante
+                    </Badge>
+                    <span className="text-sm text-gray-600">Paiement requis</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Configuration paiement (si payante) */}
+            {formData.type === "payante" && (
+              <div className="grid gap-4 border rounded-lg p-4 bg-blue-50">
+                <h4 className="font-semibold text-blue-900 flex items-center gap-2">
+                  💳 Configuration du paiement
+                </h4>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="montantRequis">Montant requis *</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="montantRequis"
+                        type="number"
+                        value={formData.montantRequis}
+                        onChange={(e) => setFormData({ ...formData, montantRequis: e.target.value })}
+                        placeholder="10000"
+                        required={formData.type === "payante"}
+                        min="0"
+                      />
+                      <Select
+                        value={formData.devise}
+                        onValueChange={(value: "CDF" | "USD") => setFormData({ ...formData, devise: value })}
+                      >
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CDF">CDF</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="montantAlternatif">Montant alternatif</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="montantAlternatif"
+                        type="number"
+                        value={formData.montantAlternatif}
+                        onChange={(e) => setFormData({ ...formData, montantAlternatif: e.target.value })}
+                        placeholder="6"
+                        min="0"
+                      />
+                      <Select
+                        value={formData.deviseAlternative}
+                        onValueChange={(value: "CDF" | "USD") => setFormData({ ...formData, deviseAlternative: value })}
+                      >
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CDF">CDF</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-blue-700">
+                  💡 Les participants seront automatiquement ajoutés lorsqu'ils paient ou scannent le QR Code
+                </p>
+              </div>
+            )}
+
+            {formData.type === "gratuite" && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-sm text-green-700">
+                  💡 Les participants seront automatiquement ajoutés lorsqu'ils scannent le QR Code
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="date">Date</Label>
