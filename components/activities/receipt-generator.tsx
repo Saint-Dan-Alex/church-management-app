@@ -30,12 +30,358 @@ export function ReceiptGenerator({
   const receiptRef = useRef<HTMLDivElement>(null)
 
   const handlePrint = () => {
-    window.print()
+    // Méthode améliorée pour l'impression
+    const printContent = document.getElementById('receipt-to-print')
+    if (!printContent) {
+      alert("Erreur : Contenu du reçu introuvable")
+      return
+    }
+
+    // Créer une fenêtre d'impression
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      alert("Veuillez autoriser les popups pour imprimer")
+      return
+    }
+
+    // Styles CSS pour l'impression
+    const styles = `
+      <style>
+        @page {
+          size: A4;
+          margin: 1.5cm;
+        }
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 20px;
+          color: #000;
+        }
+        * {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        button {
+          display: none !important;
+        }
+        .text-center {
+          text-align: center;
+        }
+        .flex {
+          display: flex;
+        }
+        .flex-col {
+          flex-direction: column;
+        }
+        .items-center {
+          align-items: center;
+        }
+        .justify-center {
+          justify-content: center;
+        }
+        .justify-between {
+          justify-content: space-between;
+        }
+        .gap-3 {
+          gap: 0.75rem;
+        }
+        .mb-4 {
+          margin-bottom: 1rem;
+        }
+        .mb-6 {
+          margin-bottom: 1.5rem;
+        }
+        .mt-2 {
+          margin-top: 0.5rem;
+        }
+        .mt-4 {
+          margin-top: 1rem;
+        }
+        .pb-6 {
+          padding-bottom: 1.5rem;
+        }
+        .p-4 {
+          padding: 1rem;
+        }
+        .border-b-2 {
+          border-bottom: 2px solid #1f2937;
+        }
+        .border-gray-800 {
+          border-color: #1f2937;
+        }
+        .bg-gray-50 {
+          background-color: #f9fafb;
+        }
+        .rounded-lg {
+          border-radius: 0.5rem;
+        }
+        .text-xl {
+          font-size: 1.25rem;
+          line-height: 1.75rem;
+        }
+        .text-3xl {
+          font-size: 1.875rem;
+          line-height: 2.25rem;
+        }
+        .font-bold {
+          font-weight: 700;
+        }
+        .font-semibold {
+          font-weight: 600;
+        }
+        .font-medium {
+          font-weight: 500;
+        }
+        .text-blue-900 {
+          color: #1e3a8a;
+        }
+        .text-blue-700 {
+          color: #1d4ed8;
+        }
+        .text-gray-900 {
+          color: #111827;
+        }
+        .text-gray-700 {
+          color: #374151;
+        }
+        .text-gray-600 {
+          color: #4b5563;
+        }
+        .grid {
+          display: grid;
+        }
+        .grid-cols-2 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .gap-4 {
+          gap: 1rem;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th, td {
+          padding: 0.75rem 0;
+        }
+        th {
+          text-align: left;
+          font-weight: 600;
+        }
+        .text-right {
+          text-align: right;
+        }
+        .border-b {
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .border-b-2 {
+          border-bottom: 2px solid #d1d5db;
+        }
+      </style>
+    `
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Reçu de Paiement - ${payment.numeroRecu}</title>
+          ${styles}
+        </head>
+        <body>
+          ${printContent.innerHTML}
+        </body>
+      </html>
+    `)
+
+    printWindow.document.close()
+    
+    // Attendre le chargement puis imprimer
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print()
+        printWindow.close()
+      }, 250)
+    }
   }
 
   const handleDownload = () => {
-    // TODO: Implémenter la génération PDF
-    alert("Fonctionnalité de téléchargement PDF à venir")
+    // Solution alternative : Utiliser l'impression vers PDF
+    const printContent = document.getElementById('receipt-to-print')
+    if (!printContent) {
+      alert("Erreur : Contenu du reçu introuvable")
+      return
+    }
+
+    // Créer une fenêtre pour "Sauvegarder en PDF"
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      alert("Veuillez autoriser les popups pour télécharger le PDF")
+      return
+    }
+
+    // Styles CSS pour le PDF
+    const styles = `
+      <style>
+        @page {
+          size: A4;
+          margin: 1.5cm;
+        }
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 20px;
+          color: #000;
+        }
+        * {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        button {
+          display: none !important;
+        }
+        .text-center {
+          text-align: center;
+        }
+        .flex {
+          display: flex;
+        }
+        .flex-col {
+          flex-direction: column;
+        }
+        .items-center {
+          align-items: center;
+        }
+        .justify-center {
+          justify-content: center;
+        }
+        .justify-between {
+          justify-content: space-between;
+        }
+        .gap-3 {
+          gap: 0.75rem;
+        }
+        .mb-4 {
+          margin-bottom: 1rem;
+        }
+        .mb-6 {
+          margin-bottom: 1.5rem;
+        }
+        .mt-2 {
+          margin-top: 0.5rem;
+        }
+        .mt-4 {
+          margin-top: 1rem;
+        }
+        .pb-6 {
+          padding-bottom: 1.5rem;
+        }
+        .p-4 {
+          padding: 1rem;
+        }
+        .border-b-2 {
+          border-bottom: 2px solid #1f2937;
+        }
+        .border-gray-800 {
+          border-color: #1f2937;
+        }
+        .bg-gray-50 {
+          background-color: #f9fafb;
+        }
+        .rounded-lg {
+          border-radius: 0.5rem;
+        }
+        .text-xl {
+          font-size: 1.25rem;
+          line-height: 1.75rem;
+        }
+        .text-3xl {
+          font-size: 1.875rem;
+          line-height: 2.25rem;
+        }
+        .font-bold {
+          font-weight: 700;
+        }
+        .font-semibold {
+          font-weight: 600;
+        }
+        .font-medium {
+          font-weight: 500;
+        }
+        .text-blue-900 {
+          color: #1e3a8a;
+        }
+        .text-blue-700 {
+          color: #1d4ed8;
+        }
+        .text-gray-900 {
+          color: #111827;
+        }
+        .text-gray-700 {
+          color: #374151;
+        }
+        .text-gray-600 {
+          color: #4b5563;
+        }
+        .grid {
+          display: grid;
+        }
+        .grid-cols-2 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .gap-4 {
+          gap: 1rem;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th, td {
+          padding: 0.75rem 0;
+        }
+        th {
+          text-align: left;
+          font-weight: 600;
+        }
+        .text-right {
+          text-align: right;
+        }
+        .border-b {
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .border-b-2 {
+          border-bottom: 2px solid #d1d5db;
+        }
+      </style>
+    `
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Reçu de Paiement - ${payment.numeroRecu}</title>
+          ${styles}
+        </head>
+        <body>
+          <div style="text-align: center; margin-bottom: 20px; padding: 10px; background-color: #eff6ff; border: 2px solid #3b82f6; border-radius: 8px;">
+            <p style="margin: 0; color: #1e40af; font-weight: bold;">
+              💡 Utilisez "Enregistrer en PDF" ou "Destination: Enregistrer au format PDF" dans le dialogue d'impression
+            </p>
+          </div>
+          ${printContent.innerHTML}
+        </body>
+      </html>
+    `)
+
+    printWindow.document.close()
+    
+    // Attendre le chargement puis ouvrir le dialogue d'impression
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print()
+        // Ne pas fermer automatiquement pour laisser l'utilisateur sauvegarder
+      }, 250)
+    }
   }
 
   const formatCurrency = (montant: number, devise: string) => {
