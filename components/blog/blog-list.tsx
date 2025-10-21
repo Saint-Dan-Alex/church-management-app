@@ -63,6 +63,24 @@ interface BlogListProps {
 }
 
 export function BlogList({ searchQuery, filter }: BlogListProps) {
+  const handleEdit = (post: typeof blogPosts[0]) => {
+    alert(`✏️ Édition de: "${post.title}"\n\n(Fonctionnalité en cours d'implémentation)`)
+    console.log("Éditer l'article:", post)
+  }
+
+  const handleDelete = (post: typeof blogPosts[0]) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer "${post.title}" ?`)) {
+      console.log("Article supprimé:", post.id)
+      alert(`🗑️ Article "${post.title}" supprimé avec succès !`)
+    }
+  }
+
+  const handleShare = (post: typeof blogPosts[0]) => {
+    const url = `${window.location.origin}/blog/${post.id}`
+    navigator.clipboard.writeText(url)
+    alert(`📋 Lien copié dans le presse-papier !\n\n${url}`)
+  }
+
   const filteredPosts = blogPosts.filter((post) => {
     const matchesSearch =
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -104,17 +122,17 @@ export function BlogList({ searchQuery, filter }: BlogListProps) {
                     <Eye className="mr-2 h-4 w-4" />
                     Voir
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleEdit(post)}>
                     <Edit className="mr-2 h-4 w-4" />
                     Modifier
                   </DropdownMenuItem>
                   {post.status === "published" && (
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleShare(post)}>
                       <Share2 className="mr-2 h-4 w-4" />
                       Partager
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem className="text-destructive">
+                  <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(post)}>
                     <Trash className="mr-2 h-4 w-4" />
                     Supprimer
                   </DropdownMenuItem>

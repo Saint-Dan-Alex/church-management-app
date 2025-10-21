@@ -35,7 +35,23 @@ export function AddBlogDialog({ open, onOpenChange }: AddBlogDialogProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("[v0] Blog post created:", formData)
+    
+    if (!formData.title || !formData.content || !formData.category) {
+      alert("Veuillez remplir tous les champs obligatoires")
+      return
+    }
+
+    const newPost = {
+      id: Date.now().toString(),
+      ...formData,
+      author: formData.author || "Admin",
+      date: new Date().toISOString(),
+      views: 0,
+    }
+
+    console.log("Article créé:", newPost)
+    alert(`✅ Article "${formData.title}" créé avec succès !`)
+    
     onOpenChange(false)
     setFormData({
       title: "",
