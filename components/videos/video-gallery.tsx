@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { VideoDetailsDialog } from "./video-details-dialog"
 
 // Données mockées
 const mockVideos = [
@@ -67,6 +69,9 @@ interface VideoGalleryProps {
 }
 
 export function VideoGallery({ searchQuery = "", categorie }: VideoGalleryProps) {
+  const [selectedVideo, setSelectedVideo] = useState<typeof mockVideos[0] | null>(null)
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+
   const filteredVideos = mockVideos.filter((video) => {
     const matchesSearch =
       video.titre.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -86,7 +91,8 @@ export function VideoGallery({ searchQuery = "", categorie }: VideoGalleryProps)
   }
 
   const handleView = (video: typeof mockVideos[0]) => {
-    alert(`👁️ Détails de: "${video.titre}"\n\nDurée: ${video.duree}\nVues: ${video.vues}\nDate: ${video.date}`)
+    setSelectedVideo(video)
+    setIsDetailsDialogOpen(true)
   }
 
   const handleDelete = (video: typeof mockVideos[0]) => {
@@ -183,6 +189,12 @@ export function VideoGallery({ searchQuery = "", categorie }: VideoGalleryProps)
           </Card>
         ))
       )}
+
+      <VideoDetailsDialog
+        open={isDetailsDialogOpen}
+        onOpenChange={setIsDetailsDialogOpen}
+        video={selectedVideo}
+      />
     </div>
   )
 }
