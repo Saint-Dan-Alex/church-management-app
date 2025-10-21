@@ -17,9 +17,11 @@ import {
   FileText,
   QrCode,
   UserPlus,
+  DollarSign,
 } from "lucide-react"
 import { PresenceManager } from "@/components/activities/presence-manager"
 import { EditActivityDialog } from "@/components/activities/edit-activity-dialog"
+import { PaymentManager } from "@/components/activities/payment-manager"
 
 // Données mockées
 const mockActivity = {
@@ -188,6 +190,10 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
                 <Users className="mr-2 h-4 w-4" />
                 Participants
               </TabsTrigger>
+              <TabsTrigger value="paiements">
+                <DollarSign className="mr-2 h-4 w-4" />
+                Paiements
+              </TabsTrigger>
               <TabsTrigger value="details">
                 <FileText className="mr-2 h-4 w-4" />
                 Détails
@@ -239,6 +245,14 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
                   </Button>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="paiements">
+              <PaymentManager
+                activiteId={activity.id}
+                activiteNom={activity.titre}
+                dateActivite={activity.date}
+              />
             </TabsContent>
 
             <TabsContent value="details">

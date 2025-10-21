@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, MapPin, Users, MoreVertical, Edit, Trash, UserPlus, QrCode, Eye } from "lucide-react"
+import { Calendar, Clock, MapPin, Users, MoreVertical, Edit, Trash, UserPlus, QrCode, Eye, DollarSign } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { EditActivityDialog } from "./edit-activity-dialog"
 
@@ -145,6 +145,14 @@ export function ActivitiesList() {
                       <UserPlus className="mr-2 h-4 w-4" />
                       Gérer Participants
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation()
+                      router.push(`/activities/${activity.id}?tab=paiements`)
+                    }}>
+                      <DollarSign className="mr-2 h-4 w-4" />
+                      Gérer Paiements
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={(e) => handleEdit(activity, e)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Modifier
