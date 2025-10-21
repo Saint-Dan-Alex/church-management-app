@@ -1,7 +1,9 @@
 "use client"
 
 import { useRef } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { CHURCH_INFO } from "@/lib/config/church-info"
 import {
   Dialog,
   DialogContent,
@@ -97,11 +99,26 @@ export function ReceiptGenerator({
           className="bg-white p-8 border-2 border-gray-300 rounded-lg print:border-0"
           id="receipt-to-print"
         >
-          {/* En-tête */}
-          <div className="text-center border-b-2 border-gray-800 pb-4 mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">REÇU DE PAIEMENT</h1>
-            <p className="text-lg text-gray-600 mt-2">Église / Organisation</p>
-            <p className="text-sm text-gray-500">Adresse complète de l'église</p>
+          {/* En-tête avec logo */}
+          <div className="text-center border-b-2 border-gray-800 pb-6 mb-6">
+            <div className="flex flex-col items-center gap-3 mb-4">
+              <div className="relative w-32 h-32">
+                <Image
+                  src={CHURCH_INFO.logo}
+                  alt={CHURCH_INFO.logoAlt}
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-blue-900">{CHURCH_INFO.name}</h2>
+                <p className="text-base text-blue-700">{CHURCH_INFO.ministry}</p>
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mt-4">REÇU DE PAIEMENT</h1>
+            <p className="text-sm text-gray-600 mt-2">{CHURCH_INFO.address}</p>
+            {CHURCH_INFO.phone && <p className="text-sm text-gray-600">{CHURCH_INFO.phone}</p>}
           </div>
 
           {/* Numéro de reçu */}
@@ -202,7 +219,8 @@ export function ReceiptGenerator({
                 <div className="border-t border-gray-400 w-48"></div>
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-8">Signature du responsable</p>
+                <p className="text-sm text-gray-600 mb-2">{CHURCH_INFO.signature.title}</p>
+                <p className="text-sm text-gray-600 mb-6">{CHURCH_INFO.signature.name || "_______________"}</p>
                 <div className="border-t border-gray-400 w-48"></div>
               </div>
             </div>
@@ -211,6 +229,7 @@ export function ReceiptGenerator({
           {/* Note de bas de page */}
           <div className="text-center mt-6 text-xs text-gray-500">
             <p>Ce reçu fait foi de paiement. Merci de le conserver précieusement.</p>
+            <p className="mt-1">{CHURCH_INFO.name} - {CHURCH_INFO.ministry}</p>
             <p className="mt-1">Document généré le {new Date().toLocaleString("fr-FR")}</p>
           </div>
         </div>

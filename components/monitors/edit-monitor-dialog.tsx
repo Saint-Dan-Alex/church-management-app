@@ -19,12 +19,22 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Upload } from "lucide-react"
 import type { Monitor } from "@/types/monitor"
+import type { RoleMoniteur } from "@/types/salle"
 
 interface EditMonitorDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   monitor: Monitor | null
 }
+
+// Salles disponibles (mockées - à remplacer par des données de la BD)
+const sallesDisponibles = [
+  { id: "1", nom: "Adolescents" },
+  { id: "2", nom: "Juniors" },
+  { id: "3", nom: "Jardin" },
+  { id: "4", nom: "Cadets" },
+  { id: "5", nom: "Ainés" },
+]
 
 export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDialogProps) {
   const [formData, setFormData] = useState<Partial<Monitor>>({})
@@ -238,6 +248,83 @@ export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDi
                   required
                 />
               </div>
+            </div>
+
+            {/* Affectation à une salle */}
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="font-semibold text-gray-900">Affectation à une salle</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="salleActuelleId">Salle</Label>
+                  <Select
+                    value={formData.salleActuelleId || ""}
+                    onValueChange={(value) => {
+                      const salle = sallesDisponibles.find(s => s.id === value)
+                      setFormData({ 
+                        ...formData, 
+                        salleActuelleId: value,
+                        salleActuelleNom: salle?.nom
+                      })
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une salle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Aucune salle</SelectItem>
+                      {sallesDisponibles.map((salle) => (
+                        <SelectItem key={salle.id} value={salle.id}>
+                          {salle.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="roleActuel">Rôle dans la salle</Label>
+                  <Select
+                    value={formData.roleActuel || ""}
+                    onValueChange={(value: RoleMoniteur | "") => 
+                      setFormData({ ...formData, roleActuel: value || undefined })
+                    }
+                    disabled={!formData.salleActuelleId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un rôle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Aucun rôle</SelectItem>
+                      <SelectItem value="responsable">Responsable</SelectItem>
+                      <SelectItem value="adjoint">Adjoint</SelectItem>
+                      <SelectItem value="membre">Membre</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {formData.salleActuelleId && (
+                <div className="grid gap-2">
+                  <Label htmlFor="dateAffectationActuelle">Date d'affectation</Label>
+                  <Input
+                    id="dateAffectationActuelle"
+                    type="date"
+                    value={formData.dateAffectationActuelle as string || ""}
+                    onChange={(e) => setFormData({ ...formData, dateAffectationActuelle: e.target.value })}
+                  />
+                </div>
+              )}
+              {formData.salleActuelleId && formData.salleActuelleNom && (
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <p className="text-sm text-blue-900">
+                    <span className="font-semibold">Affectation actuelle :</span> {formData.salleActuelleNom}
+                    {formData.roleActuel && (
+                      <span> - Rôle : <span className="font-semibold">
+                        {formData.roleActuel === "responsable" ? "Responsable" : 
+                         formData.roleActuel === "adjoint" ? "Adjoint" : "Membre"}
+                      </span></span>
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>

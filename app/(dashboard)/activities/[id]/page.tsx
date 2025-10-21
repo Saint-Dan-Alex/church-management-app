@@ -18,10 +18,12 @@ import {
   QrCode,
   UserPlus,
   DollarSign,
+  FileText as FileTextIcon,
 } from "lucide-react"
 import { PresenceManager } from "@/components/activities/presence-manager"
 import { EditActivityDialog } from "@/components/activities/edit-activity-dialog"
 import { PaymentManager } from "@/components/activities/payment-manager"
+import { ActivityReport } from "@/components/activities/activity-report"
 
 // Données mockées
 const mockActivity = {
@@ -194,6 +196,10 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
                 <DollarSign className="mr-2 h-4 w-4" />
                 Paiements
               </TabsTrigger>
+              <TabsTrigger value="rapport">
+                <FileTextIcon className="mr-2 h-4 w-4" />
+                Rapport
+              </TabsTrigger>
               <TabsTrigger value="details">
                 <FileText className="mr-2 h-4 w-4" />
                 Détails
@@ -252,6 +258,31 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
                 activiteId={activity.id}
                 activiteNom={activity.titre}
                 dateActivite={activity.date}
+              />
+            </TabsContent>
+
+            <TabsContent value="rapport">
+              <ActivityReport
+                activite={activity}
+                presences={[]}
+                payments={[]}
+                paymentStats={{
+                  totalParticipants: 10,
+                  totalPaye: 13000,
+                  totalRestant: 7000,
+                  totalAttendus: 20000,
+                  tauxPaiement: 65,
+                  nombrePaiesComplet: 2,
+                  nombrePaiesPartiel: 1,
+                  nombreEnAttente: 5,
+                  nombreEnRetard: 2,
+                }}
+                paymentConfig={{
+                  montantRequis: 5000,
+                  devise: "CDF",
+                  montantAlternatif: 3,
+                  deviseAlternative: "USD",
+                }}
               />
             </TabsContent>
 
