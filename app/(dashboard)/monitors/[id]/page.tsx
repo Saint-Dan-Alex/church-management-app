@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { toast } from "sonner"
 import { 
   ArrowLeft, 
   Edit, 
@@ -26,104 +28,54 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react"
 import { EditMonitorDialog } from "@/components/monitors/edit-monitor-dialog"
 import type { Monitor } from "@/types/monitor"
 import type { MoniteurSalleHistorique } from "@/types/salle"
+import { monitorsService } from "@/lib/services/monitors.service"
 
-// Données de test - à remplacer par des données réelles de la base de données
-const mockMonitor: Monitor = {
-  id: "1",
-  nom: "Dupont",
-  postNom: "Martin",
-  prenom: "Jean",
-  dateNaissance: "1985-03-15",
-  email: "jean.dupont@email.com",
-  telephone: "+33 6 12 34 56 78",
-  adresse: "123 Rue de l'Église, 75001 Paris, France",
-  photo: "",
-  dateConversion: "2010-05-20",
-  dateBapteme: "2010-08-15",
-  baptiseSaintEsprit: true,
-  etatCivil: "Marié(e)",
-  dateAdhesion: "2015-01-10",
-  salleActuelleId: "1",
-  salleActuelleNom: "Adolescents",
-  roleActuel: "responsable",
-  dateAffectationActuelle: "2023-01-15",
-}
-
-// Historique des affectations
-const mockHistorique: MoniteurSalleHistorique[] = [
-  {
-    id: "1",
-    moniteurId: "1",
-    moniteurNom: "Dupont",
-    moniteurPrenom: "Jean",
-    moniteurNomComplet: "Jean Martin Dupont",
-    salleId: "1",
-    salleNom: "Adolescents",
-    role: "responsable",
-    dateDebut: new Date("2023-01-15"),
-    dateFin: undefined,
-    actif: true,
-    createdAt: new Date("2023-01-15"),
-  },
-  {
-    id: "2",
-    moniteurId: "1",
-    moniteurNom: "Dupont",
-    moniteurPrenom: "Jean",
-    moniteurNomComplet: "Jean Martin Dupont",
-    salleId: "2",
-    salleNom: "Juniors",
-    role: "adjoint",
-    dateDebut: new Date("2021-06-01"),
-    dateFin: new Date("2023-01-10"),
-    actif: false,
-    motifChangement: "Promotion au poste de responsable Adolescents",
-    createdAt: new Date("2021-06-01"),
-  },
-  {
-    id: "3",
-    moniteurId: "1",
-    moniteurNom: "Dupont",
-    moniteurPrenom: "Jean",
-    moniteurNomComplet: "Jean Martin Dupont",
-    salleId: "3",
-    salleNom: "Jardin",
-    role: "membre",
-    dateDebut: new Date("2019-09-01"),
-    dateFin: new Date("2021-05-30"),
-    actif: false,
-    motifChangement: "Réaffectation à la salle Juniors",
-    createdAt: new Date("2019-09-01"),
-  },
-  {
-    id: "4",
-    moniteurId: "1",
-    moniteurNom: "Dupont",
-    moniteurPrenom: "Jean",
-    moniteurNomComplet: "Jean Martin Dupont",
-    salleId: "2",
-    salleNom: "Juniors",
-    role: "membre",
-    dateDebut: new Date("2018-01-10"),
-    dateFin: new Date("2019-08-30"),
-    actif: false,
-    motifChangement: "Mutation vers salle Jardin",
-    createdAt: new Date("2018-01-10"),
-  },
-]
-
-export default function MonitorDetailsPage({ params }: { params: { id: string } }) {
+export default function MonitorDetailsPage() {
   const router = useRouter()
+  const params = useParams()
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [monitor] = useState<Monitor>(mockMonitor) // Remplacer par fetch réel
-  const [historique] = useState<MoniteurSalleHistorique[]>(mockHistorique)
+  const [monitor, setMonitor] = useState<Monitor | null>(null)
+  const [historique, setHistorique] = useState<MoniteurSalleHistorique[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
+
+  // Charger les données du moniteur et son historique
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!params?.id) return
+      
+      try {
+        setIsLoading(true)
+        // Récupérer les informations du moniteur
+        const monitorData = await monitorsService.getById(params.id as string)
+        setMonitor(monitorData)
+        
+        // Récupérer l'historique des affectations
+        // Remarque : Vous devrez peut-être implémenter cette méthode dans votre service
+        // const historiqueData = await monitorsService.getMonitorHistory(params.id as string)
+        // setHistorique(historiqueData)
+        
+        // Pour l'instant, on initialise avec un tableau vide
+        setHistorique([])
+      } catch (err) {
+        console.error('Erreur lors du chargement des données du moniteur:', err)
+        setError('Impossible de charger les données du moniteur')
+        toast.error("Une erreur est survenue lors du chargement des données")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [params?.id])
 
   const calculateAge = (birthDate: string) => {
     const today = new Date()
@@ -145,11 +97,18 @@ export default function MonitorDetailsPage({ params }: { params: { id: string } 
     })
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    if (!monitor) return
+    
     if (confirm("Êtes-vous sûr de vouloir supprimer ce moniteur ?")) {
-      console.log("Suppression du moniteur:", monitor.id)
-      // Logique de suppression ici
-      router.push("/monitors")
+      try {
+        await monitorsService.delete(monitor.id)
+        toast.success("Moniteur supprimé avec succès")
+        router.push("/monitors")
+      } catch (err) {
+        console.error('Erreur lors de la suppression du moniteur:', err)
+        toast.error("Une erreur est survenue lors de la suppression")
+      }
     }
   }
 
@@ -205,25 +164,59 @@ export default function MonitorDetailsPage({ params }: { params: { id: string } 
     setCurrentPage(1)
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
+        <p className="text-gray-500">Chargement des données du moniteur...</p>
+      </div>
+    )
+  }
+
+  if (error || !monitor) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <p className="text-red-500">{error || "Moniteur non trouvé"}</p>
+        <div className="flex space-x-4">
+          <Button 
+            variant="outline" 
+            onClick={() => router.push('/monitors')}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Retour à la liste
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Détails du Moniteur</h1>
-            <p className="text-gray-600">Informations complètes</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
+
+      <div className="flex justify-between items-center">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => router.push('/monitors')}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Retour à la liste
+        </Button>
+        <div className="space-x-2">
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditDialogOpen(true)}
+          >
             <Edit className="mr-2 h-4 w-4" />
             Modifier
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={handleDelete}
+          >
             <Trash2 className="mr-2 h-4 w-4" />
             Supprimer
           </Button>

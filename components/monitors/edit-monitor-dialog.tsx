@@ -319,7 +319,9 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                       <SelectValue placeholder="Sélectionner une salle" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Aucune salle</SelectItem>
+                      <SelectItem value="none" className="text-muted-foreground">
+                        Aucune salle
+                      </SelectItem>
                       {salles.map((salle) => (
                         <SelectItem key={salle.id} value={salle.id}>
                           {salle.nom}
@@ -331,9 +333,9 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                 <div className="grid gap-2">
                   <Label htmlFor="roleActuel">Rôle dans la salle</Label>
                   <Select
-                    value={formData.roleActuel || ""}
-                    onValueChange={(value: RoleMoniteur | "") => 
-                      setFormData({ ...formData, roleActuel: value || undefined })
+                    value={formData.roleActuel || "none"}
+                    onValueChange={(value: RoleMoniteur | "none") => 
+                      setFormData({ ...formData, roleActuel: value === "none" ? undefined : value })
                     }
                     disabled={!formData.salleActuelleId}
                   >
@@ -341,7 +343,9 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                       <SelectValue placeholder="Sélectionner un rôle" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Aucun rôle</SelectItem>
+                      <SelectItem value="none" className="text-muted-foreground">
+                        Aucun rôle
+                      </SelectItem>
                       <SelectItem value="responsable">Responsable</SelectItem>
                       <SelectItem value="adjoint">Adjoint</SelectItem>
                       <SelectItem value="membre">Membre</SelectItem>
