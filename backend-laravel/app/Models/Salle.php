@@ -40,7 +40,7 @@ class Salle extends Model
 
     public function moniteurs()
     {
-        return $this->belongsToMany(Monitor::class, 'moniteur_salle')
+        return $this->belongsToMany(Monitor::class, 'moniteur_salle', 'salle_id', 'moniteur_id')
             ->withPivot('role', 'date_affectation')
             ->withTimestamps();
     }
