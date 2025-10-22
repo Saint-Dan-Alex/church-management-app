@@ -5,13 +5,14 @@ export const monitorsService = {
   /**
    * Récupérer tous les moniteurs
    */
-  async getAll(params?: { per_page?: number; page?: number }): Promise<Monitor[]> {
+  async getAll(params?: { per_page?: number; page?: number }): Promise<any> {
     const queryParams = new URLSearchParams();
     if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
     if (params?.page) queryParams.append('page', params.page.toString());
     
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    return api.get<Monitor[]>(`/monitors${query}`);
+    // Laravel renvoie directement les données avec les métadonnées de pagination
+    return await api.get(`/monitors${query}`);
   },
 
   /**
