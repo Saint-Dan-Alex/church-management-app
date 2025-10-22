@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 
 class DatabaseSeeder extends Seeder
 {
@@ -41,7 +42,10 @@ class DatabaseSeeder extends Seeder
             TeachingSeeder::class,
             WorshipReportSeeder::class,
         ]);
-        
+
+        // Réaffecter les salles des enfants selon l'âge après insertion
+        Artisan::call('children:reassign-salles');
+
         $this->command->info('✅ Base de données peuplée avec succès !');
         $this->command->info('📊 Résumé :');
         $this->command->info('   - 5 Salles créées');
