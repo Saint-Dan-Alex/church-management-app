@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,26 +17,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Upload } from "lucide-react"
-import type { MonitorFormData } from "@/types/monitor"
-import type { RoleMoniteur } from "@/types/salle"
+import { Upload, Loader2 } from "lucide-react"
+import { toast } from "sonner"
+import type { Monitor } from "@/types/monitor"
+import { monitorsService } from "@/lib/services/monitors.service"
 
-// Données mockées des salles disponibles
-const sallesDisponibles = [
-  { id: "1", nom: "Adolescents" },
-  { id: "2", nom: "Juniors" },
-  { id: "3", nom: "Jardin" },
-  { id: "4", nom: "Ainés" },
-  { id: "5", nom: "Cadets" },
-]
-
-interface AddMonitorDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+// Types
+type Salle = {
+  id: string
+  nom: string
 }
 
-export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) {
-  const [formData, setFormData] = useState<Partial<MonitorFormData>>({
+type AddMonitorDialogProps = {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onMonitorAdded?: (monitor: Monitor) => void
+}
+
+export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMonitorDialogProps) {
+  const [formData, setFormData] = useState<Partial<Monitor>>({
     nom: "",
     postNom: "",
     prenom: "",
@@ -51,30 +50,34 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
     etatCivil: "Célibataire",
     dateAdhesion: "",
     salleActuelleId: undefined,
-    salleActuelleNom: undefined,
     roleActuel: undefined,
-    dateAffectationActuelle: "",
   })
+  
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [salles, setSalles] = useState<Salle[]>([])
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string)
-        setFormData({ ...formData, photo: reader.result as string })
+  // Charger les salles disponibles
+  useEffect(() => {
+    const fetchSalles = async () => {
+      try {
+        const response = await fetch('/api/salles')
+        if (response.ok) {
+          const data = await response.json()
+          setSalles(data)
+        }
+      } catch (err) {
+        console.error('Erreur lors du chargement des salles:', err)
       }
-      reader.readAsDataURL(file)
     }
-  }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Formulaire soumis:", formData)
-    // Ici vous enregistrerez dans la base de données
-    onOpenChange(false)
-    // Réinitialiser le formulaire
+    if (open) {
+      fetchSalles()
+    }
+  }, [open])
+
+  const resetForm = () => {
     setFormData({
       nom: "",
       postNom: "",
@@ -90,15 +93,97 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
       etatCivil: "Célibataire",
       dateAdhesion: "",
       salleActuelleId: undefined,
-      salleActuelleNom: undefined,
       roleActuel: undefined,
-      dateAffectationActuelle: "",
     })
     setPhotoPreview(null)
+    setError(null)
+  }
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setPhotoPreview(base64String)
+        setFormData(prev => ({ ...prev, photo: base64String }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Validation des champs obligatoires
+    if (!formData.nom || !formData.prenom || !formData.email || !formData.telephone || !formData.adresse) {
+      toast.error("Veuillez remplir tous les champs obligatoires")
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      // Préparer les données pour l'envoi
+      const monitorData = {
+        ...formData,
+        // Convertir les dates au format attendu par l'API
+        dateNaissance: formData.dateNaissance ? new Date(formData.dateNaissance).toISOString() : null,
+        dateConversion: formData.dateConversion ? new Date(formData.dateConversion).toISOString() : null,
+        dateBapteme: formData.dateBapteme ? new Date(formData.dateBapteme).toISOString() : null,
+        dateAdhesion: formData.dateAdhesion ? new Date(formData.dateAdhesion).toISOString() : null,
+        // S'assurer que les booléens sont des booléens
+        baptiseSaintEsprit: Boolean(formData.baptiseSaintEsprit),
+        // Si une photo a été téléchargée, l'envoyer
+        ...(photoPreview && { photo: photoPreview })
+      }
+
+      const newMonitor = await monitorsService.create(monitorData)
+      toast.success("Moniteur ajouté avec succès")
+      onOpenChange(false)
+      
+      // Réinitialiser le formulaire
+      setFormData({
+        nom: "",
+        postNom: "",
+        prenom: "",
+        dateNaissance: "",
+        email: "",
+        telephone: "",
+        adresse: "",
+        photo: "",
+        dateConversion: "",
+        dateBapteme: "",
+        baptiseSaintEsprit: false,
+        etatCivil: "Célibataire",
+        dateAdhesion: "",
+        salleActuelleId: undefined,
+        roleActuel: undefined,
+      })
+      setPhotoPreview(null)
+      
+      // Recharger la liste des moniteurs si nécessaire
+      if (onMonitorAdded) {
+        onMonitorAdded(newMonitor)
+      }
+      
+    } catch (err) {
+      console.error('Erreur lors de l\'ajout du moniteur:', err)
+      setError('Une erreur est survenue lors de l\'ajout du moniteur')
+      toast.error("Erreur lors de l'ajout du moniteur")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        resetForm()
+      }
+      onOpenChange(isOpen)
+    }}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Ajouter un Moniteur</DialogTitle>
@@ -106,6 +191,12 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 py-4">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                {error}
+              </div>
+            )}
+            
             {/* Photo */}
             <div className="flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24">
@@ -118,7 +209,7 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                 <Label htmlFor="photo" className="cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
                     <Upload className="h-4 w-4" />
-                    Ajouter une photo
+                    {photoPreview ? 'Changer la photo' : 'Ajouter une photo'}
                   </div>
                 </Label>
                 <Input
@@ -127,6 +218,7 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                   accept="image/*"
                   className="hidden"
                   onChange={handlePhotoChange}
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -137,29 +229,32 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                 <Label htmlFor="nom">Nom *</Label>
                 <Input
                   id="nom"
-                  value={formData.nom}
+                  value={formData.nom || ''}
                   onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
                   placeholder="Dupont"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="postNom">Post-nom</Label>
                 <Input
                   id="postNom"
-                  value={formData.postNom}
+                  value={formData.postNom || ''}
                   onChange={(e) => setFormData({ ...formData, postNom: e.target.value })}
                   placeholder="Martin"
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="prenom">Prénom *</Label>
                 <Input
                   id="prenom"
-                  value={formData.prenom}
+                  value={formData.prenom || ''}
                   onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
                   placeholder="Jean"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -167,9 +262,10 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                 <Input
                   id="dateNaissance"
                   type="date"
-                  value={formData.dateNaissance as string}
+                  value={formData.dateNaissance ? new Date(formData.dateNaissance).toISOString().split('T')[0] : ''}
                   onChange={(e) => setFormData({ ...formData, dateNaissance: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -181,10 +277,11 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                 <Input
                   id="email"
                   type="email"
-                  value={formData.email}
+                  value={formData.email || ''}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="jean.dupont@email.com"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -192,10 +289,11 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                 <Input
                   id="telephone"
                   type="tel"
-                  value={formData.telephone}
+                  value={formData.telephone || ''}
                   onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
                   placeholder="+33 6 12 34 56 78"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -204,11 +302,12 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
               <Label htmlFor="adresse">Adresse *</Label>
               <Textarea
                 id="adresse"
-                value={formData.adresse}
+                value={formData.adresse || ''}
                 onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
-                placeholder="123 Rue de l'Église, 75001 Paris"
-                rows={2}
+                placeholder="123 Rue de l'Église, 75000 Paris"
                 required
+                rows={2}
+                disabled={isLoading}
               />
             </div>
 
@@ -221,93 +320,102 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                   <Input
                     id="dateConversion"
                     type="date"
-                    value={formData.dateConversion as string}
+                    value={formData.dateConversion ? new Date(formData.dateConversion).toISOString().split('T')[0] : ''}
                     onChange={(e) => setFormData({ ...formData, dateConversion: e.target.value })}
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="dateBapteme">Date de baptême</Label>
+                  <Label htmlFor="dateBapteme">Date de baptême d'eau</Label>
                   <Input
                     id="dateBapteme"
                     type="date"
-                    value={formData.dateBapteme as string}
+                    value={formData.dateBapteme ? new Date(formData.dateBapteme).toISOString().split('T')[0] : ''}
                     onChange={(e) => setFormData({ ...formData, dateBapteme: e.target.value })}
+                    disabled={isLoading}
                   />
                 </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label>Baptisé du Saint-Esprit ? *</Label>
-                <RadioGroup
-                  value={formData.baptiseSaintEsprit ? "oui" : "non"}
-                  onValueChange={(value) => setFormData({ ...formData, baptiseSaintEsprit: value === "oui" })}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="oui" id="oui" />
-                    <Label htmlFor="oui" className="font-normal cursor-pointer">Oui</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="non" id="non" />
-                    <Label htmlFor="non" className="font-normal cursor-pointer">Non</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
-
-            {/* État civil et adhésion */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="etatCivil">État civil *</Label>
-                <Select
-                  value={formData.etatCivil}
-                  onValueChange={(value: any) => setFormData({ ...formData, etatCivil: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Célibataire">Célibataire</SelectItem>
-                    <SelectItem value="Marié(e)">Marié(e)</SelectItem>
-                    <SelectItem value="Veuf(ve)">Veuf(ve)</SelectItem>
-                    <SelectItem value="Divorcé(e)">Divorcé(e)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="dateAdhesion">Date d'adhésion au ministère *</Label>
-                <Input
-                  id="dateAdhesion"
-                  type="date"
-                  value={formData.dateAdhesion as string}
-                  onChange={(e) => setFormData({ ...formData, dateAdhesion: e.target.value })}
-                  required
-                />
+                <div className="grid gap-2">
+                  <Label>Baptisé du Saint-Esprit</Label>
+                  <RadioGroup
+                    value={formData.baptiseSaintEsprit ? "oui" : "non"}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, baptiseSaintEsprit: value === "oui" })
+                    }
+                    className="flex space-x-4"
+                    disabled={isLoading}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="oui" id="baptise-oui" />
+                      <Label htmlFor="baptise-oui">Oui</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="non" id="baptise-non" />
+                      <Label htmlFor="baptise-non">Non</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
               </div>
             </div>
 
-            {/* Affectation à une salle */}
+            {/* Informations d'adhésion */}
             <div className="space-y-4 border-t pt-4">
-              <h3 className="font-semibold text-gray-900">🏢 Affectation à une salle (Optionnel)</h3>
+              <h3 className="font-semibold text-gray-900">Adhésion</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="salle">Salle</Label>
+                  <Label htmlFor="dateAdhesion">Date d'adhésion</Label>
+                  <Input
+                    id="dateAdhesion"
+                    type="date"
+                    value={formData.dateAdhesion ? new Date(formData.dateAdhesion).toISOString().split('T')[0] : ''}
+                    onChange={(e) => setFormData({ ...formData, dateAdhesion: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="etatCivil">État civil</Label>
                   <Select
-                    value={formData.salleActuelleId}
-                    onValueChange={(value) => {
-                      const salle = sallesDisponibles.find(s => s.id === value)
+                    value={formData.etatCivil}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, etatCivil: value as any })
+                    }
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un état civil" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Célibataire">Célibataire</SelectItem>
+                      <SelectItem value="Marié(e)">Marié(e)</SelectItem>
+                      <SelectItem value="Divorcé(e)">Divorcé(e)</SelectItem>
+                      <SelectItem value="Veuf/Veuve">Veuf/Veuve</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Affectation actuelle */}
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="font-semibold text-gray-900">Affectation actuelle</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="salleActuelleId">Salle</Label>
+                  <Select
+                    value={formData.salleActuelleId || ''}
+                    onValueChange={(value) =>
                       setFormData({
                         ...formData,
                         salleActuelleId: value,
-                        salleActuelleNom: salle?.nom,
-                        dateAffectationActuelle: new Date().toISOString().split('T')[0],
                       })
-                    }}
+                    }
+                    disabled={isLoading}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner une salle" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sallesDisponibles.map((salle) => (
+                      {salles.map((salle) => (
                         <SelectItem key={salle.id} value={salle.id}>
                           {salle.nom}
                         </SelectItem>
@@ -315,32 +423,48 @@ export function AddMonitorDialog({ open, onOpenChange }: AddMonitorDialogProps) 
                     </SelectContent>
                   </Select>
                 </div>
-                {formData.salleActuelleId && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="role">Rôle</Label>
-                    <Select
-                      value={formData.roleActuel}
-                      onValueChange={(value: RoleMoniteur) => setFormData({ ...formData, roleActuel: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un rôle" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="responsable">Responsable</SelectItem>
-                        <SelectItem value="adjoint">Adjoint</SelectItem>
-                        <SelectItem value="membre">Membre</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                <div className="grid gap-2">
+                  <Label htmlFor="roleActuel">Rôle</Label>
+                  <Select
+                    value={formData.roleActuel || ''}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, roleActuel: value as any })
+                    }
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un rôle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="responsable">Responsable</SelectItem>
+                      <SelectItem value="adjoint">Adjoint</SelectItem>
+                      <SelectItem value="membre">Membre</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+
+          <DialogFooter className="mt-6">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
               Annuler
             </Button>
-            <Button type="submit">Ajouter</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enregistrement...
+                </>
+              ) : (
+                'Ajouter le moniteur'
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

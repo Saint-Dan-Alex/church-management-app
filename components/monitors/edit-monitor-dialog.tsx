@@ -17,53 +17,87 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Upload } from "lucide-react"
+import { Upload, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 import type { Monitor } from "@/types/monitor"
-import type { RoleMoniteur } from "@/types/salle"
+import { monitorsService } from "@/lib/services/monitors.service"
 
 interface EditMonitorDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   monitor: Monitor | null
+  onSave: (monitor: Monitor) => void
 }
 
-// Salles disponibles (mockées - à remplacer par des données de la BD)
-const sallesDisponibles = [
-  { id: "1", nom: "Adolescents" },
-  { id: "2", nom: "Juniors" },
-  { id: "3", nom: "Jardin" },
-  { id: "4", nom: "Cadets" },
-  { id: "5", nom: "Ainés" },
-]
-
-export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDialogProps) {
+export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditMonitorDialogProps) {
   const [formData, setFormData] = useState<Partial<Monitor>>({})
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [salles, setSalles] = useState<{id: string, nom: string}[]>([])
 
   useEffect(() => {
-    if (monitor) {
-      setFormData(monitor)
-      setPhotoPreview(monitor.photo || null)
+    const fetchSalles = async () => {
+      try {
+        // Récupération des salles depuis l'API
+        const response = await fetch('/api/salles')
+        if (response.ok) {
+          const data = await response.json()
+          setSalles(data)
+        }
+      } catch (err) {
+        console.error('Erreur lors du chargement des salles:', err)
+      }
     }
-  }, [monitor])
+
+    if (open) {
+      fetchSalles()
+      
+      if (monitor) {
+        setFormData(monitor)
+        setPhotoPreview(monitor.photo || null)
+      }
+    }
+    
+    return () => {
+      setFormData({})
+      setPhotoPreview(null)
+      setError(null)
+    }
+  }, [open, monitor])
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       const reader = new FileReader()
       reader.onloadend = () => {
-        setPhotoPreview(reader.result as string)
-        setFormData({ ...formData, photo: reader.result as string })
+        const base64String = reader.result as string
+        setPhotoPreview(base64String)
+        setFormData(prev => ({ ...prev, photo: base64String }))
       }
       reader.readAsDataURL(file)
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Moniteur modifié:", formData)
-    // Ici vous enregistrerez dans la base de données
-    onOpenChange(false)
+    if (!formData.id) return
+    
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const updatedMonitor = await monitorsService.update(formData.id, formData)
+      onSave(updatedMonitor)
+      toast.success("Moniteur mis à jour avec succès")
+      onOpenChange(false)
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour du moniteur:', err)
+      setError('Une erreur est survenue lors de la mise à jour du moniteur')
+      toast.error("Erreur lors de la mise à jour")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!monitor) return null
@@ -89,7 +123,7 @@ export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDi
                 <Label htmlFor="photo-edit" className="cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
                     <Upload className="h-4 w-4" />
-                    Modifier la photo
+                    {photoPreview ? 'Changer la photo' : 'Ajouter une photo'}
                   </div>
                 </Label>
                 <Input
@@ -98,9 +132,16 @@ export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDi
                   accept="image/*"
                   className="hidden"
                   onChange={handlePhotoChange}
+                  disabled={isLoading}
                 />
               </div>
             </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                {error}
+              </div>
+            )}
 
             {/* Informations personnelles */}
             <div className="grid gap-4 md:grid-cols-2">
@@ -108,26 +149,29 @@ export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDi
                 <Label htmlFor="nom">Nom *</Label>
                 <Input
                   id="nom"
-                  value={formData.nom}
+                  value={formData.nom || ''}
                   onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="postNom">Post-nom</Label>
                 <Input
                   id="postNom"
-                  value={formData.postNom}
+                  value={formData.postNom || ''}
                   onChange={(e) => setFormData({ ...formData, postNom: e.target.value })}
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="prenom">Prénom *</Label>
                 <Input
                   id="prenom"
-                  value={formData.prenom}
+                  value={formData.prenom || ''}
                   onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -135,9 +179,10 @@ export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDi
                 <Input
                   id="dateNaissance"
                   type="date"
-                  value={formData.dateNaissance as string}
+                  value={formData.dateNaissance ? new Date(formData.dateNaissance).toISOString().split('T')[0] : ''}
                   onChange={(e) => setFormData({ ...formData, dateNaissance: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -149,9 +194,10 @@ export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDi
                 <Input
                   id="email"
                   type="email"
-                  value={formData.email}
+                  value={formData.email || ''}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -159,9 +205,10 @@ export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDi
                 <Input
                   id="telephone"
                   type="tel"
-                  value={formData.telephone}
+                  value={formData.telephone || ''}
                   onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -170,10 +217,11 @@ export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDi
               <Label htmlFor="adresse">Adresse *</Label>
               <Textarea
                 id="adresse"
-                value={formData.adresse}
+                value={formData.adresse || ''}
                 onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
                 rows={2}
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -259,7 +307,7 @@ export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDi
                   <Select
                     value={formData.salleActuelleId || ""}
                     onValueChange={(value) => {
-                      const salle = sallesDisponibles.find(s => s.id === value)
+                      const salle = salles.find(s => s.id === value)
                       setFormData({ 
                         ...formData, 
                         salleActuelleId: value,
@@ -272,7 +320,7 @@ export function EditMonitorDialog({ open, onOpenChange, monitor }: EditMonitorDi
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Aucune salle</SelectItem>
-                      {sallesDisponibles.map((salle) => (
+                      {salles.map((salle) => (
                         <SelectItem key={salle.id} value={salle.id}>
                           {salle.nom}
                         </SelectItem>
