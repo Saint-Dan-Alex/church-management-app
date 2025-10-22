@@ -1,0 +1,821 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Church Management API",
+        "description": "API REST complète pour la gestion d'église - 12 modules avec CRUD complet",
+        "contact": {
+            "email": "admin@eglise.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api/v1",
+            "description": "API Server Local"
+        }
+    ],
+    "paths": {
+        "/monitors": {
+            "get": {
+                "tags": [
+                    "Monitors"
+                ],
+                "summary": "Liste tous les moniteurs",
+                "description": "Retourne la liste paginée des moniteurs avec filtres optionnels",
+                "operationId": "a166d2bc306bc55e8cee969c32da7c44",
+                "parameters": [
+                    {
+                        "name": "salle_id",
+                        "in": "query",
+                        "description": "Filtrer par ID de salle",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "description": "Filtrer par rôle",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "responsable",
+                                "adjoint",
+                                "membre"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche par nom, prénom ou email",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des moniteurs récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Monitor"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Monitors"
+                ],
+                "summary": "Créer un nouveau moniteur",
+                "description": "Crée un nouveau moniteur avec les données fournies",
+                "operationId": "137a9563492452c4276eef9752984702",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreMonitorRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Moniteur créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Moniteur créé avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Monitor"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/monitors/{id}": {
+            "get": {
+                "tags": [
+                    "Monitors"
+                ],
+                "summary": "Détails d'un moniteur",
+                "description": "Retourne les détails d'un moniteur avec ses relations",
+                "operationId": "432aa06a7d4da44785c2fb46ca2da537",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du moniteur",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du moniteur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Monitor"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Moniteur non trouvé"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Monitors"
+                ],
+                "summary": "Modifier un moniteur",
+                "description": "Met à jour les informations d'un moniteur",
+                "operationId": "eac28e3307a91c441ff7e0f2f65e58f3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du moniteur",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateMonitorRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Moniteur mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Monitor"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Moniteur non trouvé"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Monitors"
+                ],
+                "summary": "Supprimer un moniteur",
+                "description": "Supprime (soft delete) un moniteur",
+                "operationId": "2f36c58ed2e36fdb1e5257d29f6ab956",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du moniteur",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Moniteur supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Moniteur supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Moniteur non trouvé"
+                    }
+                }
+            }
+        },
+        "/monitors-statistics": {
+            "get": {
+                "tags": [
+                    "Monitors"
+                ],
+                "summary": "Statistiques des moniteurs",
+                "description": "Retourne les statistiques globales des moniteurs",
+                "operationId": "8345d73691e2a4118a44a3ec9c243217",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "actifs": {
+                                            "type": "integer"
+                                        },
+                                        "responsables": {
+                                            "type": "integer"
+                                        },
+                                        "adjoints": {
+                                            "type": "integer"
+                                        },
+                                        "membres": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Activity": {
+                "title": "Activity",
+                "description": "Modèle d'activité/événement",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "titre": {
+                        "type": "string",
+                        "example": "Camp de vacances 2025"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Camp pour les enfants pendant les vacances"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "gratuite",
+                            "payante"
+                        ],
+                        "example": "payante"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-07-15"
+                    },
+                    "heure_debut": {
+                        "type": "string",
+                        "format": "time",
+                        "example": "09:00"
+                    },
+                    "heure_fin": {
+                        "type": "string",
+                        "format": "time",
+                        "example": "17:00"
+                    },
+                    "lieu": {
+                        "type": "string",
+                        "example": "Centre Kivuli"
+                    },
+                    "responsable": {
+                        "type": "string",
+                        "example": "Pastor John"
+                    },
+                    "responsable_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "montant_requis": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50000,
+                        "nullable": true
+                    },
+                    "devise": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ],
+                        "example": "CDF",
+                        "nullable": true
+                    },
+                    "montant_alternatif": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50,
+                        "nullable": true
+                    },
+                    "devise_alternative": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ],
+                        "example": "USD",
+                        "nullable": true
+                    },
+                    "statut": {
+                        "type": "string",
+                        "enum": [
+                            "planifiee",
+                            "en_cours",
+                            "terminee",
+                            "annulee"
+                        ],
+                        "example": "planifiee"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreActivityRequest": {
+                "required": [
+                    "titre",
+                    "description",
+                    "type",
+                    "date",
+                    "heure_debut",
+                    "heure_fin",
+                    "lieu",
+                    "responsable",
+                    "responsable_id"
+                ],
+                "properties": {
+                    "titre": {
+                        "type": "string",
+                        "example": "Camp de vacances 2025"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Camp pour les enfants"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "gratuite",
+                            "payante"
+                        ],
+                        "example": "payante"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-07-15"
+                    },
+                    "heure_debut": {
+                        "type": "string",
+                        "format": "time",
+                        "example": "09:00"
+                    },
+                    "heure_fin": {
+                        "type": "string",
+                        "format": "time",
+                        "example": "17:00"
+                    },
+                    "lieu": {
+                        "type": "string",
+                        "example": "Centre Kivuli"
+                    },
+                    "responsable": {
+                        "type": "string",
+                        "example": "Pastor John"
+                    },
+                    "responsable_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "montant_requis": {
+                        "description": "Requis si type=payante",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "devise": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ],
+                        "nullable": true
+                    },
+                    "montant_alternatif": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "devise_alternative": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ],
+                        "nullable": true
+                    },
+                    "statut": {
+                        "type": "string",
+                        "enum": [
+                            "planifiee",
+                            "en_cours",
+                            "terminee",
+                            "annulee"
+                        ],
+                        "example": "planifiee"
+                    }
+                },
+                "type": "object"
+            },
+            "Monitor": {
+                "title": "Monitor",
+                "description": "Modèle de moniteur/encadrant",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "KABAMBA"
+                    },
+                    "post_nom": {
+                        "type": "string",
+                        "example": "MBUYU"
+                    },
+                    "prenom": {
+                        "type": "string",
+                        "example": "Jean"
+                    },
+                    "nom_complet": {
+                        "type": "string",
+                        "example": "KABAMBA MBUYU Jean"
+                    },
+                    "date_naissance": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "1990-05-15"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "jean.kabamba@example.com"
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "example": "+243900000000"
+                    },
+                    "adresse": {
+                        "type": "string",
+                        "example": "Lubumbashi, Congo"
+                    },
+                    "photo": {
+                        "type": "string",
+                        "example": "https://example.com/photo.jpg",
+                        "nullable": true
+                    },
+                    "date_conversion": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2015-03-20",
+                        "nullable": true
+                    },
+                    "date_bapteme": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2015-06-15",
+                        "nullable": true
+                    },
+                    "baptise_saint_esprit": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "etat_civil": {
+                        "type": "string",
+                        "enum": [
+                            "Célibataire",
+                            "Marié(e)",
+                            "Veuf(ve)",
+                            "Divorcé(e)"
+                        ],
+                        "example": "Marié(e)"
+                    },
+                    "date_adhesion": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2020-01-15"
+                    },
+                    "salle_actuelle_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "salle_actuelle_nom": {
+                        "type": "string",
+                        "example": "Jardin",
+                        "nullable": true
+                    },
+                    "role_actuel": {
+                        "type": "string",
+                        "enum": [
+                            "responsable",
+                            "adjoint",
+                            "membre"
+                        ],
+                        "example": "responsable",
+                        "nullable": true
+                    },
+                    "date_affectation_actuelle": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreMonitorRequest": {
+                "required": [
+                    "nom",
+                    "post_nom",
+                    "prenom",
+                    "date_naissance",
+                    "email",
+                    "telephone",
+                    "adresse",
+                    "etat_civil",
+                    "date_adhesion"
+                ],
+                "properties": {
+                    "nom": {
+                        "type": "string",
+                        "example": "KABAMBA"
+                    },
+                    "post_nom": {
+                        "type": "string",
+                        "example": "MBUYU"
+                    },
+                    "prenom": {
+                        "type": "string",
+                        "example": "Jean"
+                    },
+                    "date_naissance": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "1990-05-15"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "jean.kabamba@example.com"
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "example": "+243900000000"
+                    },
+                    "adresse": {
+                        "type": "string",
+                        "example": "Lubumbashi, Congo"
+                    },
+                    "photo": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "date_conversion": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "date_bapteme": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "baptise_saint_esprit": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "etat_civil": {
+                        "type": "string",
+                        "enum": [
+                            "Célibataire",
+                            "Marié(e)",
+                            "Veuf(ve)",
+                            "Divorcé(e)"
+                        ],
+                        "example": "Marié(e)"
+                    },
+                    "date_adhesion": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2020-01-15"
+                    },
+                    "salle_actuelle_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "salle_actuelle_nom": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "role_actuel": {
+                        "type": "string",
+                        "enum": [
+                            "responsable",
+                            "adjoint",
+                            "membre"
+                        ],
+                        "nullable": true
+                    },
+                    "date_affectation_actuelle": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateMonitorRequest": {
+                "properties": {
+                    "nom": {
+                        "type": "string"
+                    },
+                    "post_nom": {
+                        "type": "string"
+                    },
+                    "prenom": {
+                        "type": "string"
+                    },
+                    "date_naissance": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "telephone": {
+                        "type": "string"
+                    },
+                    "adresse": {
+                        "type": "string"
+                    },
+                    "photo": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "date_conversion": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "date_bapteme": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "baptise_saint_esprit": {
+                        "type": "boolean"
+                    },
+                    "etat_civil": {
+                        "type": "string",
+                        "enum": [
+                            "Célibataire",
+                            "Marié(e)",
+                            "Veuf(ve)",
+                            "Divorcé(e)"
+                        ]
+                    },
+                    "date_adhesion": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "salle_actuelle_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "salle_actuelle_nom": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "role_actuel": {
+                        "type": "string",
+                        "enum": [
+                            "responsable",
+                            "adjoint",
+                            "membre"
+                        ],
+                        "nullable": true
+                    },
+                    "date_affectation_actuelle": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Monitors",
+            "description": "Gestion des moniteurs/encadrants"
+        }
+    ]
+}
