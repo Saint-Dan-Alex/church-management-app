@@ -46,6 +46,26 @@ namespace App\Models\Schemas;
  *     @OA\Property(property="devise_alternative", type="string", enum={"CDF", "USD"}, nullable=true),
  *     @OA\Property(property="statut", type="string", enum={"planifiee", "en_cours", "terminee", "annulee"}, example="planifiee")
  * )
+ *
+ * @OA\Schema(
+ *     schema="UpdateActivityRequest",
+ *     type="object",
+ *     description="Tous les champs sont optionnels pour la mise à jour",
+ *     @OA\Property(property="titre", type="string", example="Camp de vacances 2025"),
+ *     @OA\Property(property="description", type="string", example="Camp pour les enfants"),
+ *     @OA\Property(property="type", type="string", enum={"gratuite", "payante"}),
+ *     @OA\Property(property="date", type="string", format="date", example="2025-07-15"),
+ *     @OA\Property(property="heure_debut", type="string", format="time", example="09:00"),
+ *     @OA\Property(property="heure_fin", type="string", format="time", example="17:00"),
+ *     @OA\Property(property="lieu", type="string", example="Centre Kivuli"),
+ *     @OA\Property(property="responsable", type="string", example="Pastor John"),
+ *     @OA\Property(property="responsable_id", type="string", format="uuid"),
+ *     @OA\Property(property="montant_requis", type="number", format="float", nullable=true),
+ *     @OA\Property(property="devise", type="string", enum={"CDF", "USD"}, nullable=true),
+ *     @OA\Property(property="montant_alternatif", type="number", format="float", nullable=true),
+ *     @OA\Property(property="devise_alternative", type="string", enum={"CDF", "USD"}, nullable=true),
+ *     @OA\Property(property="statut", type="string", enum={"planifiee", "en_cours", "terminee", "annulee"})
+ * )
  */
 class ActivitySchema
 {

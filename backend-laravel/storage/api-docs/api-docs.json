@@ -15,6 +15,1252 @@
         }
     ],
     "paths": {
+        "/activities": {
+            "get": {
+                "tags": [
+                    "Activities"
+                ],
+                "summary": "Liste toutes les activités",
+                "description": "Retourne la liste paginée des activités avec filtres",
+                "operationId": "3901e1e33d9aff4fa425d1ed43cbff65",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer par type",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "gratuite",
+                                "payante"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "statut",
+                        "in": "query",
+                        "description": "Filtrer par statut",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "planifiee",
+                                "en_cours",
+                                "terminee",
+                                "annulee"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "description": "Date de début de la période",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "description": "Date de fin de la période",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des activités récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Activity"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Activities"
+                ],
+                "summary": "Créer une nouvelle activité",
+                "description": "Crée une nouvelle activité/événement",
+                "operationId": "8739417ac5cb15df433dbb21b70f6dae",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreActivityRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Activité créée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Activity"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/activities/{id}": {
+            "get": {
+                "tags": [
+                    "Activities"
+                ],
+                "summary": "Détails d'une activité",
+                "description": "Retourne les détails avec participants, dépenses et paiements",
+                "operationId": "26066fae4b9a5735d88128bc01f985a4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'activité",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails de l'activité",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Activity"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Activité non trouvée"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Activities"
+                ],
+                "summary": "Modifier une activité",
+                "description": "Met à jour les informations d'une activité",
+                "operationId": "b32a14e9d59a3a5df07610f84d91a213",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'activité",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateActivityRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Activité mise à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Activity"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Activité non trouvée"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Activities"
+                ],
+                "summary": "Supprimer une activité",
+                "description": "Supprime (soft delete) une activité",
+                "operationId": "5bfd64286e809825bf4555e9e1dc6a1b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'activité",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Activité supprimée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Activité non trouvée"
+                    }
+                }
+            }
+        },
+        "/activities/{id}/statistics": {
+            "get": {
+                "tags": [
+                    "Activities"
+                ],
+                "summary": "Statistiques d'une activité",
+                "description": "Retourne les statistiques de participation et paiement",
+                "operationId": "820c88f77b9305b800138f9de43e3718",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'activité",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques récupérées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_participants": {
+                                            "type": "integer"
+                                        },
+                                        "presents": {
+                                            "type": "integer"
+                                        },
+                                        "absents": {
+                                            "type": "integer"
+                                        },
+                                        "paye": {
+                                            "type": "integer"
+                                        },
+                                        "non_paye": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/blogs": {
+            "get": {
+                "tags": [
+                    "Blog"
+                ],
+                "summary": "Liste tous les articles",
+                "operationId": "f4eb352461f41578b0493dafc4ca9789",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "published"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Blog"
+                ],
+                "summary": "Créer un article",
+                "operationId": "59c85f49f8fbc66e0858df85eaffdad9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreBlogRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Article créé"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/blogs/{id}": {
+            "get": {
+                "tags": [
+                    "Blog"
+                ],
+                "summary": "Détails d'un article",
+                "operationId": "9d298fcf297a19c338d1a5eed1547bbb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails"
+                    },
+                    "404": {
+                        "description": "Non trouvé"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Blog"
+                ],
+                "summary": "Modifier un article",
+                "operationId": "220958590bee23b1273a43aa0bb6eab0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreBlogRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mis à jour"
+                    },
+                    "404": {
+                        "description": "Non trouvé"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Blog"
+                ],
+                "summary": "Supprimer un article",
+                "operationId": "f424c54c6af5dada48d1f0adda2ee301",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimé"
+                    },
+                    "404": {
+                        "description": "Non trouvé"
+                    }
+                }
+            }
+        },
+        "/blogs-published": {
+            "get": {
+                "tags": [
+                    "Blog"
+                ],
+                "summary": "Articles publiés",
+                "operationId": "cf9e00bc9472a30f0adbccbd160e41da",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des articles publiés"
+                    }
+                }
+            }
+        },
+        "/children": {
+            "get": {
+                "tags": [
+                    "Children"
+                ],
+                "summary": "Liste tous les enfants",
+                "description": "Retourne la liste paginée des enfants avec filtres optionnels",
+                "operationId": "d4e9e6c20e264c6a6d735762b27cb7c1",
+                "parameters": [
+                    {
+                        "name": "genre",
+                        "in": "query",
+                        "description": "Filtrer par genre",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "Masculin",
+                                "Féminin"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche par nom, prénom ou email",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des enfants récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Child"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Children"
+                ],
+                "summary": "Créer un nouvel enfant",
+                "description": "Crée un nouvel enfant avec les données fournies",
+                "operationId": "fa6831156710a79c80bd545d73145b7b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreChildRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Enfant créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Enfant créé avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Child"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/children/{id}": {
+            "get": {
+                "tags": [
+                    "Children"
+                ],
+                "summary": "Détails d'un enfant",
+                "description": "Retourne les détails d'un enfant",
+                "operationId": "414304710facda6df4f8741ce4c8d1a6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'enfant",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails de l'enfant",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Child"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Enfant non trouvé"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Children"
+                ],
+                "summary": "Modifier un enfant",
+                "description": "Met à jour les informations d'un enfant",
+                "operationId": "86d23e17be30d401fb84bb73872cf983",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'enfant",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateChildRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Enfant mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Child"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Enfant non trouvé"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Children"
+                ],
+                "summary": "Supprimer un enfant",
+                "description": "Supprime (soft delete) un enfant",
+                "operationId": "726e3481c7419744af78bec894742790",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'enfant",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Enfant supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Enfant supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Enfant non trouvé"
+                    }
+                }
+            }
+        },
+        "/children-statistics": {
+            "get": {
+                "tags": [
+                    "Children"
+                ],
+                "summary": "Statistiques des enfants",
+                "description": "Retourne les statistiques globales des enfants",
+                "operationId": "81dac226a3d027964d1cdb6ab7e82d84",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "garcons": {
+                                            "type": "integer"
+                                        },
+                                        "filles": {
+                                            "type": "integer"
+                                        },
+                                        "ouvriers": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/cotisations": {
+            "get": {
+                "tags": [
+                    "Cotisations"
+                ],
+                "summary": "Liste toutes les cotisations",
+                "operationId": "37b29dfebc485343b051097f5c573395",
+                "parameters": [
+                    {
+                        "name": "type_cotisation",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "mois",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "annee",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Cotisations"
+                ],
+                "summary": "Enregistrer une cotisation",
+                "operationId": "d5310da330e3f6a367ace44c088e2309",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreCotisationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Cotisation enregistrée"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/cotisations/{id}": {
+            "get": {
+                "tags": [
+                    "Cotisations"
+                ],
+                "summary": "Détails d'une cotisation",
+                "operationId": "4dfd5a77e5a52f315cd1a9c9e766f6e5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Cotisations"
+                ],
+                "summary": "Modifier une cotisation",
+                "operationId": "ea01ea142846daf627081ac722b87411",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreCotisationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mise à jour"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Cotisations"
+                ],
+                "summary": "Supprimer une cotisation",
+                "operationId": "1180a590451347aa65870e8d8fd40792",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimée"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            }
+        },
+        "/cotisations-statistics": {
+            "get": {
+                "tags": [
+                    "Cotisations"
+                ],
+                "summary": "Statistiques des cotisations",
+                "operationId": "96edf89faa5dbfd1b248ce3f46865cd6",
+                "parameters": [
+                    {
+                        "name": "mois",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "annee",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_cotisations": {
+                                            "type": "integer"
+                                        },
+                                        "total_cdf": {
+                                            "type": "number"
+                                        },
+                                        "total_usd": {
+                                            "type": "number"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/expenses": {
+            "get": {
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Liste toutes les dépenses",
+                "operationId": "0500f7c1884c29cdf17354e5bcbfabbc",
+                "parameters": [
+                    {
+                        "name": "activity_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "categorie",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Créer une dépense",
+                "operationId": "503d5db5b92a6deac25374e294cfab4f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreExpenseRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Dépense créée"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/expenses/{id}": {
+            "get": {
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Détails d'une dépense",
+                "operationId": "f682346047c74136bb5c1629acfcd78a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Modifier une dépense",
+                "operationId": "184ef9941bebb4cf1b95df0a571eb348",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreExpenseRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mise à jour"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Supprimer une dépense",
+                "operationId": "5340b4ec526a5c8f4627f5e48056088b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimée"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            }
+        },
+        "/expenses-statistics": {
+            "get": {
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Statistiques des dépenses",
+                "operationId": "2512e25df11c97a8c6997f2e4cabd092",
+                "parameters": [
+                    {
+                        "name": "activity_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_cdf": {
+                                            "type": "number"
+                                        },
+                                        "total_usd": {
+                                            "type": "number"
+                                        },
+                                        "nombre_depenses": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/monitors": {
             "get": {
                 "tags": [
@@ -310,6 +1556,1626 @@
                     }
                 }
             }
+        },
+        "/payments": {
+            "get": {
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Liste tous les paiements",
+                "description": "Retourne la liste paginée des paiements avec filtres",
+                "operationId": "e07c35407a995e6fbcc6159beb123d01",
+                "parameters": [
+                    {
+                        "name": "activity_id",
+                        "in": "query",
+                        "description": "Filtrer par activité",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "statut",
+                        "in": "query",
+                        "description": "Filtrer par statut",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "paid",
+                                "partial",
+                                "overdue",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Payment"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Créer un paiement",
+                "operationId": "0c3902cc46fc236adc6a3ecc698c0107",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePaymentRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Paiement créé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Payment"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/payments/{id}": {
+            "get": {
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Détails d'un paiement",
+                "operationId": "cdbf6031f2c22d03b11b79ee72d8a105",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du paiement",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Payment"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Paiement non trouvé"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Modifier un paiement",
+                "operationId": "42c3098b93370d26e1b4c39871b73a5c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePaymentRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mis à jour",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Payment"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trouvé"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Supprimer un paiement",
+                "operationId": "cffc35edfbe3085457111971a77f2454",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trouvé"
+                    }
+                }
+            }
+        },
+        "/payments-statistics": {
+            "get": {
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Statistiques des paiements",
+                "operationId": "dd028d800948b4d10f2cd221434492ed",
+                "parameters": [
+                    {
+                        "name": "activity_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_paiements": {
+                                            "type": "integer"
+                                        },
+                                        "payes": {
+                                            "type": "integer"
+                                        },
+                                        "en_attente": {
+                                            "type": "integer"
+                                        },
+                                        "total_cdf": {
+                                            "type": "number"
+                                        },
+                                        "total_usd": {
+                                            "type": "number"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/photos": {
+            "get": {
+                "tags": [
+                    "Photos"
+                ],
+                "summary": "Liste toutes les photos",
+                "operationId": "16f12039456b2f07c2b7d308ed863dd2",
+                "parameters": [
+                    {
+                        "name": "album",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Photos"
+                ],
+                "summary": "Créer une photo",
+                "operationId": "09b500db883f5d9843d3358d99c7cca1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePhotoRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Photo créée"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/photos/{id}": {
+            "get": {
+                "tags": [
+                    "Photos"
+                ],
+                "summary": "Détails d'une photo",
+                "operationId": "98697798fa18645f09862414d3244fd8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Photos"
+                ],
+                "summary": "Modifier une photo",
+                "operationId": "c8681b43ef26eda3ab1203fd32868139",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePhotoRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mise à jour"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Photos"
+                ],
+                "summary": "Supprimer une photo",
+                "operationId": "ceef00491e0d236e99b77cd9ce784bb6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimée"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            }
+        },
+        "/photos-albums": {
+            "get": {
+                "tags": [
+                    "Photos"
+                ],
+                "summary": "Liste des albums",
+                "operationId": "00504fb52ed4718e5740e29b9d8cc76f",
+                "responses": {
+                    "200": {
+                        "description": "Liste des albums disponibles"
+                    }
+                }
+            }
+        },
+        "/presences": {
+            "get": {
+                "tags": [
+                    "Presences"
+                ],
+                "summary": "Liste toutes les présences",
+                "operationId": "c853994feacdd04e4c640517f5124edf",
+                "parameters": [
+                    {
+                        "name": "activity_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "moniteur_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "statut",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "present",
+                                "absent",
+                                "retard",
+                                "excuse"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Presences"
+                ],
+                "summary": "Enregistrer une présence",
+                "operationId": "9e6289fb04fb10320816600623a87deb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePresenceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Présence enregistrée"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/presences/{id}": {
+            "get": {
+                "tags": [
+                    "Presences"
+                ],
+                "summary": "Détails d'une présence",
+                "operationId": "836a72288e76c5f58251acf69c77ffea",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Presences"
+                ],
+                "summary": "Modifier une présence",
+                "operationId": "b7cfe6ce32eb3681b66fff1245ba1900",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePresenceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mise à jour"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Presences"
+                ],
+                "summary": "Supprimer une présence",
+                "operationId": "e69eb598572479bf04e17e1c98eb9adb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimée"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            }
+        },
+        "/presences-statistics": {
+            "get": {
+                "tags": [
+                    "Presences"
+                ],
+                "summary": "Statistiques des présences",
+                "operationId": "6aac1e27a119b822a83c713677e49454",
+                "parameters": [
+                    {
+                        "name": "activity_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "presents": {
+                                            "type": "integer"
+                                        },
+                                        "absents": {
+                                            "type": "integer"
+                                        },
+                                        "retards": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/salles": {
+            "get": {
+                "tags": [
+                    "Salles"
+                ],
+                "summary": "Liste toutes les salles",
+                "description": "Retourne la liste paginée des salles avec leurs responsables",
+                "operationId": "db04c5a46d0edd54e6325733f3eefd94",
+                "parameters": [
+                    {
+                        "name": "actif",
+                        "in": "query",
+                        "description": "Filtrer par statut actif",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des salles récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Salle"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Salles"
+                ],
+                "summary": "Créer une nouvelle salle",
+                "description": "Crée une nouvelle salle avec les données fournies",
+                "operationId": "f81f5c99eaf1f42f9b8283f9f95fd89f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreSalleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Salle créée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Salle créée avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Salle"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/salles/{id}": {
+            "get": {
+                "tags": [
+                    "Salles"
+                ],
+                "summary": "Détails d'une salle",
+                "description": "Retourne les détails d'une salle avec ses relations",
+                "operationId": "7b0dd4d65b341b4eac3fc6da57c09b90",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la salle",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails de la salle",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Salle"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Salle non trouvée"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Salles"
+                ],
+                "summary": "Modifier une salle",
+                "description": "Met à jour les informations d'une salle",
+                "operationId": "1e4351d4fb1a28c8e03403d9395ecc05",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la salle",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSalleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Salle mise à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Salle"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Salle non trouvée"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Salles"
+                ],
+                "summary": "Supprimer une salle",
+                "description": "Supprime (soft delete) une salle",
+                "operationId": "a32f63d2932fab7b8e9311fd37a0deca",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la salle",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Salle supprimée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Salle supprimée avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Salle non trouvée"
+                    }
+                }
+            }
+        },
+        "/sorties": {
+            "get": {
+                "tags": [
+                    "Sorties"
+                ],
+                "summary": "Liste toutes les sorties financières",
+                "operationId": "820cc33e0cdac84ae897e59678f2879c",
+                "parameters": [
+                    {
+                        "name": "categorie",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Sorties"
+                ],
+                "summary": "Enregistrer une sortie",
+                "operationId": "545898e73f39f8214ab60c1453ebe15e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreSortieRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Sortie enregistrée"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/sorties/{id}": {
+            "get": {
+                "tags": [
+                    "Sorties"
+                ],
+                "summary": "Détails d'une sortie",
+                "operationId": "a67b5018b0171333253b822a67a32eb9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Sorties"
+                ],
+                "summary": "Modifier une sortie",
+                "operationId": "4f0989a551df2dbd166c36d86c266480",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreSortieRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mise à jour"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Sorties"
+                ],
+                "summary": "Supprimer une sortie",
+                "operationId": "a90fbd12d32de5935968794d48bfa799",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimée"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            }
+        },
+        "/sorties-statistics": {
+            "get": {
+                "tags": [
+                    "Sorties"
+                ],
+                "summary": "Statistiques des sorties",
+                "operationId": "af5a6d3840237c8bd49fe99411fa0de7",
+                "parameters": [
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_sorties": {
+                                            "type": "integer"
+                                        },
+                                        "total_cdf": {
+                                            "type": "number"
+                                        },
+                                        "total_usd": {
+                                            "type": "number"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/teachings": {
+            "get": {
+                "tags": [
+                    "Teachings"
+                ],
+                "summary": "Liste tous les enseignements",
+                "operationId": "52a2a043f0bb47f1a51dbfbc95c0bd41",
+                "parameters": [
+                    {
+                        "name": "theme",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Teachings"
+                ],
+                "summary": "Créer un enseignement",
+                "operationId": "b7602b74ee2eb4fe4c16a3ca09f3e68f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreTeachingRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Enseignement créé"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    },
+                    "500": {
+                        "description": "Erreur serveur"
+                    }
+                }
+            }
+        },
+        "/teachings/{id}": {
+            "get": {
+                "tags": [
+                    "Teachings"
+                ],
+                "summary": "Détails d'un enseignement",
+                "operationId": "ce3076b23bc8219142e6601863ed74a2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails avec chants, points et événements"
+                    },
+                    "404": {
+                        "description": "Non trouvé"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Teachings"
+                ],
+                "summary": "Supprimer un enseignement",
+                "operationId": "2bf49edf30f9589306eddc03b4e439e0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimé"
+                    },
+                    "404": {
+                        "description": "Non trouvé"
+                    }
+                }
+            }
+        },
+        "/videos": {
+            "get": {
+                "tags": [
+                    "Videos"
+                ],
+                "summary": "Liste toutes les vidéos",
+                "operationId": "d1af8c595775652c0cfa92c39ad00684",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_featured",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Videos"
+                ],
+                "summary": "Créer une vidéo",
+                "operationId": "e095066f2f64d6eeb471f898b30c0615",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreVideoRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Vidéo créée"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/videos/{id}": {
+            "get": {
+                "tags": [
+                    "Videos"
+                ],
+                "summary": "Détails d'une vidéo",
+                "operationId": "817cec19fc66e8402895eae2bc839166",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Videos"
+                ],
+                "summary": "Modifier une vidéo",
+                "operationId": "d9ecf2e86cdffea0158caa0aca0cbd3f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreVideoRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mise à jour"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Videos"
+                ],
+                "summary": "Supprimer une vidéo",
+                "operationId": "f76ead4bdc343557bb61518377c92b88",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimée"
+                    },
+                    "404": {
+                        "description": "Non trouvée"
+                    }
+                }
+            }
+        },
+        "/videos-featured": {
+            "get": {
+                "tags": [
+                    "Videos"
+                ],
+                "summary": "Vidéos en vedette",
+                "operationId": "a03ce9b02766fd865771cb675b4e8159",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vidéos en vedette"
+                    }
+                }
+            }
+        },
+        "/worship-reports": {
+            "get": {
+                "tags": [
+                    "Worship Reports"
+                ],
+                "summary": "Liste tous les rapports de culte",
+                "operationId": "230821a69e8d1933dc35c824b86de16f",
+                "parameters": [
+                    {
+                        "name": "salle",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Worship Reports"
+                ],
+                "summary": "Créer un rapport de culte",
+                "operationId": "940a367c226ca80158fd66e229de7042",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreWorshipReportRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Rapport créé avec nouveaux venus"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    },
+                    "500": {
+                        "description": "Erreur serveur"
+                    }
+                }
+            }
+        },
+        "/worship-reports/{id}": {
+            "get": {
+                "tags": [
+                    "Worship Reports"
+                ],
+                "summary": "Détails d'un rapport de culte",
+                "operationId": "a5a0534c5df7c48c0fe2232777d72b3a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails avec nouveaux venus"
+                    },
+                    "404": {
+                        "description": "Non trouvé"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Worship Reports"
+                ],
+                "summary": "Supprimer un rapport de culte",
+                "operationId": "e801753a32168aa41fb9dd7a94f98e39",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supprimé"
+                    },
+                    "404": {
+                        "description": "Non trouvé"
+                    }
+                }
+            }
+        },
+        "/worship-reports-global-statistics": {
+            "get": {
+                "tags": [
+                    "Worship Reports"
+                ],
+                "summary": "Statistiques globales des cultes",
+                "operationId": "2b35496868265dfdd2ae023b29f29a74",
+                "parameters": [
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_cultes": {
+                                            "type": "integer"
+                                        },
+                                        "total_effectif": {
+                                            "type": "integer"
+                                        },
+                                        "total_nouveaux_venus": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -512,6 +3378,407 @@
                 },
                 "type": "object"
             },
+            "UpdateActivityRequest": {
+                "description": "Tous les champs sont optionnels pour la mise à jour",
+                "properties": {
+                    "titre": {
+                        "type": "string",
+                        "example": "Camp de vacances 2025"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Camp pour les enfants"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "gratuite",
+                            "payante"
+                        ]
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-07-15"
+                    },
+                    "heure_debut": {
+                        "type": "string",
+                        "format": "time",
+                        "example": "09:00"
+                    },
+                    "heure_fin": {
+                        "type": "string",
+                        "format": "time",
+                        "example": "17:00"
+                    },
+                    "lieu": {
+                        "type": "string",
+                        "example": "Centre Kivuli"
+                    },
+                    "responsable": {
+                        "type": "string",
+                        "example": "Pastor John"
+                    },
+                    "responsable_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "montant_requis": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "devise": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ],
+                        "nullable": true
+                    },
+                    "montant_alternatif": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "devise_alternative": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ],
+                        "nullable": true
+                    },
+                    "statut": {
+                        "type": "string",
+                        "enum": [
+                            "planifiee",
+                            "en_cours",
+                            "terminee",
+                            "annulee"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "Blog": {
+                "title": "Blog",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "published"
+                        ]
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "views": {
+                        "type": "integer"
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreBlogRequest": {
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "published"
+                        ]
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Child": {
+                "title": "Child",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "nom": {
+                        "type": "string"
+                    },
+                    "prenom": {
+                        "type": "string"
+                    },
+                    "genre": {
+                        "type": "string",
+                        "enum": [
+                            "Masculin",
+                            "Féminin"
+                        ]
+                    },
+                    "date_naissance": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreChildRequest": {
+                "properties": {
+                    "nom": {
+                        "type": "string"
+                    },
+                    "prenom": {
+                        "type": "string"
+                    },
+                    "genre": {
+                        "type": "string",
+                        "enum": [
+                            "Masculin",
+                            "Féminin"
+                        ]
+                    },
+                    "date_naissance": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateChildRequest": {
+                "description": "Tous les champs sont optionnels pour la mise à jour",
+                "properties": {
+                    "nom": {
+                        "type": "string"
+                    },
+                    "prenom": {
+                        "type": "string"
+                    },
+                    "genre": {
+                        "type": "string",
+                        "enum": [
+                            "Masculin",
+                            "Féminin"
+                        ]
+                    },
+                    "date_naissance": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Cotisation": {
+                "title": "Cotisation",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "type_cotisation": {
+                        "type": "string"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "devise": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ]
+                    },
+                    "date_cotisation": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "mois": {
+                        "type": "string"
+                    },
+                    "annee": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreCotisationRequest": {
+                "properties": {
+                    "type_cotisation": {
+                        "type": "string"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "devise": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ]
+                    },
+                    "date_cotisation": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "mois": {
+                        "type": "string"
+                    },
+                    "annee": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Expense": {
+                "title": "Expense",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "activity_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "categorie": {
+                        "type": "string"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "devise": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ]
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreExpenseRequest": {
+                "properties": {
+                    "activity_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "categorie": {
+                        "type": "string"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "devise": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ]
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "Monitor": {
                 "title": "Monitor",
                 "description": "Modèle de moniteur/encadrant",
@@ -630,87 +3897,55 @@
             "StoreMonitorRequest": {
                 "required": [
                     "nom",
-                    "post_nom",
                     "prenom",
-                    "date_naissance",
+                    "genre",
                     "email",
                     "telephone",
-                    "adresse",
-                    "etat_civil",
-                    "date_adhesion"
+                    "role",
+                    "salle_id"
                 ],
                 "properties": {
                     "nom": {
                         "type": "string",
-                        "example": "KABAMBA"
-                    },
-                    "post_nom": {
-                        "type": "string",
-                        "example": "MBUYU"
+                        "maxLength": 255,
+                        "example": "Doe"
                     },
                     "prenom": {
                         "type": "string",
-                        "example": "Jean"
+                        "maxLength": 255,
+                        "example": "John"
                     },
-                    "date_naissance": {
+                    "genre": {
                         "type": "string",
-                        "format": "date",
-                        "example": "1990-05-15"
+                        "enum": [
+                            "Masculin",
+                            "Féminin"
+                        ],
+                        "example": "Masculin"
                     },
                     "email": {
                         "type": "string",
                         "format": "email",
-                        "example": "jean.kabamba@example.com"
+                        "example": "john.doe@example.com"
                     },
                     "telephone": {
                         "type": "string",
-                        "example": "+243900000000"
+                        "maxLength": 20,
+                        "example": "+243 800 000 000"
                     },
-                    "adresse": {
-                        "type": "string",
-                        "example": "Lubumbashi, Congo"
-                    },
-                    "photo": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "date_conversion": {
-                        "type": "string",
-                        "format": "date",
-                        "nullable": true
-                    },
-                    "date_bapteme": {
-                        "type": "string",
-                        "format": "date",
-                        "nullable": true
-                    },
-                    "baptise_saint_esprit": {
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "etat_civil": {
+                    "role": {
                         "type": "string",
                         "enum": [
-                            "Célibataire",
-                            "Marié(e)",
-                            "Veuf(ve)",
-                            "Divorcé(e)"
+                            "responsable",
+                            "adjoint",
+                            "membre"
                         ],
-                        "example": "Marié(e)"
+                        "example": "membre"
                     },
-                    "date_adhesion": {
+                    "salle_id": {
+                        "description": "ID de la salle assignée",
                         "type": "string",
-                        "format": "date",
-                        "example": "2020-01-15"
-                    },
-                    "salle_actuelle_id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "nullable": true
-                    },
-                    "salle_actuelle_nom": {
-                        "type": "string",
-                        "nullable": true
+                        "format": "uuid"
                     },
                     "role_actuel": {
                         "type": "string",
@@ -809,6 +4044,540 @@
                     }
                 },
                 "type": "object"
+            },
+            "Payment": {
+                "title": "Payment",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "activity_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "montant_paye": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "devise": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ]
+                    },
+                    "statut": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "paid",
+                            "partial",
+                            "overdue",
+                            "cancelled"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StorePaymentRequest": {
+                "properties": {
+                    "activity_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "montant_paye": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "devise": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ]
+                    },
+                    "statut": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "paid",
+                            "partial",
+                            "overdue",
+                            "cancelled"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "Photo": {
+                "title": "Photo",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "titre": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "album": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "date_prise": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StorePhotoRequest": {
+                "properties": {
+                    "titre": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "album": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "date_prise": {
+                        "type": "string",
+                        "format": "date"
+                    }
+                },
+                "type": "object"
+            },
+            "Presence": {
+                "title": "Presence",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "activity_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "moniteur_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "date_presence": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "statut": {
+                        "type": "string",
+                        "enum": [
+                            "present",
+                            "absent",
+                            "retard",
+                            "excuse"
+                        ]
+                    },
+                    "commentaire": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StorePresenceRequest": {
+                "properties": {
+                    "activity_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "moniteur_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "date_presence": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "statut": {
+                        "type": "string",
+                        "enum": [
+                            "present",
+                            "absent",
+                            "retard",
+                            "excuse"
+                        ]
+                    },
+                    "commentaire": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Salle": {
+                "title": "Salle",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "nom": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "capacite": {
+                        "type": "integer"
+                    },
+                    "actif": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreSalleRequest": {
+                "properties": {
+                    "nom": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "capacite": {
+                        "type": "integer"
+                    },
+                    "actif": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateSalleRequest": {
+                "description": "Tous les champs sont optionnels pour la mise à jour",
+                "properties": {
+                    "nom": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "capacite": {
+                        "type": "integer"
+                    },
+                    "actif": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "Sortie": {
+                "title": "Sortie",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "categorie": {
+                        "type": "string"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "devise": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ]
+                    },
+                    "date_sortie": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreSortieRequest": {
+                "properties": {
+                    "categorie": {
+                        "type": "string"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "devise": {
+                        "type": "string",
+                        "enum": [
+                            "CDF",
+                            "USD"
+                        ]
+                    },
+                    "date_sortie": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "Teaching": {
+                "title": "Teaching",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "theme": {
+                        "type": "string"
+                    },
+                    "date_seance": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "lieu": {
+                        "type": "string"
+                    },
+                    "orateur": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreTeachingRequest": {
+                "properties": {
+                    "theme": {
+                        "type": "string"
+                    },
+                    "date_seance": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "lieu": {
+                        "type": "string"
+                    },
+                    "orateur": {
+                        "type": "string"
+                    },
+                    "chants": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "points": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "evenements": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Video": {
+                "title": "Video",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "titre": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "date_enregistrement": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "is_featured": {
+                        "type": "boolean"
+                    },
+                    "views": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreVideoRequest": {
+                "properties": {
+                    "titre": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "date_enregistrement": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "is_featured": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "WorshipReport": {
+                "title": "WorshipReport",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "salle": {
+                        "type": "string"
+                    },
+                    "effectif": {
+                        "type": "integer"
+                    },
+                    "offrande_cdf": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "offrande_usd": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreWorshipReportRequest": {
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "salle": {
+                        "type": "string"
+                    },
+                    "effectif": {
+                        "type": "integer"
+                    },
+                    "offrande_cdf": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "offrande_usd": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "nouveaux_venus": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
             }
         }
     },
@@ -816,6 +4585,58 @@
         {
             "name": "Monitors",
             "description": "Gestion des moniteurs/encadrants"
+        },
+        {
+            "name": "Children",
+            "description": "Gestion des enfants"
+        },
+        {
+            "name": "Salles",
+            "description": "Gestion des salles"
+        },
+        {
+            "name": "Activities",
+            "description": "Gestion des activités et événements"
+        },
+        {
+            "name": "Teachings",
+            "description": "Gestion des enseignements"
+        },
+        {
+            "name": "Worship Reports",
+            "description": "Rapports de culte"
+        },
+        {
+            "name": "Blog",
+            "description": "Articles et témoignages"
+        },
+        {
+            "name": "Videos",
+            "description": "Gestion de la vidéothèque"
+        },
+        {
+            "name": "Photos",
+            "description": "Gestion de la photothèque"
+        },
+        {
+            "name": "Expenses",
+            "description": "Gestion des dépenses"
+        },
+        {
+            "name": "Payments",
+            "description": "Gestion des paiements"
+        },
+        {
+            "name": "Presences",
+            "description": "Gestion des présences"
+        },
+        {
+            "name": "Cotisations",
+            "description": "Gestion des cotisations"
+        },
+        {
+            "name": "Sorties",
+            "description": "Gestion des sorties financières"
         }
     ]
 }
