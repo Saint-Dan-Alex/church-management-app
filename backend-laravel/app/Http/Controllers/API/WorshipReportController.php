@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class WorshipReportController extends Controller
 {
+    /** @OA\Get(path="/worship-reports", tags={"Worship Reports"}, summary="Liste tous les rapports de culte", @OA\Parameter(name="salle", in="query", required=false, @OA\Schema(type="string")), @OA\Parameter(name="date_debut", in="query", required=false, @OA\Schema(type="string", format="date")), @OA\Parameter(name="date_fin", in="query", required=false, @OA\Schema(type="string", format="date")), @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", default=15)), @OA\Response(response=200, description="Liste récupérée")) */
     public function index(Request $request): JsonResponse
     {
         $query = WorshipReport::with('nouveauxVenus');
@@ -29,6 +30,7 @@ class WorshipReportController extends Controller
         return response()->json($reports);
     }
 
+    /** @OA\Post(path="/worship-reports", tags={"Worship Reports"}, summary="Créer un rapport de culte", @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreWorshipReportRequest")), @OA\Response(response=201, description="Rapport créé avec nouveaux venus"), @OA\Response(response=422, description="Erreur de validation"), @OA\Response(response=500, description="Erreur serveur")) */
     public function store(StoreWorshipReportRequest $request): JsonResponse
     {
         DB::beginTransaction();
@@ -56,6 +58,7 @@ class WorshipReportController extends Controller
         }
     }
 
+    /** @OA\Get(path="/worship-reports/{id}", tags={"Worship Reports"}, summary="Détails d'un rapport de culte", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Détails avec nouveaux venus"), @OA\Response(response=404, description="Non trouvé")) */
     public function show(WorshipReport $worshipReport): JsonResponse
     {
         $worshipReport->load('nouveauxVenus');
@@ -63,6 +66,7 @@ class WorshipReportController extends Controller
         return response()->json($worshipReport);
     }
 
+    /** @OA\Delete(path="/worship-reports/{id}", tags={"Worship Reports"}, summary="Supprimer un rapport de culte", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Supprimé"), @OA\Response(response=404, description="Non trouvé")) */
     public function destroy(WorshipReport $worshipReport): JsonResponse
     {
         $worshipReport->delete();
@@ -72,6 +76,7 @@ class WorshipReportController extends Controller
         ]);
     }
 
+    /** @OA\Get(path="/worship-reports-global-statistics", tags={"Worship Reports"}, summary="Statistiques globales des cultes", @OA\Parameter(name="date_debut", in="query", required=false, @OA\Schema(type="string", format="date")), @OA\Parameter(name="date_fin", in="query", required=false, @OA\Schema(type="string", format="date")), @OA\Response(response=200, description="Statistiques", @OA\JsonContent(@OA\Property(property="total_cultes", type="integer"), @OA\Property(property="total_effectif", type="integer"), @OA\Property(property="total_nouveaux_venus", type="integer")))) */
     public function globalStatistics(Request $request): JsonResponse
     {
         $query = WorshipReport::query();

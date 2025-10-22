@@ -10,6 +10,19 @@ use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/expenses",
+     *     tags={"Expenses"},
+     *     summary="Liste toutes les dépenses",
+     *     @OA\Parameter(name="activity_id", in="query", required=false, @OA\Schema(type="string", format="uuid")),
+     *     @OA\Parameter(name="categorie", in="query", required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="date_debut", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="date_fin", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", default=15)),
+     *     @OA\Response(response=200, description="Liste récupérée")
+     * )
+     */
     public function index(Request $request): JsonResponse
     {
         $query = Expense::query();
@@ -32,6 +45,16 @@ class ExpenseController extends Controller
         return response()->json($expenses);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/expenses",
+     *     tags={"Expenses"},
+     *     summary="Créer une dépense",
+     *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreExpenseRequest")),
+     *     @OA\Response(response=201, description="Dépense créée"),
+     *     @OA\Response(response=422, description="Erreur de validation")
+     * )
+     */
     public function store(StoreExpenseRequest $request): JsonResponse
     {
         $expense = Expense::create($request->validated());
@@ -42,6 +65,16 @@ class ExpenseController extends Controller
         ], 201);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/expenses/{id}",
+     *     tags={"Expenses"},
+     *     summary="Détails d'une dépense",
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+     *     @OA\Response(response=200, description="Détails"),
+     *     @OA\Response(response=404, description="Non trouvée")
+     * )
+     */
     public function show(Expense $expense): JsonResponse
     {
         $expense->load('activity');
@@ -49,6 +82,17 @@ class ExpenseController extends Controller
         return response()->json($expense);
     }
 
+    /**
+     * @OA\Put(
+     *     path="/expenses/{id}",
+     *     tags={"Expenses"},
+     *     summary="Modifier une dépense",
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+     *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreExpenseRequest")),
+     *     @OA\Response(response=200, description="Mise à jour"),
+     *     @OA\Response(response=404, description="Non trouvée")
+     * )
+     */
     public function update(StoreExpenseRequest $request, Expense $expense): JsonResponse
     {
         $expense->update($request->validated());
@@ -59,6 +103,16 @@ class ExpenseController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/expenses/{id}",
+     *     tags={"Expenses"},
+     *     summary="Supprimer une dépense",
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
+     *     @OA\Response(response=200, description="Supprimée"),
+     *     @OA\Response(response=404, description="Non trouvée")
+     * )
+     */
     public function destroy(Expense $expense): JsonResponse
     {
         $expense->delete();
@@ -68,6 +122,15 @@ class ExpenseController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/expenses-statistics",
+     *     tags={"Expenses"},
+     *     summary="Statistiques des dépenses",
+     *     @OA\Parameter(name="activity_id", in="query", required=false, @OA\Schema(type="string", format="uuid")),
+     *     @OA\Response(response=200, description="Statistiques", @OA\JsonContent(@OA\Property(property="total_cdf", type="number"), @OA\Property(property="total_usd", type="number"), @OA\Property(property="nombre_depenses", type="integer")))
+     * )
+     */
     public function statistics(Request $request): JsonResponse
     {
         $query = Expense::query();

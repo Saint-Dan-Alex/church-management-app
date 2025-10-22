@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class TeachingController extends Controller
 {
+    /** @OA\Get(path="/teachings", tags={"Teachings"}, summary="Liste tous les enseignements", @OA\Parameter(name="theme", in="query", required=false, @OA\Schema(type="string")), @OA\Parameter(name="date_debut", in="query", required=false, @OA\Schema(type="string", format="date")), @OA\Parameter(name="date_fin", in="query", required=false, @OA\Schema(type="string", format="date")), @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", default=15)), @OA\Response(response=200, description="Liste récupérée")) */
     public function index(Request $request): JsonResponse
     {
         $query = Teaching::with(['chants', 'points.sousPoints', 'evenements.enseignements']);
@@ -29,6 +30,7 @@ class TeachingController extends Controller
         return response()->json($teachings);
     }
 
+    /** @OA\Post(path="/teachings", tags={"Teachings"}, summary="Créer un enseignement", @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreTeachingRequest")), @OA\Response(response=201, description="Enseignement créé"), @OA\Response(response=422, description="Erreur de validation"), @OA\Response(response=500, description="Erreur serveur")) */
     public function store(StoreTeachingRequest $request): JsonResponse
     {
         DB::beginTransaction();
@@ -98,6 +100,7 @@ class TeachingController extends Controller
         }
     }
 
+    /** @OA\Get(path="/teachings/{id}", tags={"Teachings"}, summary="Détails d'un enseignement", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Détails avec chants, points et événements"), @OA\Response(response=404, description="Non trouvé")) */
     public function show(Teaching $teaching): JsonResponse
     {
         $teaching->load(['chants', 'points.sousPoints', 'evenements.enseignements', 'createdBy']);
@@ -105,6 +108,7 @@ class TeachingController extends Controller
         return response()->json($teaching);
     }
 
+    /** @OA\Delete(path="/teachings/{id}", tags={"Teachings"}, summary="Supprimer un enseignement", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Supprimé"), @OA\Response(response=404, description="Non trouvé")) */
     public function destroy(Teaching $teaching): JsonResponse
     {
         $teaching->delete();

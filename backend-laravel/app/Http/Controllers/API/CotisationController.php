@@ -10,6 +10,16 @@ use Illuminate\Http\Request;
 
 class CotisationController extends Controller
 {
+    /**
+     * @OA\Get(path="/cotisations", tags={"Cotisations"}, summary="Liste toutes les cotisations",
+     *     @OA\Parameter(name="type_cotisation", in="query", required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="mois", in="query", required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="annee", in="query", required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="date_debut", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="date_fin", in="query", required=false, @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", default=15)),
+     *     @OA\Response(response=200, description="Liste récupérée"))
+     */
     public function index(Request $request): JsonResponse
     {
         $query = Cotisation::query();
@@ -32,6 +42,7 @@ class CotisationController extends Controller
         return response()->json($cotisations);
     }
 
+    /** @OA\Post(path="/cotisations", tags={"Cotisations"}, summary="Enregistrer une cotisation", @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreCotisationRequest")), @OA\Response(response=201, description="Cotisation enregistrée"), @OA\Response(response=422, description="Erreur de validation")) */
     public function store(StoreCotisationRequest $request): JsonResponse
     {
         $cotisation = Cotisation::create($request->validated());
@@ -42,11 +53,13 @@ class CotisationController extends Controller
         ], 201);
     }
 
+    /** @OA\Get(path="/cotisations/{id}", tags={"Cotisations"}, summary="Détails d'une cotisation", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Détails"), @OA\Response(response=404, description="Non trouvée")) */
     public function show(Cotisation $cotisation): JsonResponse
     {
         return response()->json($cotisation);
     }
 
+    /** @OA\Put(path="/cotisations/{id}", tags={"Cotisations"}, summary="Modifier une cotisation", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreCotisationRequest")), @OA\Response(response=200, description="Mise à jour"), @OA\Response(response=404, description="Non trouvée")) */
     public function update(StoreCotisationRequest $request, Cotisation $cotisation): JsonResponse
     {
         $cotisation->update($request->validated());
@@ -57,6 +70,7 @@ class CotisationController extends Controller
         ]);
     }
 
+    /** @OA\Delete(path="/cotisations/{id}", tags={"Cotisations"}, summary="Supprimer une cotisation", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Supprimée"), @OA\Response(response=404, description="Non trouvée")) */
     public function destroy(Cotisation $cotisation): JsonResponse
     {
         $cotisation->delete();
@@ -66,6 +80,7 @@ class CotisationController extends Controller
         ]);
     }
 
+    /** @OA\Get(path="/cotisations-statistics", tags={"Cotisations"}, summary="Statistiques des cotisations", @OA\Parameter(name="mois", in="query", required=false, @OA\Schema(type="string")), @OA\Parameter(name="annee", in="query", required=false, @OA\Schema(type="string")), @OA\Response(response=200, description="Statistiques", @OA\JsonContent(@OA\Property(property="total_cotisations", type="integer"), @OA\Property(property="total_cdf", type="number"), @OA\Property(property="total_usd", type="number")))) */
     public function statistics(Request $request): JsonResponse
     {
         $query = Cotisation::query();

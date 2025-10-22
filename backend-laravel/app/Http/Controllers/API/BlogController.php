@@ -10,6 +10,14 @@ use Illuminate\Http\Request;
 
 class BlogController extends Controller
 {
+    /**
+     * @OA\Get(path="/blogs", tags={"Blog"}, summary="Liste tous les articles",
+     *     @OA\Parameter(name="status", in="query", required=false, @OA\Schema(type="string", enum={"draft", "published"})),
+     *     @OA\Parameter(name="category", in="query", required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string")),
+     *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", default=15)),
+     *     @OA\Response(response=200, description="Liste récupérée"))
+     */
     public function index(Request $request): JsonResponse
     {
         $query = Blog::query();
@@ -36,6 +44,7 @@ class BlogController extends Controller
         return response()->json($blogs);
     }
 
+    /** @OA\Post(path="/blogs", tags={"Blog"}, summary="Créer un article", @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreBlogRequest")), @OA\Response(response=201, description="Article créé"), @OA\Response(response=422, description="Erreur de validation")) */
     public function store(StoreBlogRequest $request): JsonResponse
     {
         $blog = Blog::create($request->validated());
@@ -46,6 +55,7 @@ class BlogController extends Controller
         ], 201);
     }
 
+    /** @OA\Get(path="/blogs/{id}", tags={"Blog"}, summary="Détails d'un article", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Détails"), @OA\Response(response=404, description="Non trouvé")) */
     public function show(Blog $blog): JsonResponse
     {
         $blog->increment('views');
@@ -53,6 +63,7 @@ class BlogController extends Controller
         return response()->json($blog);
     }
 
+    /** @OA\Put(path="/blogs/{id}", tags={"Blog"}, summary="Modifier un article", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreBlogRequest")), @OA\Response(response=200, description="Mis à jour"), @OA\Response(response=404, description="Non trouvé")) */
     public function update(StoreBlogRequest $request, Blog $blog): JsonResponse
     {
         $blog->update($request->validated());
@@ -63,6 +74,7 @@ class BlogController extends Controller
         ]);
     }
 
+    /** @OA\Delete(path="/blogs/{id}", tags={"Blog"}, summary="Supprimer un article", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Supprimé"), @OA\Response(response=404, description="Non trouvé")) */
     public function destroy(Blog $blog): JsonResponse
     {
         $blog->delete();
@@ -72,6 +84,7 @@ class BlogController extends Controller
         ]);
     }
 
+    /** @OA\Get(path="/blogs-published", tags={"Blog"}, summary="Articles publiés", @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", default=15)), @OA\Response(response=200, description="Liste des articles publiés")) */
     public function published(Request $request): JsonResponse
     {
         $perPage = $request->get('per_page', 15);
