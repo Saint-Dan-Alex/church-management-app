@@ -14,35 +14,37 @@ class DatabaseSeeder extends Seeder
     {
         // L'ordre est IMPORTANT : Salle doit être créé avant Monitor
         // car Monitor a une relation avec Salle
-        
+
         $this->call([
+
+             AdminSeeder::class,
             // 1. Salles (en premier - pas de dépendances)
             SalleSeeder::class,
-            
+
             // 2. Monitors et Children (créent automatiquement des Users via Observer)
             MonitorSeeder::class,
             ChildSeeder::class,
-            
+
             // 3. Activities (dépend de Monitor pour responsable_id)
             ActivitySeeder::class,
-            
+
             // 4. Modules financiers et opérationnels
             PaymentSeeder::class,
             ExpenseSeeder::class,
             PresenceSeeder::class,
             CotisationSeeder::class,
             SortieSeeder::class,
-            
+
             // 5. Contenus et médias
             BlogSeeder::class,
             VideoSeeder::class,
             PhotoSeeder::class,
-            
+
             // 6. Enseignements et rapports
             TeachingSeeder::class,
             WorshipReportSeeder::class,
             // 7. Admin par défaut
-            AdminSeeder::class,
+
         ]);
 
         // Réaffecter les salles des enfants selon l'âge après insertion
