@@ -13,82 +13,54 @@ class ActivitySeeder extends Seeder
         $monitors = Monitor::all();
         $responsable = $monitors->first();
 
-        $activities = [
-            [
-                'titre' => 'Camp de Vacances 2025',
-                'description' => 'Camp d\'été pour les enfants avec activités spirituelles et récréatives',
-                'type' => 'payante',
-                'date' => '2025-07-15',
-                'heure_debut' => '08:00',
-                'heure_fin' => '17:00',
-                'lieu' => 'Centre Kivuli, Lubumbashi',
-                'responsable' => $responsable?->nom_complet ?? 'Pastor John',
-                'responsable_id' => $responsable?->id,
-                'montant_requis' => 50000,
-                'devise' => 'CDF',
-                'montant_alternatif' => 50,
-                'devise_alternative' => 'USD',
-                'statut' => 'planifiee',
-            ],
-            [
-                'titre' => 'Sortie Piscine',
-                'description' => 'Journée détente à la piscine pour les adolescents',
-                'type' => 'payante',
-                'date' => '2025-06-20',
-                'heure_debut' => '10:00',
-                'heure_fin' => '16:00',
-                'lieu' => 'Piscine Olympique, Lubumbashi',
-                'responsable' => $responsable?->nom_complet ?? 'Marie TSHISEKEDI',
-                'responsable_id' => $responsable?->id,
-                'montant_requis' => 20000,
-                'devise' => 'CDF',
-                'montant_alternatif' => 20,
-                'devise_alternative' => 'USD',
-                'statut' => 'planifiee',
-            ],
-            [
-                'titre' => 'Journée de Prière',
-                'description' => 'Journée de jeûne et prière pour les enfants',
-                'type' => 'gratuite',
-                'date' => '2025-05-10',
-                'heure_debut' => '09:00',
-                'heure_fin' => '15:00',
-                'lieu' => 'Église Principale',
-                'responsable' => $responsable?->nom_complet ?? 'Paul MUKENDI',
-                'responsable_id' => $responsable?->id,
-                'statut' => 'terminee',
-            ],
-            [
-                'titre' => 'Fête de Noël',
-                'description' => 'Célébration de Noël avec spectacles et cadeaux',
-                'type' => 'gratuite',
-                'date' => '2024-12-25',
-                'heure_debut' => '14:00',
-                'heure_fin' => '18:00',
-                'lieu' => 'Salle des Fêtes',
-                'responsable' => $responsable?->nom_complet ?? 'David KASONGO',
-                'responsable_id' => $responsable?->id,
-                'statut' => 'terminee',
-            ],
-            [
-                'titre' => 'Séminaire Jeunesse',
-                'description' => 'Formation sur le leadership chrétien pour les jeunes',
-                'type' => 'payante',
-                'date' => '2025-08-05',
-                'heure_debut' => '08:30',
-                'heure_fin' => '17:30',
-                'lieu' => 'Centre de Conférence',
-                'responsable' => $responsable?->nom_complet ?? 'Grace MULAMBA',
-                'responsable_id' => $responsable?->id,
-                'montant_requis' => 30000,
-                'devise' => 'CDF',
-                'montant_alternatif' => 30,
-                'devise_alternative' => 'USD',
-                'statut' => 'planifiee',
-            ],
+        $titles = [
+            "Journée d’évaluation et de prière des serviteurs/moniteurs",
+            "Retraite avec la jeunesse : La puissance de la résurrection",
+            "Descente évangélique entre moniteurs et enfants ouvriers",
+            "Journée de la femme avec les jeunes filles, les mamans et la jeunesse",
+            "Retraite des serviteurs avec les ouvriers cadets et ados",
+            "Célébration de la Pâques dans les différentes salles",
+            "Nuit de prière avec les ados partants",
+            "Dernier culte avec les ados partants",
+            "Culte de célébration de l’anniversaire de l’Arche",
+            "Présentation des ados partants dans la grande salle",
+            "Excursion des serviteurs",
+            "Descente évangélique",
+            "Journée d’adoration des enfants et adolescents (ADORA 2025)",
+            "Convention missionnaire de l’église Arche/Masina",
+            "Journées de prière avec les enfants et ados",
+            "Nuit de prière avec les ados",
+            "Dédicace de l’année scolaire",
+            "Descente évangélique avec les ouvriers",
+            "Retraite des serviteurs",
+            "Camp biblique YEKOLA",
+            "Célébration de la Nativité de Jésus-Christ",
         ];
 
-        foreach ($activities as $activity) {
+        $baseDate = now()->startOfYear()->addMonth(1); // Février de l'année courante
+        $rows = [];
+        foreach ($titles as $idx => $t) {
+            $d = (clone $baseDate)->addDays($idx * 7); // espacées d'une semaine
+            $payante = str_contains(mb_strtolower($t), 'camp') || str_contains(mb_strtolower($t), 'excursion') || str_contains(mb_strtolower($t), 'convention');
+            $rows[] = [
+                'titre' => $t,
+                'description' => $t,
+                'type' => $payante ? 'payante' : 'gratuite',
+                'date' => $d->format('Y-m-d'),
+                'heure_debut' => '09:00',
+                'heure_fin' => '16:00',
+                'lieu' => 'Église Principale',
+                'responsable' => $responsable?->nom_complet ?? 'Comité Écodim',
+                'responsable_id' => $responsable?->id,
+                'montant_requis' => $payante ? 30000 : null,
+                'devise' => $payante ? 'CDF' : null,
+                'montant_alternatif' => $payante ? 30 : null,
+                'devise_alternative' => $payante ? 'USD' : null,
+                'statut' => 'planifiee',
+            ];
+        }
+
+        foreach ($rows as $activity) {
             Activity::create($activity);
         }
     }

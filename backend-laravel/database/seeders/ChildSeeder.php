@@ -3,154 +3,76 @@
 namespace Database\Seeders;
 
 use App\Models\Child;
+use App\Models\Salle;
 use Illuminate\Database\Seeder;
+use Faker\Factory as Faker;
 
 class ChildSeeder extends Seeder
 {
     public function run(): void
     {
-        $children = [
-            [
-                'nom' => 'MWANZA',
-                'post_nom' => 'KILOLO',
-                'prenom' => 'Emmanuel',
-                'date_naissance' => '2015-03-10',
-                'genre' => 'Masculin',
-                'etat_civil' => 'Célibataire',
-                'email' => 'emmanuel.mwanza@parent.cd',
-                'telephone' => '+243900001001',
-                'adresse' => 'Lubumbashi, RDC',
-                'nom_pere' => 'MWANZA Jean',
-                'nom_mere' => 'KILOLO Marie',
-                'telephone_parent1' => '+243900001000',
-                'telephone_parent2' => '+243900001002',
-                'email_parents' => 'parents.mwanza@email.cd',
-                'contact_urgence' => '+243900001003',
-                'lien_contact_urgence' => 'Oncle',
-                'date_conversion' => '2023-06-15',
-                'date_bapteme' => null,
-                'baptise_saint_esprit' => 'Non',
-                'vie_donnee_a_jesus' => 'Oui',
-                'est_ouvrier' => false,
-                'date_adhesion' => '2020-01-15',
-                'allergies_connues' => false,
-                'maladies' => null,
-                'autorisation_soins' => true,
-            ],
-            [
-                'nom' => 'LUBOYA',
-                'post_nom' => 'MONGA',
-                'prenom' => 'Sarah',
-                'date_naissance' => '2014-07-22',
-                'genre' => 'Féminin',
-                'etat_civil' => 'Célibataire',
-                'email' => 'sarah.luboya@parent.cd',
-                'telephone' => '+243900002001',
-                'adresse' => 'Kinshasa, RDC',
-                'nom_pere' => 'LUBOYA Paul',
-                'nom_mere' => 'MONGA Grace',
-                'telephone_parent1' => '+243900002000',
-                'telephone_parent2' => '+243900002002',
-                'email_parents' => 'parents.luboya@email.cd',
-                'contact_urgence' => '+243900002003',
-                'lien_contact_urgence' => 'Tante',
-                'date_conversion' => '2022-12-25',
-                'date_bapteme' => '2024-01-07',
-                'baptise_saint_esprit' => 'Oui',
-                'vie_donnee_a_jesus' => 'Oui',
-                'est_ouvrier' => true,
-                'commission_actuelle' => 'Louange',
-                'date_adhesion' => '2019-09-10',
-                'allergies_connues' => true,
-                'allergies_details' => 'Allergie aux arachides',
-                'maladies' => 'Asthme léger',
-                'traitement' => 'Inhalateur en cas de crise',
-                'autorisation_soins' => true,
-            ],
-            [
-                'nom' => 'NKULU',
-                'post_nom' => 'TSHIBANGU',
-                'prenom' => 'Daniel',
-                'date_naissance' => '2016-11-05',
-                'genre' => 'Masculin',
-                'etat_civil' => 'Célibataire',
-                'email' => 'daniel.nkulu@parent.cd',
-                'telephone' => '+243900003001',
-                'adresse' => 'Kolwezi, RDC',
-                'nom_pere' => 'NKULU David',
-                'nom_mere' => 'TSHIBANGU Rachel',
-                'telephone_parent1' => '+243900003000',
-                'telephone_parent2' => '+243900003002',
-                'email_parents' => 'parents.nkulu@email.cd',
-                'contact_urgence' => '+243900003000',
-                'lien_contact_urgence' => 'Père',
-                'date_conversion' => null,
-                'date_bapteme' => null,
-                'baptise_saint_esprit' => 'Non',
-                'vie_donnee_a_jesus' => 'Non',
-                'est_ouvrier' => false,
-                'date_adhesion' => '2021-05-20',
-                'allergies_connues' => false,
-                'autorisation_soins' => true,
-            ],
-            [
-                'nom' => 'KALALA',
-                'post_nom' => 'ILUNGA',
-                'prenom' => 'Ruth',
-                'date_naissance' => '2013-02-14',
-                'genre' => 'Féminin',
-                'etat_civil' => 'Célibataire',
-                'email' => 'ruth.kalala@parent.cd',
-                'telephone' => '+243900004001',
-                'adresse' => 'Likasi, RDC',
-                'nom_pere' => 'KALALA Joseph',
-                'nom_mere' => 'ILUNGA Esther',
-                'telephone_parent1' => '+243900004000',
-                'telephone_parent2' => '+243900004002',
-                'email_parents' => 'parents.kalala@email.cd',
-                'contact_urgence' => '+243900004003',
-                'lien_contact_urgence' => 'Grand-mère',
-                'date_conversion' => '2021-08-15',
-                'date_bapteme' => '2023-04-09',
-                'baptise_saint_esprit' => 'Non',
-                'vie_donnee_a_jesus' => 'Oui',
-                'est_ouvrier' => true,
-                'commission_actuelle' => 'Intercession',
-                'commission_souhaitee' => 'Évangélisation',
-                'date_adhesion' => '2018-03-12',
-                'allergies_connues' => false,
-                'autorisation_soins' => true,
-            ],
-            [
-                'nom' => 'MUJINGA',
-                'post_nom' => 'KABWE',
-                'prenom' => 'Samuel',
-                'date_naissance' => '2017-09-28',
-                'genre' => 'Masculin',
-                'etat_civil' => 'Célibataire',
-                'email' => 'samuel.mujinga@parent.cd',
-                'telephone' => '+243900005001',
-                'adresse' => 'Lubumbashi, RDC',
-                'nom_pere' => 'MUJINGA Samuel Sr',
-                'nom_mere' => 'KABWE Deborah',
-                'telephone_parent1' => '+243900005000',
-                'telephone_parent2' => '+243900005002',
-                'email_parents' => 'parents.mujinga@email.cd',
-                'contact_urgence' => '+243900005000',
-                'lien_contact_urgence' => 'Père',
-                'date_conversion' => '2024-03-31',
-                'date_bapteme' => null,
-                'baptise_saint_esprit' => 'Non',
-                'vie_donnee_a_jesus' => 'Oui',
-                'est_ouvrier' => false,
-                'date_adhesion' => '2022-01-08',
-                'allergies_connues' => false,
-                'autorisation_soins' => true,
-            ],
-        ];
+        $faker = Faker::create('fr_FR');
 
-        foreach ($children as $child) {
-            Child::create($child);
+        $genres = ['Masculin', 'Féminin'];
+        $bse = ['Oui', 'Non', 'NSP'];
+        $vieJesus = ['Oui', 'Non', 'Je ne sais pas'];
+
+        $sallesByName = Salle::all()->keyBy('nom');
+
+        for ($i = 0; $i < 2000; $i++) {
+            $genre = $faker->randomElement($genres);
+            $nom = strtoupper($faker->lastName());
+            $postNom = strtoupper($faker->lastName());
+            $prenom = $faker->firstName($genre === 'Féminin' ? 'female' : 'male');
+
+            $dateNaissance = $faker->dateTimeBetween('-19 years', '-3 years');
+            $age = (int) $dateNaissance->diff(new \DateTime())->y;
+
+            $salleNom = null; $salleId = null;
+            if ($age >= 3 && $age <= 5) { $salleNom = 'Jardin'; }
+            elseif ($age >= 6 && $age <= 7) { $salleNom = 'Ainés'; }
+            elseif ($age >= 8 && $age <= 9) { $salleNom = 'Juniors'; }
+            elseif ($age >= 10 && $age <= 13) { $salleNom = 'Cadets'; }
+            elseif ($age >= 14 && $age <= 18) { $salleNom = 'Adolescents'; }
+            if ($age > 18) { $salleNom = 'ADO PARTI'; }
+
+            if ($salleNom && $sallesByName->has($salleNom)) {
+                $salleId = $sallesByName[$salleNom]->id;
+            }
+
+            Child::create([
+                'nom' => $nom,
+                'post_nom' => $postNom,
+                'prenom' => $prenom,
+                'date_naissance' => $dateNaissance->format('Y-m-d'),
+                'genre' => $genre,
+                'etat_civil' => 'Célibataire',
+                'adresse' => $faker->city() . ', RDC',
+                'telephone' => '+2439' . $faker->numberBetween(100000000, 999999999),
+                'email' => $faker->unique()->safeEmail(),
+                'nom_pere' => strtoupper($faker->lastName()) . ' ' . $faker->firstNameMale(),
+                'nom_mere' => strtoupper($faker->lastName()) . ' ' . $faker->firstNameFemale(),
+                'telephone_parent1' => '+2439' . $faker->numberBetween(100000000, 999999999),
+                'telephone_parent2' => $faker->boolean(50) ? '+2439' . $faker->numberBetween(100000000, 999999999) : null,
+                'email_parents' => $faker->safeEmail(),
+                'contact_urgence' => '+2439' . $faker->numberBetween(100000000, 999999999),
+                'lien_contact_urgence' => $faker->randomElement(['Père','Mère','Oncle','Tante','Grand-parent']),
+                'date_conversion' => $faker->optional()->date('Y-m-d'),
+                'date_bapteme' => $faker->optional()->date('Y-m-d'),
+                'baptise_saint_esprit' => $faker->randomElement($bse),
+                'vie_donnee_a_jesus' => $faker->randomElement($vieJesus),
+                'est_ouvrier' => $faker->boolean(15),
+                'commission_actuelle' => null,
+                'commission_souhaitee' => null,
+                'date_adhesion' => $faker->optional()->date('Y-m-d'),
+                'allergies_connues' => $faker->boolean(10),
+                'allergies_details' => null,
+                'maladies' => null,
+                'traitement' => null,
+                'autorisation_soins' => $faker->boolean(90),
+                'salle_id' => $age > 18 ? null : $salleId,
+                'salle_nom' => $salleNom,
+            ]);
         }
     }
 }
