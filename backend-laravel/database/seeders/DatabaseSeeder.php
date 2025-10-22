@@ -41,6 +41,8 @@ class DatabaseSeeder extends Seeder
             // 6. Enseignements et rapports
             TeachingSeeder::class,
             WorshipReportSeeder::class,
+            // 7. Admin par défaut
+            AdminSeeder::class,
         ]);
 
         // Réaffecter les salles des enfants selon l'âge après insertion
