@@ -69,4 +69,12 @@ class Monitor extends Model
     {
         return $this->hasMany(Presence::class, 'moniteur_id');
     }
+
+    /**
+     * Obtenir le User associé au moniteur
+     */
+    public function user()
+    {
+        return $this->morphOne(User::class, 'userable', 'user_type', 'user_id');
+    }
 }

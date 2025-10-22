@@ -74,4 +74,12 @@ class Child extends Model
     {
         return $this->morphMany(ActivityParticipant::class, 'participant');
     }
+
+    /**
+     * Obtenir le User associé à l'enfant
+     */
+    public function user()
+    {
+        return $this->morphOne(User::class, 'userable', 'user_type', 'user_id');
+    }
 }

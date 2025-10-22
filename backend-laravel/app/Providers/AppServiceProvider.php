@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Monitor;
+use App\Models\Child;
+use App\Observers\MonitorObserver;
+use App\Observers\ChildObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Enregistrer les observers pour créer automatiquement des Users
+        Monitor::observe(MonitorObserver::class);
+        Child::observe(ChildObserver::class);
     }
 }
