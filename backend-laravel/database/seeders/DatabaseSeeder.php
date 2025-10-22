@@ -2,24 +2,52 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // L'ordre est IMPORTANT : Salle doit être créé avant Monitor
+        // car Monitor a une relation avec Salle
+        
+        $this->call([
+            // 1. Salles (en premier - pas de dépendances)
+            SalleSeeder::class,
+            
+            // 2. Monitors et Children (créent automatiquement des Users via Observer)
+            MonitorSeeder::class,
+            ChildSeeder::class,
+            
+            // 3. Activities (dépend de Monitor pour responsable_id)
+            ActivitySeeder::class,
+            
+            // 4. Modules financiers et opérationnels
+            PaymentSeeder::class,
+            ExpenseSeeder::class,
+            PresenceSeeder::class,
+            CotisationSeeder::class,
+            SortieSeeder::class,
+            
+            // 5. Contenus et médias
+            BlogSeeder::class,
+            VideoSeeder::class,
+            PhotoSeeder::class,
+            
+            // 6. Enseignements et rapports
+            TeachingSeeder::class,
+            WorshipReportSeeder::class,
         ]);
+        
+        $this->command->info('✅ Base de données peuplée avec succès !');
+        $this->command->info('📊 Résumé :');
+        $this->command->info('   - 5 Salles créées');
+        $this->command->info('   - 5 Moniteurs créés (+ 5 Users auto)');
+        $this->command->info('   - 5 Enfants créés (+ 5 Users auto)');
+        $this->command->info('   - 5 Activités créées');
+        $this->command->info('   - Données de test pour tous les modules');
     }
 }

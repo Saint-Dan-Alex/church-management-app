@@ -68,7 +68,8 @@ return new class extends Migration
             
             $table->index('email');
             $table->index('telephone');
-            $table->index(['nom', 'prenom']);
+            // Index composite avec longueur limitée pour MySQL utf8mb4
+            // $table->index(['nom', 'prenom']); // Removed to avoid index length error
         });
     }
 

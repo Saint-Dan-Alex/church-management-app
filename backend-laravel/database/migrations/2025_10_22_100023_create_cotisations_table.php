@@ -30,7 +30,8 @@ return new class extends Migration
             
             $table->index('date_cotisation');
             $table->index('type_cotisation');
-            $table->index(['mois', 'annee']);
+            // Index composite removed to avoid MySQL utf8mb4 length limit
+            // $table->index(['mois', 'annee']);
         });
     }
 
