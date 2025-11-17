@@ -17,7 +17,8 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
 
-             AdminSeeder::class,
+            AdminSeeder::class,
+            RolesAndPermissionsSeeder::class,
             // 1. Salles (en premier - pas de dépendances)
             SalleSeeder::class,
 

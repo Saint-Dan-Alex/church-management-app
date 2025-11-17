@@ -234,7 +234,7 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                   <Input
                     id="dateConversion"
                     type="date"
-                    value={formData.dateConversion as string}
+                    value={(formData.dateConversion as string) || ""}
                     onChange={(e) => setFormData({ ...formData, dateConversion: e.target.value })}
                   />
                 </div>
@@ -243,7 +243,7 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                   <Input
                     id="dateBapteme"
                     type="date"
-                    value={formData.dateBapteme as string}
+                    value={(formData.dateBapteme as string) || ""}
                     onChange={(e) => setFormData({ ...formData, dateBapteme: e.target.value })}
                   />
                 </div>
@@ -291,7 +291,7 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                 <Input
                   id="dateAdhesion"
                   type="date"
-                  value={formData.dateAdhesion as string}
+                  value={(formData.dateAdhesion as string) || ""}
                   onChange={(e) => setFormData({ ...formData, dateAdhesion: e.target.value })}
                   required
                 />

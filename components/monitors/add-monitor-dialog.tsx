@@ -21,6 +21,7 @@ import { Upload, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import type { Monitor } from "@/types/monitor"
 import { monitorsService } from "@/lib/services/monitors.service"
+import { sallesService } from "@/lib/services/salles.service"
 
 // Types
 type Salle = {
@@ -58,17 +59,15 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
   const [error, setError] = useState<string | null>(null)
   const [salles, setSalles] = useState<Salle[]>([])
 
-  // Charger les salles disponibles
+  // Charger les salles disponibles depuis l'API Laravel
   useEffect(() => {
     const fetchSalles = async () => {
       try {
-        const response = await fetch('/api/salles')
-        if (response.ok) {
-          const data = await response.json()
-          setSalles(data)
-        }
+        const data = await sallesService.getAll()
+        setSalles(data)
       } catch (err) {
         console.error('Erreur lors du chargement des salles:', err)
+        toast.error("Impossible de charger les salles")
       }
     }
 
@@ -388,7 +387,7 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
                       <SelectItem value="Célibataire">Célibataire</SelectItem>
                       <SelectItem value="Marié(e)">Marié(e)</SelectItem>
                       <SelectItem value="Divorcé(e)">Divorcé(e)</SelectItem>
-                      <SelectItem value="Veuf/Veuve">Veuf/Veuve</SelectItem>
+                      <SelectItem value="Veuf(ve)">Veuf(ve)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
