@@ -16,6 +16,7 @@ use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\PresenceController;
 use App\Http\Controllers\API\CotisationController;
 use App\Http\Controllers\API\SortieController;
+use App\Http\Controllers\API\RoleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,6 +79,9 @@ Route::prefix('v1')->group(function () {
     // Sorties Routes
     Route::apiResource('sorties', SortieController::class);
     Route::get('sorties-statistics', [SortieController::class, 'statistics']);
+
+    // Roles (Spatie Permission)
+    Route::get('roles', [RoleController::class, 'index']);
 });
 
 // Health check route

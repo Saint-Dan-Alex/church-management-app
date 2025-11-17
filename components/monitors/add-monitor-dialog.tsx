@@ -22,11 +22,17 @@ import { toast } from "sonner"
 import type { Monitor } from "@/types/monitor"
 import { monitorsService } from "@/lib/services/monitors.service"
 import { sallesService } from "@/lib/services/salles.service"
+import { rolesService } from "@/lib/services/roles.service"
 
 // Types
 type Salle = {
   id: string
   nom: string
+}
+
+type Role = {
+  id: number
+  name: string
 }
 
 type AddMonitorDialogProps = {
@@ -58,13 +64,22 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [salles, setSalles] = useState<Salle[]>([])
+  const [roles, setRoles] = useState<Role[]>([])
 
   // Charger les salles disponibles depuis l'API Laravel
   useEffect(() => {
     const fetchSalles = async () => {
       try {
-        const data = await sallesService.getAll()
-        setSalles(data)
+        const response = await sallesService.getAll()
+
+        // L'API renvoie soit un tableau simple, soit un objet paginé avec .data
+        const sallesArray = Array.isArray(response)
+          ? response
+          : Array.isArray((response as any).data)
+            ? (response as any).data
+            : []
+
+        setSalles(sallesArray)
       } catch (err) {
         console.error('Erreur lors du chargement des salles:', err)
         toast.error("Impossible de charger les salles")
@@ -73,6 +88,23 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
 
     if (open) {
       fetchSalles()
+    }
+  }, [open])
+
+  // Charger les rôles disponibles depuis l'API Laravel
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const data = await rolesService.getAll()
+        setRoles(data)
+      } catch (err) {
+        console.error('Erreur lors du chargement des rôles:', err)
+        toast.error("Impossible de charger les rôles")
+      }
+    }
+
+    if (open) {
+      fetchRoles()
     }
   }, [open])
 
@@ -429,15 +461,17 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
                     onValueChange={(value) =>
                       setFormData({ ...formData, roleActuel: value as any })
                     }
-                    disabled={isLoading}
+                    disabled={isLoading || roles.length === 0}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner un rôle" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="responsable">Responsable</SelectItem>
-                      <SelectItem value="adjoint">Adjoint</SelectItem>
-                      <SelectItem value="membre">Membre</SelectItem>
+                      {roles.map((role) => (
+                        <SelectItem key={role.id} value={role.name}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

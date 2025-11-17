@@ -17,6 +17,7 @@ import { paymentsService } from './payments.service';
 import { presencesService } from './presences.service';
 import { cotisationsService } from './cotisations.service';
 import { sortiesService } from './sorties.service';
+import { rolesService } from './roles.service';
 
 // Exports nommés
 export {
@@ -34,6 +35,7 @@ export {
   presencesService,
   cotisationsService,
   sortiesService,
+  rolesService,
 };
 
 // Export groupé pratique
