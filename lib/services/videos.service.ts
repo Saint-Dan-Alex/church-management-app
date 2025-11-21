@@ -1,19 +1,5 @@
 import { api } from '@/lib/utils/api';
-
-export interface Video {
-  id: string;
-  titre: string;
-  description?: string | null;
-  url: string;
-  type: 'youtube' | 'local';
-  categorie: string;
-  duree?: string | null;
-  vues: number;
-  featured: boolean;
-  thumbnail?: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import type { Video } from '@/lib/types/api';
 
 export const videosService = {
   async getAll(params?: { categorie?: string }): Promise<Video[]> {

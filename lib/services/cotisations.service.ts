@@ -1,21 +1,5 @@
 import { api } from '@/lib/utils/api';
-import type { Statistics } from '@/lib/types/api';
-
-export interface Cotisation {
-  id: string;
-  membre_nom: string;
-  type_cotisation: 'mensuelle' | 'annuelle' | 'speciale' | 'autre';
-  montant: number;
-  devise: 'CDF' | 'USD';
-  date_cotisation: string;
-  mois: string;
-  annee: string;
-  enregistre_par: string;
-  enregistre_par_nom: string;
-  remarque?: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import type { Cotisation, Statistics } from '@/lib/types/api';
 
 export const cotisationsService = {
   async getAll(params?: { type_cotisation?: string; annee?: string }): Promise<Cotisation[]> {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,92 +8,13 @@ import { Button } from "@/components/ui/button"
 import { Calendar, Clock, MapPin, Users, MoreVertical, Edit, Trash, UserPlus, QrCode, Eye, DollarSign } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { EditActivityDialog } from "./edit-activity-dialog"
+import { activitiesService, type Activity } from "@/lib/services/activities.service"
+import { toast } from "sonner"
 
-const activities = [
-  {
-    id: "1",
-    title: "École du Dimanche",
-    description: "Enseignement biblique pour les enfants",
-    date: "2024-10-20",
-    time: "09:00",
-    duration: "1h",
-    location: "Salle Enfants",
-    category: "Enfants",
-    type: "gratuite" as const,
-    participants: 56,
-    maxParticipants: 80,
-    status: "upcoming",
-    organizer: "Sophie Bernard",
-  },
-  {
-    id: "2",
-    title: "Réunion de Prière",
-    description: "Temps de prière collective",
-    date: "2024-10-18",
-    time: "19:00",
-    duration: "1h30",
-    location: "Salle Principale",
-    category: "Prière",
-    type: "gratuite" as const,
-    participants: 45,
-    maxParticipants: 100,
-    status: "upcoming",
-    organizer: "Jean Martin",
-  },
-  {
-    id: "3",
-    title: "Groupe de Jeunesse",
-    description: "Rencontre et partage pour les jeunes",
-    date: "2024-10-19",
-    time: "18:30",
-    duration: "2h",
-    location: "Salle Jeunesse",
-    category: "Jeunesse",
-    type: "payante" as const,
-    montantRequis: 2000,
-    devise: "CDF" as const,
-    participants: 34,
-    maxParticipants: 50,
-    status: "upcoming",
-    organizer: "Pierre Dubois",
-  },
-  {
-    id: "4",
-    title: "Atelier Louange",
-    description: "Pratique et apprentissage de chants",
-    date: "2024-10-21",
-    time: "17:00",
-    duration: "2h",
-    location: "Salle Principale",
-    category: "Louange",
-    type: "gratuite" as const,
-    participants: 22,
-    maxParticipants: 30,
-    status: "upcoming",
-    organizer: "Marie Dupont",
-  },
-  {
-    id: "5",
-    title: "Sortie au Zoo",
-    description: "Visite du zoo de Kinshasa avec les enfants",
-    date: "2024-10-25",
-    time: "08:00",
-    duration: "8h",
-    location: "Zoo de Kinshasa",
-    category: "Sortie",
-    type: "payante" as const,
-    montantRequis: 10000,
-    devise: "CDF" as const,
-    montantAlternatif: 6,
-    deviseAlternative: "USD" as const,
-    participants: 15,
-    maxParticipants: 30,
-    status: "upcoming",
-    organizer: "Paul NGEA",
-  },
-]
-
-const categoryColors: Record<string, string> = {
+interface ActivitiesListProps {
+  searchQuery?: string
+  type?: string
+  status?: string
   Enfants: "bg-blue-500",
   Prière: "bg-purple-500",
   Jeunesse: "bg-green-500",

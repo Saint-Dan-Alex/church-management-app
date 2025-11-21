@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -9,93 +9,42 @@ import { MoreVertical, Edit, Trash, Eye, Calendar } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { EditChildDialog } from "@/components/children/edit-child-dialog"
-
-const children = [
-  {
-    id: "1",
-    firstName: "Lucas",
-    lastName: "Martin",
-    age: 8,
-    birthDate: "2016-03-15",
-    parentName: "Jean Martin",
-    parentPhone: "+33 6 23 45 67 89",
-    parentEmail: "jean.martin@email.com",
-    group: "8-10 ans",
-    allergies: "Aucune",
-    medicalNotes: "",
-    photo: null,
-    status: "active",
-  },
-  {
-    id: "2",
-    firstName: "Emma",
-    lastName: "Dupont",
-    age: 6,
-    birthDate: "2018-07-22",
-    parentName: "Marie Dupont",
-    parentPhone: "+33 6 12 34 56 78",
-    parentEmail: "marie.dupont@email.com",
-    group: "5-7 ans",
-    allergies: "Arachides",
-    medicalNotes: "Asthme léger",
-    photo: null,
-    status: "active",
-  },
-  {
-    id: "3",
-    firstName: "Noah",
-    lastName: "Bernard",
-    age: 10,
-    birthDate: "2014-11-08",
-    parentName: "Sophie Bernard",
-    parentPhone: "+33 6 34 56 78 90",
-    parentEmail: "sophie.bernard@email.com",
-    group: "8-10 ans",
-    allergies: "Lactose",
-    medicalNotes: "",
-    photo: null,
-    status: "active",
-  },
-  {
-    id: "4",
-    firstName: "Léa",
-    lastName: "Dubois",
-    age: 5,
-    birthDate: "2019-02-14",
-    parentName: "Pierre Dubois",
-    parentPhone: "+33 6 45 67 89 01",
-    parentEmail: "pierre.dubois@email.com",
-    group: "3-5 ans",
-    allergies: "Aucune",
-    medicalNotes: "",
-    photo: null,
-    status: "active",
-  },
-]
+import { childrenService, type Child } from "@/lib/services/children.service"
+import { toast } from "sonner"
 
 interface ChildrenListProps {
-  searchQuery: string
+  searchQuery?: string
+  group?: string
   onSelectChild: (childId: string) => void
 }
 
-export function ChildrenList({ searchQuery, onSelectChild }: ChildrenListProps) {
+export function ChildrenList({ searchQuery = "", group, onSelectChild }: ChildrenListProps) {
   const router = useRouter()
-  const [editingChild, setEditingChild] = useState<any | null>(null)
+  const [children, setChildren] = useState<Child[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [editingChild, setEditingChild] = useState<Child | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
-  const handleEdit = (child: any) => {
-    setEditingChild(child)
-    setIsEditDialogOpen(true)
-  }
-
-  const handleDelete = (childId: string, childName: string) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${childName} ?`)) {
-      console.log("Suppression de l'enfant:", childId)
-      // Logique de suppression ici
+  useEffect(() => {
+    const fetchChildren = async () => {
+      try {
+        setLoading(true)
+        const data = await childrenService.getAll({ group })
+        setChildren(data)
+      } catch (err) {
+        setError("Erreur lors du chargement des enfants")
+        console.error("Erreur:", err)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
-  const filteredChildren = children.filter(
-    (child) =>
+
+    fetchChildren()
+  }, [group])
+
+  const filteredChildren = children.filter((child) => {
+    const matchesSearch =
       child.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       child.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       child.parentName.toLowerCase().includes(searchQuery.toLowerCase()) ||

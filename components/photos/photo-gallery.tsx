@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,37 +18,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-// Données mockées
-const mockPhotos = [
-  {
-    id: "1",
-    titre: "Culte du dimanche",
-    description: "Photo du culte du 15 janvier 2025",
-    url: "/placeholder.svg",
-    album: "Cultes",
-    date: "2025-01-15",
-    auteur: "Admin",
-  },
-  {
-    id: "2",
-    titre: "Camp de vacances",
-    description: "Groupe d'enfants au camp",
-    url: "/placeholder.svg",
-    album: "Camps",
-    date: "2024-12-20",
-    auteur: "Marie LENGE",
-  },
-  {
-    id: "3",
-    titre: "Réunion des moniteurs",
-    description: "Formation mensuelle",
-    url: "/placeholder.svg",
-    album: "Formations",
-    date: "2025-01-10",
-    auteur: "Paul NGEA",
-  },
-]
+import { photosService, type Photo } from "@/lib/services/photos.service"
+import { toast } from "sonner"
 
 interface PhotoGalleryProps {
   searchQuery?: string
@@ -55,7 +27,28 @@ interface PhotoGalleryProps {
 }
 
 export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
-  const filteredPhotos = mockPhotos.filter((photo) => {
+  const [photos, setPhotos] = useState<Photo[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      try {
+        setLoading(true)
+        const data = await photosService.getAll({ album })
+        setPhotos(data)
+      } catch (err) {
+        setError("Erreur lors du chargement des photos")
+        console.error("Erreur:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPhotos()
+  }, [album])
+
+  const filteredPhotos = photos.filter((photo) => {
     const matchesSearch =
       photo.titre.toLowerCase().includes(searchQuery.toLowerCase()) ||
       photo.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -65,20 +58,44 @@ export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
     return matchesSearch && matchesAlbum
   })
 
-  const handleView = (photo: typeof mockPhotos[0]) => {
+  const handleView = (photo: Photo) => {
     alert(`👁️ Affichage de: "${photo.titre}"\n\n(Ouvrir dans une modal ou nouvelle page)`)
   }
 
-  const handleDownload = (photo: typeof mockPhotos[0]) => {
+  const handleDownload = (photo: Photo) => {
     alert(`📥 Téléchargement de: "${photo.titre}"\n\n✅ Image téléchargée !`)
     console.log("Téléchargement:", photo.url)
   }
 
-  const handleDelete = (photo: typeof mockPhotos[0]) => {
+  const handleDelete = async (photo: Photo) => {
     if (confirm(`Êtes-vous sûr de vouloir supprimer "${photo.titre}" ?`)) {
-      alert(`🗑️ Photo "${photo.titre}" supprimée avec succès !`)
-      console.log("Photo supprimée:", photo.id)
+      try {
+        await photosService.delete(photo.id)
+        setPhotos(photos.filter(p => p.id !== photo.id))
+        toast.success(`Photo "${photo.titre}" supprimée avec succès`)
+      } catch (err) {
+        toast.error("Erreur lors de la suppression")
+        console.error("Erreur:", err)
+      }
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="col-span-full text-center py-12">
+        <ImageIcon className="h-12 w-12 mx-auto text-gray-400 mb-3 animate-pulse" />
+        <p className="text-gray-500">Chargement des photos...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="col-span-full text-center py-12">
+        <ImageIcon className="h-12 w-12 mx-auto text-red-400 mb-3" />
+        <p className="text-red-500">{error}</p>
+      </div>
+    )
   }
 
   return (

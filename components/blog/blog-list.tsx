@@ -1,231 +1,176 @@
 "use client"
 
-import { useState } from "react"
-import { Card } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, User, Eye, MoreVertical, Edit, Trash, Share2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ViewBlogDialog } from "./view-blog-dialog"
 import { EditBlogDialog } from "./edit-blog-dialog"
-
-const blogPosts = [
-  {
-    id: "1",
-    title: "La Puissance de la Prière - Gloire à Dieu",
-    excerpt:
-      "Découvrez comment la prière transforme nos vies et renforce notre relation avec Dieu. Un témoignage inspirant de foi et de persévérance.",
-    content: `La prière est un pilier fondamental de notre vie spirituelle. Elle nous permet de communiquer directement avec Dieu, de Lui présenter nos besoins, nos joies, et nos peines.
-
-Dans cet article, nous explorons comment la prière peut transformer nos vies de manière profonde et durable. La Bible nous dit dans Philippiens 4:6-7 : "Ne vous inquiétez de rien; mais en toute chose faites connaître vos besoins à Dieu par des prières et des supplications, avec des actions de grâces."
-
-La prière n'est pas seulement une demande, c'est une relation. C'est un moment privilégié où nous pouvons nous rapprocher de Dieu, Lui exprimer notre reconnaissance et notre amour.
-
-Que Dieu bénisse votre vie de prière et qu'Il vous accorde la persévérance de prier sans cesse !`,
-    author: "Pasteur Jean Martin",
-    date: "2024-10-15",
-    category: "Enseignement",
-    status: "published",
-    views: 245,
-    image: "/person-praying.png",
-  },
-  {
-    id: "2",
-    title: "Témoignage: Comment Dieu a Changé Ma Vie",
-    excerpt:
-      "Un témoignage puissant de transformation et de grâce divine. Marie partage son parcours de foi et les miracles qu'elle a vécus.",
-    content: `Je m'appelle Marie et je veux partager avec vous comment Dieu a complètement transformé ma vie.
-
-Il y a quelques années, je traversais une période très difficile. J'étais perdue, sans espoir, et je ne savais pas vers qui me tourner. C'est à ce moment-là que j'ai découvert l'amour de Dieu.
-
-Un dimanche matin, j'ai décidé d'entrer dans une église. Ce que j'y ai trouvé a changé ma vie à jamais. J'ai rencontré des gens qui m'ont accueillie avec amour, sans jugement. J'ai entendu parler de Jésus-Christ et de Son sacrifice pour nous.
-
-Aujourd'hui, je peux témoigner que Dieu est fidèle. Il ne m'a jamais abandonnée. Si vous traversez des difficultés, sachez que Dieu vous aime et qu'Il a un plan merveilleux pour votre vie.
-
-Gloire à Dieu pour Sa bonté et Sa miséricorde !`,
-    author: "Marie Dupont",
-    date: "2024-10-12",
-    category: "Témoignage",
-    status: "published",
-    views: 189,
-    image: "/testimony.jpg",
-  },
-  {
-    id: "3",
-    title: "L'Importance de la Communion Fraternelle",
-    excerpt:
-      "Réflexion sur le rôle essentiel de la communauté dans notre vie spirituelle. Comment grandir ensemble dans la foi.",
-    content: `La Bible nous rappelle dans Hébreux 10:24-25 : "Veillons les uns sur les autres, pour nous exciter à l'amour et aux bonnes œuvres. N'abandonnons pas notre assemblée, comme c'est la coutume de quelques-uns."
-
-La communion fraternelle n'est pas optionnelle dans la vie chrétienne. C'est un élément essentiel de notre croissance spirituelle. Nous avons besoin les uns des autres pour :
-
-- Nous encourager mutuellement dans la foi
-- Porter les fardeaux les uns des autres
-- Partager nos joies et nos peines
-- Apprendre ensemble de la Parole de Dieu
-- Prier les uns pour les autres
-
-Dans notre église, nous croyons en l'importance de créer des liens authentiques entre frères et sœurs. C'est pourquoi nous organisons régulièrement des moments de partage et de communion.
-
-Ne sous-estimez jamais le pouvoir d'une communauté unie dans l'amour du Christ !`,
-    author: "Sophie Bernard",
-    date: "2024-10-10",
-    category: "Réflexion",
-    status: "published",
-    views: 156,
-    image: "/fellowship.jpg",
-  },
-  {
-    id: "4",
-    title: "Préparer son Coeur pour le Culte",
-    excerpt:
-      "Conseils pratiques pour se préparer spirituellement avant de venir au culte. Brouillon en cours de rédaction.",
-    content: `[Article en cours de rédaction]
-
-Comment pouvons-nous nous préparer à rencontrer Dieu lors du culte ?
-
-Points à développer :
-- La prière personnelle avant le culte
-- La lecture de la Parole
-- L'attitude du cœur
-- L'importance de la ponctualité
-- Venir avec un esprit d'adoration
-
-À compléter...`,
-    author: "Pasteur Jean Martin",
-    date: "2024-10-16",
-    category: "Enseignement",
-    status: "draft",
-    views: 0,
-    image: "/act-of-worship.png",
-  },
-]
+import { blogsService, type Blog } from "@/lib/services/blogs.service"
+import { toast } from "sonner"
 
 interface BlogListProps {
-  searchQuery: string
-  filter: "all" | "published" | "draft"
+  searchQuery?: string
+  status?: string
 }
 
-export function BlogList({ searchQuery, filter }: BlogListProps) {
-  const [selectedPost, setSelectedPost] = useState<typeof blogPosts[0] | null>(null)
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+export function BlogList({ searchQuery = "", status }: BlogListProps) {
+  const [blogs, setBlogs] = useState<Blog[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleView = (post: typeof blogPosts[0]) => {
-    setSelectedPost(post)
-    setIsViewDialogOpen(true)
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        setLoading(true)
+        const data = await blogsService.getAll({ status })
+        setBlogs(data)
+      } catch (err) {
+        setError("Erreur lors du chargement des articles")
+        console.error("Erreur:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchBlogs()
+  }, [status])
+
+  const filteredBlogs = blogs.filter((blog) => {
+    const matchesSearch =
+      (blog.title || blog.titre)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (blog.excerpt || blog.extrait)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (blog.content || blog.contenu)?.toLowerCase().includes(searchQuery.toLowerCase())
+
+    const matchesStatus = !status || blog.status === status || blog.statut === status
+
+    return matchesSearch && matchesStatus
+  })
+
+  const handleView = (blog: Blog) => {
+    alert(`👁️ Affichage de: "${blog.title || blog.titre}"\n\n(Ouvrir dans une modal ou nouvelle page)`)
   }
 
-  const handleEdit = (post: typeof blogPosts[0]) => {
-    setSelectedPost(post)
-    setIsEditDialogOpen(true)
+  const handleEdit = (blog: Blog) => {
+    alert(`✏️ Modification de: "${blog.title || blog.titre}"\n\n(Ouvrir dans un formulaire d'édition)`)
   }
 
-  const handleDelete = (post: typeof blogPosts[0]) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer "${post.title}" ?`)) {
-      console.log("Article supprimé:", post.id)
-      alert(`🗑️ Article "${post.title}" supprimé avec succès !`)
+  const handleDelete = async (blog: Blog) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer "${blog.title || blog.titre}" ?`)) {
+      try {
+        await blogsService.delete(blog.id)
+        setBlogs(blogs.filter(b => b.id !== blog.id))
+        toast.success(`Article "${blog.title || blog.titre}" supprimé avec succès`)
+      } catch (err) {
+        toast.error("Erreur lors de la suppression")
+        console.error("Erreur:", err)
+      }
     }
   }
 
-  const handleShare = (post: typeof blogPosts[0]) => {
-    const url = `${window.location.origin}/blog/${post.id}`
-    navigator.clipboard.writeText(url)
-    alert(`📋 Lien copié dans le presse-papier !\n\n${url}`)
+  if (loading) {
+    return (
+      <div className="col-span-full text-center py-12">
+        <div className="h-12 w-12 mx-auto text-gray-400 mb-3 animate-pulse">📝</div>
+        <p className="text-gray-500">Chargement des articles...</p>
+      </div>
+    )
   }
 
-  const filteredPosts = blogPosts.filter((post) => {
-    const matchesSearch =
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.author.toLowerCase().includes(searchQuery.toLowerCase())
-
-    const matchesFilter = filter === "all" || post.status === filter
-
-    return matchesSearch && matchesFilter
-  })
+  if (error) {
+    return (
+      <div className="col-span-full text-center py-12">
+        <div className="h-12 w-12 mx-auto text-red-400 mb-3">📝</div>
+        <p className="text-red-500">{error}</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      {filteredPosts.map((post) => (
-        <Card key={post.id} className="overflow-hidden">
-          <div className="aspect-video w-full overflow-hidden bg-muted">
-            <img src={post.image || "/placeholder.svg"} alt={post.title} className="h-full w-full object-cover" />
-          </div>
-          <div className="p-6 space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2">
-                  <Badge variant={post.status === "published" ? "default" : "secondary"}>
-                    {post.status === "published" ? "Publié" : "Brouillon"}
-                  </Badge>
-                  <Badge variant="outline">{post.category}</Badge>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {filteredBlogs.length === 0 ? (
+        <div className="col-span-full text-center py-12">
+          <div className="h-12 w-12 mx-auto text-gray-400 mb-3">📝</div>
+          <p className="text-gray-500">Aucun article trouvé</p>
+        </div>
+      ) : (
+        filteredBlogs.map((blog) => (
+          <Card key={blog.id} className="overflow-hidden">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <CardTitle className="text-lg line-clamp-2 mb-2">
+                    {blog.title || blog.titre}
+                  </CardTitle>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {blog.category || blog.categorie}
+                    </Badge>
+                    <Badge
+                      className={`text-xs ${
+                        blog.status === "published" || blog.statut === "publie"
+                          ? "bg-green-500"
+                          : "bg-yellow-500"
+                      }`}
+                    >
+                      {blog.status === "published" || blog.statut === "publie" ? "Publié" : "Brouillon"}
+                    </Badge>
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold leading-tight">{post.title}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">{post.excerpt}</p>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleView(post)}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Voir
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleEdit(post)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Modifier
-                  </DropdownMenuItem>
-                  {post.status === "published" && (
-                    <DropdownMenuItem onClick={() => handleShare(post)}>
-                      <Share2 className="mr-2 h-4 w-4" />
-                      Partager
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleView(blog)}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Voir
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(post)}>
-                    <Trash className="mr-2 h-4 w-4" />
-                    Supprimer
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            <div className="flex items-center justify-between text-sm text-muted-foreground border-t pt-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  <span>{post.author}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  <span>{new Date(post.date).toLocaleDateString("fr-FR")}</span>
-                </div>
+                    <DropdownMenuItem onClick={() => handleEdit(blog)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Modifier
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleDelete(blog)}
+                      className="text-red-600"
+                    >
+                      <Trash className="h-4 w-4 mr-2" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-              {post.status === "published" && (
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-sm text-gray-600 line-clamp-3 mb-3">
+                {blog.excerpt || blog.extrait}
+              </p>
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    <span>{blog.author || blog.auteur}</span>
+                  </div>
+                  {blog.date && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>{new Date(blog.date).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center gap-1">
                   <Eye className="h-3 w-3" />
-                  <span>{post.views} vues</span>
+                  <span>{blog.views || blog.vues || 0}</span>
                 </div>
-              )}
-            </div>
-          </div>
-        </Card>
-      ))}
-
-      <ViewBlogDialog
-        open={isViewDialogOpen}
-        onOpenChange={setIsViewDialogOpen}
-        post={selectedPost}
-      />
-
-      <EditBlogDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        post={selectedPost}
-      />
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
     </div>
   )
 }

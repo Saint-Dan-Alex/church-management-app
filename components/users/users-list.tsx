@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,80 +14,12 @@ import {
 import { MoreVertical, Edit, Trash, Lock, Mail, Phone, Shield } from "lucide-react"
 import { UserRole, getRoleLabel } from "@/lib/permissions"
 import { EditUserDialog } from "./edit-user-dialog"
-
-// Données mockées
-const mockUsers = [
-  {
-    id: "1",
-    nom: "MBUYI",
-    prenom: "Jean",
-    email: "jean.mbuyi@church.cd",
-    telephone: "+243 900 000 001",
-    role: UserRole.ADMIN,
-    avatar: "/placeholder.svg",
-    actif: true,
-    dateCreation: "2024-01-15",
-  },
-  {
-    id: "2",
-    nom: "LENGE",
-    prenom: "Marie",
-    email: "marie.lenge@church.cd",
-    telephone: "+243 900 000 002",
-    role: UserRole.COORDINATION,
-    avatar: "/placeholder.svg",
-    actif: true,
-    dateCreation: "2024-02-10",
-  },
-  {
-    id: "3",
-    nom: "NGEA",
-    prenom: "Paul",
-    email: "paul.ngea@church.cd",
-    telephone: "+243 900 000 003",
-    role: UserRole.CHEF_SALLE,
-    avatar: "/placeholder.svg",
-    actif: true,
-    dateCreation: "2024-03-05",
-  },
-  {
-    id: "4",
-    nom: "KAMANDA",
-    prenom: "Sophie",
-    email: "sophie.kamanda@church.cd",
-    telephone: "+243 900 000 004",
-    role: UserRole.MONITEUR,
-    avatar: "/placeholder.svg",
-    actif: true,
-    dateCreation: "2024-03-20",
-  },
-  {
-    id: "5",
-    nom: "MUKENDI",
-    prenom: "Jacques",
-    email: "jacques.mukendi@church.cd",
-    telephone: "+243 900 000 005",
-    role: UserRole.FINANCIER,
-    avatar: "/placeholder.svg",
-    actif: true,
-    dateCreation: "2024-03-25",
-  },
-  {
-    id: "6",
-    nom: "TSHALA",
-    prenom: "David",
-    email: "david.tshala@parent.cd",
-    telephone: "+243 900 000 006",
-    role: UserRole.PARENT,
-    avatar: "/placeholder.svg",
-    actif: false,
-    dateCreation: "2024-04-01",
-  },
-]
+import { usersService, type User } from "@/lib/services/users.service"
+import { toast } from "sonner"
 
 interface UsersListProps {
-  searchQuery: string
-  roleFilter: string
+  searchQuery?: string
+  role?: string
 }
 
 export function UsersList({ searchQuery, roleFilter }: UsersListProps) {

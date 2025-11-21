@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -12,84 +12,83 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical, Edit, Trash, Calendar, User, DollarSign, Check, X } from "lucide-react"
 import { EditCotisationDialog } from "./edit-cotisation-dialog"
-
-// Données mockées
-const mockCotisations = [
-  {
-    id: "1",
-    moniteur: "Sophie KAMANDA",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Janvier 2025",
-    datePaiement: "2025-01-15",
-    statut: "Payé",
-    modePaiement: "Mobile Money",
-    remarque: "",
-  },
-  {
-    id: "2",
-    moniteur: "Jacques MUKENDI",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Janvier 2025",
-    datePaiement: "2025-01-10",
-    statut: "Payé",
-    modePaiement: "Espèces",
-    remarque: "",
-  },
-  {
-    id: "3",
-    moniteur: "Sophie KAMANDA",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Décembre 2024",
-    datePaiement: null,
-    statut: "En attente",
-    modePaiement: "",
-    remarque: "",
-  },
-  {
-    id: "4",
-    moniteur: "Paul NGEA",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Janvier 2025",
-    datePaiement: "2025-01-20",
-    statut: "Payé",
-    modePaiement: "Virement",
-    remarque: "Paiement confirmé",
-  },
-]
+import { cotisationsService, type Cotisation } from "@/lib/services/cotisations.service"
+import { toast } from "sonner"
 
 interface CotisationsListProps {
-  searchQuery: string
-  statutFilter: string
+  searchQuery?: string
+  statut?: string
 }
 
-export function CotisationsList({ searchQuery, statutFilter }: CotisationsListProps) {
-  const [selectedCotisation, setSelectedCotisation] = useState<typeof mockCotisations[0] | null>(null)
+export function CotisationsList({ searchQuery = "", statut }: CotisationsListProps) {
+  const [cotisations, setCotisations] = useState<Cotisation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedCotisation, setSelectedCotisation] = useState<Cotisation | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
-  const filteredCotisations = mockCotisations.filter((cotisation) => {
+  useEffect(() => {
+    const fetchCotisations = async () => {
+      try {
+        setLoading(true)
+        const data = await cotisationsService.getAll()
+        setCotisations(data)
+      } catch (err) {
+        setError("Erreur lors du chargement des cotisations")
+        console.error("Erreur:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCotisations()
+  }, [])
+
+  const filteredCotisations = cotisations.filter((cotisation) => {
     const matchesSearch =
       cotisation.moniteur.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cotisation.periode.toLowerCase().includes(searchQuery.toLowerCase())
+      cotisation.periode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cotisation.modePaiement.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesStatut = statutFilter === "all" || cotisation.statut === statutFilter
+    const matchesStatut = !statut || cotisation.statut === statut
 
     return matchesSearch && matchesStatut
   })
 
-  const handleEdit = (cotisation: typeof mockCotisations[0]) => {
+  const handleEdit = (cotisation: Cotisation) => {
     setSelectedCotisation(cotisation)
     setIsEditDialogOpen(true)
   }
 
-  const handleDelete = (cotisation: typeof mockCotisations[0]) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer cette cotisation de ${cotisation.moniteur} ?`)) {
-      console.log("Cotisation supprimée:", cotisation.id)
-      alert(`🗑️ Cotisation supprimée avec succès !`)
+  const handleDelete = async (cotisation: Cotisation) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer la cotisation de "${cotisation.moniteur}" pour ${cotisation.periode} ?`)) {
+      try {
+        await cotisationsService.delete(cotisation.id)
+        setCotisations(cotisations.filter(c => c.id !== cotisation.id))
+        toast.success(`Cotisation supprimée avec succès`)
+      } catch (err) {
+        toast.error("Erreur lors de la suppression")
+        console.error("Erreur:", err)
+      }
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="col-span-full text-center py-12">
+        <DollarSign className="h-12 w-12 mx-auto text-gray-400 mb-3 animate-pulse" />
+        <p className="text-gray-500">Chargement des cotisations...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="col-span-full text-center py-12">
+        <DollarSign className="h-12 w-12 mx-auto text-red-400 mb-3" />
+        <p className="text-red-500">{error}</p>
+      </div>
+    )
   }
 
   const getStatutBadge = (statut: string) => {

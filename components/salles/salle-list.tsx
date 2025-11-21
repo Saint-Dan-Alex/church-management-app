@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -13,54 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { EditSalleDialog } from "./edit-salle-dialog"
-import type { Salle } from "@/types/salle"
+import { sallesService, type Salle } from "@/lib/services/salles.service"
+import { toast } from "sonner"
 
-// Données mockées
-const mockSalles: Salle[] = [
-  {
-    id: "1",
-    nom: "Adolescents",
-    description: "Salle pour les adolescents de 13 à 17 ans",
-    capacite: 80,
-    responsableId: "1",
-    responsableNom: "Marie LENGE",
-    adjointId: "2",
-    adjointNom: "Paul NGEA",
-    moniteurs: [
-      {
-        id: "1",
-        nom: "LENGE",
-        prenom: "Marie",
-        nomComplet: "Marie LENGE",
-        role: "responsable",
-        dateAffectation: "2023-01-15" as any,
-      },
-      {
-        id: "2",
-        nom: "NGEA",
-        prenom: "Paul",
-        nomComplet: "Paul NGEA",
-        role: "adjoint",
-        dateAffectation: "2023-01-15" as any,
-      },
-      {
-        id: "3",
-        nom: "NFEO",
-        prenom: "Jean",
-        nomComplet: "Jean NFEO",
-        role: "membre",
-        dateAffectation: "2023-03-20" as any,
-      },
-    ],
-    actif: true,
-    createdAt: "2023-01-15" as any,
-    updatedAt: "2024-10-20" as any,
-  },
-  {
-    id: "2",
-    nom: "Juniors",
-    description: "Salle pour les juniors de 9 à 12 ans",
-    capacite: 60,
+interface SalleListProps {
+  searchQuery?: string
+}
     responsableId: "4",
     responsableNom: "Sarah JEMMA",
     adjointId: "5",
