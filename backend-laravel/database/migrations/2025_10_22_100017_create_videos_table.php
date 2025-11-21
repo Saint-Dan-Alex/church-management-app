@@ -15,21 +15,19 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('titre');
             $table->text('description')->nullable();
+            $table->string('miniature')->nullable();
             $table->string('url'); // URL YouTube ou lien vidéo
-            $table->string('thumbnail')->nullable();
-            $table->string('category')->nullable();
-            $table->string('duration')->nullable(); // Durée en format HH:MM:SS
-            $table->integer('views')->default(0);
-            $table->date('date_enregistrement')->nullable();
-            $table->string('predicateur')->nullable();
-            $table->json('tags')->nullable();
-            $table->boolean('is_featured')->default(false);
+            $table->string('type')->nullable(); // youtube, vimeo, upload
+            $table->string('categorie')->nullable();
+            $table->string('duree')->nullable(); // Durée en format 1h 30min
+            $table->date('date')->nullable();
+            $table->string('auteur')->nullable();
+            $table->integer('vues')->default(0);
             $table->timestamps();
             $table->softDeletes();
-            
-            $table->index('category');
-            $table->index('date_enregistrement');
-            $table->index('is_featured');
+
+            $table->index('categorie');
+            $table->index('date');
         });
     }
 

@@ -12,26 +12,24 @@ class Activity extends Model
     use HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [
-        'titre',
+        'title',
         'description',
-        'type',
         'date',
-        'heure_debut',
-        'heure_fin',
-        'lieu',
-        'responsable',
-        'responsable_id',
-        'montant_requis',
-        'devise',
-        'montant_alternatif',
-        'devise_alternative',
-        'statut',
+        'time',
+        'duration',
+        'location',
+        'category',
+        'type',
+        'participants',
+        'maxParticipants',
+        'status',
+        'organizer',
     ];
 
     protected $casts = [
         'date' => 'date',
-        'montant_requis' => 'decimal:2',
-        'montant_alternatif' => 'decimal:2',
+        'participants' => 'integer',
+        'maxParticipants' => 'integer',
     ];
 
     // Relations

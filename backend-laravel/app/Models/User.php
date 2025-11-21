@@ -18,8 +18,14 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'nom',
+        'prenom',
         'email',
+        'telephone',
+        'role',
+        'avatar',
+        'actif',
+        'dateCreation',
         'password',
         'user_type', // 'monitor' ou 'child'
         'user_id', // ID du Monitor ou Child
@@ -46,6 +52,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'actif' => 'boolean',
+            'dateCreation' => 'date',
         ];
     }
 

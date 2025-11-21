@@ -14,18 +14,14 @@ class StoreCotisationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'membre_nom' => 'required|string|max:255',
-            'type_cotisation' => 'required|in:mensuelle,annuelle,speciale,autre',
+            'moniteur' => 'required|string|max:255',
             'montant' => 'required|numeric|min:0',
             'devise' => 'required|in:CDF,USD',
-            'date_cotisation' => 'required|date',
-            'mois' => 'nullable|string|max:255',
-            'annee' => 'nullable|string|max:4',
-            'mode_paiement' => 'required|in:cash,mobile_money,bank_transfer,card,other',
-            'numero_recu' => 'nullable|string|max:255|unique:cotisations,numero_recu',
+            'periode' => 'required|string|max:255',
+            'datePaiement' => 'nullable|date',
+            'statut' => 'required|in:Payé,En attente,Annulé',
+            'modePaiement' => 'required|string|max:255',
             'remarque' => 'nullable|string',
-            'enregistre_par' => 'required|uuid',
-            'enregistre_par_nom' => 'required|string|max:255',
         ];
     }
 }

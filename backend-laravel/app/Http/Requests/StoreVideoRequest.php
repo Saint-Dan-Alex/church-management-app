@@ -16,15 +16,14 @@ class StoreVideoRequest extends FormRequest
         return [
             'titre' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'url' => 'required|url',
-            'thumbnail' => 'nullable|string',
-            'category' => 'nullable|string|max:255',
-            'duration' => 'nullable|string',
-            'date_enregistrement' => 'nullable|date',
-            'predicateur' => 'nullable|string|max:255',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string',
-            'is_featured' => 'boolean',
+            'miniature' => 'nullable|string',
+            'url' => 'required|string',
+            'type' => 'nullable|string|max:255',
+            'categorie' => 'nullable|string|max:255',
+            'duree' => 'nullable|string|max:50',
+            'date' => 'nullable|date',
+            'auteur' => 'nullable|string|max:255',
+            'vues' => 'nullable|integer',
         ];
     }
 }

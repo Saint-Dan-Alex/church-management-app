@@ -14,32 +14,29 @@ class Video extends Model
     protected $fillable = [
         'titre',
         'description',
+        'miniature',
         'url',
-        'thumbnail',
-        'category',
-        'duration',
-        'views',
-        'date_enregistrement',
-        'predicateur',
-        'tags',
-        'is_featured',
+        'type',
+        'categorie',
+        'duree',
+        'date',
+        'auteur',
+        'vues',
     ];
 
     protected $casts = [
-        'views' => 'integer',
-        'date_enregistrement' => 'date',
-        'tags' => 'array',
-        'is_featured' => 'boolean',
+        'vues' => 'integer',
+        'date' => 'date',
     ];
 
     // Scopes
-    public function scopeFeatured($query)
+    public function scopeByCategory($query, $categorie)
     {
-        return $query->where('is_featured', true);
+        return $query->where('categorie', $categorie);
     }
 
-    public function scopeByCategory($query, $category)
+    public function scopeRecent($query)
     {
-        return $query->where('category', $category);
+        return $query->orderBy('date', 'desc');
     }
 }

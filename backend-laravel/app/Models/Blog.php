@@ -15,19 +15,17 @@ class Blog extends Model
         'title',
         'excerpt',
         'content',
-        'category',
         'author',
+        'date',
+        'category',
         'status',
         'views',
         'image',
-        'tags',
-        'published_at',
     ];
 
     protected $casts = [
         'views' => 'integer',
-        'tags' => 'array',
-        'published_at' => 'datetime',
+        'date' => 'date',
     ];
 
     // Scopes
@@ -41,13 +39,8 @@ class Blog extends Model
         return $query->where('status', 'draft');
     }
 
-    // Mutators
-    public function setPublishedAtAttribute($value)
+    public function scopeRecent($query)
     {
-        if ($this->status === 'published' && !$this->published_at) {
-            $this->attributes['published_at'] = now();
-        } else {
-            $this->attributes['published_at'] = $value;
-        }
+        return $query->orderBy('date', 'desc');
     }
 }

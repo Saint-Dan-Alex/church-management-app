@@ -12,23 +12,19 @@ class Cotisation extends Model
     use HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [
-        'membre_nom',
-        'type_cotisation',
+        'moniteur',
         'montant',
         'devise',
-        'date_cotisation',
-        'mois',
-        'annee',
-        'mode_paiement',
-        'numero_recu',
+        'periode',
+        'datePaiement',
+        'statut',
+        'modePaiement',
         'remarque',
-        'enregistre_par',
-        'enregistre_par_nom',
     ];
 
     protected $casts = [
         'montant' => 'decimal:2',
-        'date_cotisation' => 'date',
+        'datePaiement' => 'date',
     ];
 
     // Relations

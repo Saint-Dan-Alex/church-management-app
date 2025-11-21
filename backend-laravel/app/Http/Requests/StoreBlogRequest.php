@@ -17,12 +17,12 @@ class StoreBlogRequest extends FormRequest
             'title' => 'required|string|max:255',
             'excerpt' => 'nullable|string',
             'content' => 'required|string',
-            'category' => 'required|string|max:255',
             'author' => 'required|string|max:255',
+            'date' => 'nullable|date',
+            'category' => 'required|string|max:255',
             'status' => 'required|in:draft,published',
+            'views' => 'nullable|integer',
             'image' => 'nullable|string',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string',
         ];
     }
 }
