@@ -16,20 +16,14 @@ return new class extends Migration
             $table->string('titre');
             $table->text('description')->nullable();
             $table->string('url'); // Chemin de la photo
-            $table->string('thumbnail')->nullable();
             $table->string('album')->nullable(); // Nom de l'album
-            $table->date('date_prise')->nullable();
-            $table->string('photographe')->nullable();
-            $table->json('tags')->nullable();
-            $table->integer('width')->nullable();
-            $table->integer('height')->nullable();
-            $table->string('format')->nullable(); // jpg, png, etc.
-            $table->integer('size')->nullable(); // Taille en bytes
+            $table->date('date')->nullable();
+            $table->string('auteur')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->index('album');
-            $table->index('date_prise');
+            $table->index('date');
         });
     }
 

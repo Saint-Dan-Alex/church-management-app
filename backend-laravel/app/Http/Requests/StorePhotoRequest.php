@@ -17,16 +17,9 @@ class StorePhotoRequest extends FormRequest
             'titre' => 'required|string|max:255',
             'description' => 'nullable|string',
             'url' => 'required|string',
-            'thumbnail' => 'nullable|string',
             'album' => 'nullable|string|max:255',
-            'date_prise' => 'nullable|date',
-            'photographe' => 'nullable|string|max:255',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string',
-            'width' => 'nullable|integer',
-            'height' => 'nullable|integer',
-            'format' => 'nullable|string|max:50',
-            'size' => 'nullable|integer',
+            'date' => 'nullable|date',
+            'auteur' => 'nullable|string|max:255',
         ];
     }
 }

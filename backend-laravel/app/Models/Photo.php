@@ -15,23 +15,13 @@ class Photo extends Model
         'titre',
         'description',
         'url',
-        'thumbnail',
         'album',
-        'date_prise',
-        'photographe',
-        'tags',
-        'width',
-        'height',
-        'format',
-        'size',
+        'date',
+        'auteur',
     ];
 
     protected $casts = [
-        'date_prise' => 'date',
-        'tags' => 'array',
-        'width' => 'integer',
-        'height' => 'integer',
-        'size' => 'integer',
+        'date' => 'date',
     ];
 
     // Scopes
@@ -42,6 +32,6 @@ class Photo extends Model
 
     public function scopeRecent($query)
     {
-        return $query->orderBy('date_prise', 'desc');
+        return $query->orderBy('date', 'desc');
     }
 }
