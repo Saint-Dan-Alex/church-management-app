@@ -19,161 +19,219 @@ import { toast } from "sonner"
 
 interface UsersListProps {
   searchQuery?: string
-  role?: string
+  roleFilter?: string
 }
 
-export function UsersList({ searchQuery, roleFilter }: UsersListProps) {
-  const [selectedUser, setSelectedUser] = useState<typeof mockUsers[0] | null>(null)
+export function UsersList({ searchQuery = "", roleFilter = "all" }: UsersListProps) {
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
-  const filteredUsers = mockUsers.filter((user) => {
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true)
+        console.log("Fetching users...")
+        const data = await usersService.getAll()
+        console.log("Users data received:", data)
+        // S'assurer que data est un tableau
+        setUsers(Array.isArray(data) ? data : [])
+      } catch (err) {
+        console.error("Error fetching users:", err)
+        setError("Erreur lors du chargement des utilisateurs")
+        setUsers([]) // Initialiser avec un tableau vide en cas d'erreur
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUsers()
+  }, [])
+
+  const filteredUsers = Array.isArray(users) ? users.filter((user) => {
     const matchesSearch =
-      user.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.prenom.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.phone?.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesRole = roleFilter === "all" || user.role === roleFilter
 
     return matchesSearch && matchesRole
-  })
+  }) : []
 
-  const handleEdit = (user: typeof mockUsers[0]) => {
+  const handleEdit = (user: User) => {
     setSelectedUser(user)
     setIsEditDialogOpen(true)
   }
 
-  const handleDelete = (user: typeof mockUsers[0]) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${user.prenom} ${user.nom} ?`)) {
-      console.log("Utilisateur supprimé:", user.id)
-      alert(`🗑️ Utilisateur "${user.prenom} ${user.nom}" supprimé avec succès !`)
+  const handleDelete = async (user: User) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer "${user.name}" ?`)) {
+      try {
+        await usersService.delete(user.id)
+        setUsers(Array.isArray(users) ? users.filter(u => u.id !== user.id) : [])
+        toast.success(`Utilisateur "${user.name}" supprimé avec succès`)
+      } catch (err) {
+        toast.error("Erreur lors de la suppression")
+        console.error("Erreur:", err)
+      }
     }
   }
 
-  const handleResetPassword = (user: typeof mockUsers[0]) => {
-    if (confirm(`Réinitialiser le mot de passe de ${user.prenom} ${user.nom} ?`)) {
-      console.log("Réinitialisation mot de passe:", user.id)
-      alert(`🔑 Email de réinitialisation envoyé à ${user.email}`)
+  const handleResetPassword = (user: User) => {
+    alert(`🔧 Réinitialiser le mot de passe pour: ${user.name}\n\n(Envoyer un email de réinitialisation)`)
+  }
+
+  const handleToggleStatus = async (user: User) => {
+    try {
+      const updatedUser = { ...user, active: !user.active }
+      await usersService.update(user.id, updatedUser)
+      setUsers(Array.isArray(users) ? users.map(u => u.id === user.id ? updatedUser : u) : [])
+      toast.success(`Statut de "${user.name}" mis à jour`)
+    } catch (err) {
+      toast.error("Erreur lors de la mise à jour du statut")
+      console.error("Erreur:", err)
     }
   }
 
-  const handleToggleStatus = (user: typeof mockUsers[0]) => {
-    const action = user.actif ? "désactiver" : "activer"
-    if (confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} ${user.prenom} ${user.nom} ?`)) {
-      console.log(`${action} utilisateur:`, user.id)
-      alert(`✅ Utilisateur ${action}é avec succès !`)
-    }
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center py-8">
+          <Shield className="h-12 w-12 mx-auto text-gray-400 mb-3 animate-pulse" />
+          <p className="text-gray-500">Chargement des utilisateurs...</p>
+        </div>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 bg-gray-300 rounded w-1/4"></div>
+                  <div className="h-3 bg-gray-300 rounded w-1/3"></div>
+                </div>
+                <div className="h-8 w-8 bg-gray-300 rounded"></div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
   }
 
-  const getRoleBadgeVariant = (role: UserRole) => {
-    switch (role) {
-      case UserRole.ADMIN:
-        return "destructive"
-      case UserRole.COORDINATION:
-        return "default"
-      case UserRole.CHEF_SALLE:
-        return "secondary"
-      case UserRole.MONITEUR:
-        return "outline"
-      case UserRole.PARENT:
-        return "outline"
-      case UserRole.ENFANT:
-        return "outline"
-      default:
-        return "outline"
-    }
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <Shield className="h-12 w-12 mx-auto text-red-400 mb-3" />
+          <p className="text-red-500">{error}</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
-    <div className="space-y-4">
-      {filteredUsers.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Shield className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-            <p className="text-gray-500">Aucun utilisateur trouvé</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {filteredUsers.map((user) => (
-            <Card key={user.id}>
+    <>
+      <div className="space-y-4">
+        {/* Afficher un indicateur si pas de données et pas d'erreur */}
+        {!loading && !error && users.length === 0 && (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Shield className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+              <p className="text-gray-500 mb-2">Aucun utilisateur trouvé</p>
+              <p className="text-sm text-gray-400">Vérifiez que l'API fonctionne correctement</p>
+            </CardContent>
+          </Card>
+        )}
+        
+        {filteredUsers.length === 0 && users.length > 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Shield className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+              <p className="text-gray-500">Aucun utilisateur ne correspond aux filtres</p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredUsers.map((user) => (
+            <Card key={user.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center space-x-4">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={user.avatar} alt={`${user.prenom} ${user.nom}`} />
+                      <AvatarImage src={user.avatar} alt={user.name} />
                       <AvatarFallback>
-                        {user.prenom[0]}
-                        {user.nom[0]}
+                        {user.name?.split(" ").map((n) => n[0]).join("").toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">
-                          {user.prenom} {user.nom}
-                        </h3>
-                        <Badge variant={getRoleBadgeVariant(user.role)}>
-                          {getRoleLabel(user.role)}
-                        </Badge>
-                        {!user.actif && (
-                          <Badge variant="outline" className="text-gray-500">
-                            Inactif
-                          </Badge>
-                        )}
+                    <div className="space-y-1">
+                      <h3 className="font-semibold">{user.name}</h3>
+                      <div className="flex items-center space-x-2 text-sm text-gray-500">
+                        <Mail className="h-3 w-3" />
+                        <span>{user.email}</span>
                       </div>
-
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          <span>{user.email}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
+                      {user.phone && (
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
                           <Phone className="h-3 w-3" />
-                          <span>{user.telephone}</span>
+                          <span>{user.phone}</span>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(user)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Modifier
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleResetPassword(user)}>
-                        <Lock className="mr-2 h-4 w-4" />
-                        Réinitialiser mot de passe
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleToggleStatus(user)}>
-                        <Shield className="mr-2 h-4 w-4" />
-                        {user.actif ? "Désactiver" : "Activer"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => handleDelete(user)}
-                      >
-                        <Trash className="mr-2 h-4 w-4" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex items-center space-x-2">
+                    <Badge 
+                      variant={user.active ? "default" : "secondary"}
+                      className={user.active ? "bg-green-500" : "bg-gray-500"}
+                    >
+                      {user.active ? "Actif" : "Inactif"}
+                    </Badge>
+                    <Badge variant="outline">
+                      {getRoleLabel(user.role as UserRole)}
+                    </Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(user)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Modifier
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleResetPassword(user)}>
+                          <Lock className="h-4 w-4 mr-2" />
+                          Réinitialiser mot de passe
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleToggleStatus(user)}
+                          className={user.active ? "text-orange-600" : "text-green-600"}
+                        >
+                          <Shield className="h-4 w-4 mr-2" />
+                          {user.active ? "Désactiver" : "Activer"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(user)}
+                          className="text-red-600"
+                        >
+                          <Trash className="h-4 w-4 mr-2" />
+                          Supprimer
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
-      <EditUserDialog
-        open={isEditDialogOpen}
+          ))
+        )}
+      </div>
+
+      <EditUserDialog 
+        open={isEditDialogOpen} 
         onOpenChange={setIsEditDialogOpen}
         user={selectedUser}
       />
-    </div>
+    </>
   )
 }

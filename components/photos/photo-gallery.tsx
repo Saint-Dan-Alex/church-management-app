@@ -36,10 +36,12 @@ export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
       try {
         setLoading(true)
         const data = await photosService.getAll({ album })
-        setPhotos(data)
+        // S'assurer que data est un tableau
+        setPhotos(Array.isArray(data) ? data : [])
       } catch (err) {
         setError("Erreur lors du chargement des photos")
         console.error("Erreur:", err)
+        setPhotos([]) // Initialiser avec un tableau vide en cas d'erreur
       } finally {
         setLoading(false)
       }
@@ -48,7 +50,7 @@ export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
     fetchPhotos()
   }, [album])
 
-  const filteredPhotos = photos.filter((photo) => {
+  const filteredPhotos = Array.isArray(photos) ? photos.filter((photo) => {
     const matchesSearch =
       photo.titre.toLowerCase().includes(searchQuery.toLowerCase()) ||
       photo.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -56,7 +58,7 @@ export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
     const matchesAlbum = !album || photo.album === album
 
     return matchesSearch && matchesAlbum
-  })
+  }) : []
 
   const handleView = (photo: Photo) => {
     alert(`👁️ Affichage de: "${photo.titre}"\n\n(Ouvrir dans une modal ou nouvelle page)`)
@@ -71,7 +73,7 @@ export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
     if (confirm(`Êtes-vous sûr de vouloir supprimer "${photo.titre}" ?`)) {
       try {
         await photosService.delete(photo.id)
-        setPhotos(photos.filter(p => p.id !== photo.id))
+        setPhotos(Array.isArray(photos) ? photos.filter(p => p.id !== photo.id) : [])
         toast.success(`Photo "${photo.titre}" supprimée avec succès`)
       } catch (err) {
         toast.error("Erreur lors de la suppression")
@@ -106,7 +108,7 @@ export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
           <p className="text-gray-500">Aucune photo trouvée</p>
         </div>
       ) : (
-        filteredPhotos.map((photo) => (
+        filteredPhotos.map((photo: Photo) => (
           <Card key={photo.id} className="overflow-hidden group">
             <div className="relative aspect-square bg-gray-100">
               <img

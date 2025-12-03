@@ -19,186 +19,179 @@ import { toast } from "sonner"
 interface SalleListProps {
   searchQuery?: string
 }
-    responsableId: "4",
-    responsableNom: "Sarah JEMMA",
-    adjointId: "5",
-    adjointNom: "Marc CHRISTIAN",
-    moniteurs: [
-      {
-        id: "4",
-        nom: "JEMMA",
-        prenom: "Sarah",
-        nomComplet: "Sarah JEMMA",
-        role: "responsable",
-        dateAffectation: "2023-02-01" as any,
-      },
-      {
-        id: "5",
-        nom: "CHRISTIAN",
-        prenom: "Marc",
-        nomComplet: "Marc CHRISTIAN",
-        role: "adjoint",
-        dateAffectation: "2023-02-01" as any,
-      },
-    ],
-    actif: true,
-    createdAt: "2023-02-01" as any,
-    updatedAt: "2024-10-20" as any,
-  },
-  {
-    id: "3",
-    nom: "Jardin",
-    description: "Salle pour les tout-petits",
-    capacite: 40,
-    moniteurs: [
-      {
-        id: "6",
-        nom: "MUKEBA",
-        prenom: "David",
-        nomComplet: "David MUKEBA",
-        role: "membre",
-        dateAffectation: "2023-06-10" as any,
-      },
-    ],
-    actif: true,
-    createdAt: "2023-06-10" as any,
-    updatedAt: "2024-10-20" as any,
-  },
-]
 
-export function SalleList() {
+export function SalleList({ searchQuery = "" }: SalleListProps) {
   const router = useRouter()
-  const [editingSalle, setEditingSalle] = useState<Salle | null>(null)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [salles, setSalles] = useState<Salle[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleEdit = (salle: Salle, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setEditingSalle(salle)
-    setIsEditDialogOpen(true)
+  useEffect(() => {
+    const fetchSalles = async () => {
+      try {
+        setLoading(true)
+        const data = await sallesService.getAll()
+        // S'assurer que data est un tableau
+        setSalles(Array.isArray(data) ? data : [])
+      } catch (err) {
+        setError("Erreur lors du chargement des salles")
+        console.error("Erreur:", err)
+        setSalles([]) // Initialiser avec un tableau vide en cas d'erreur
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSalles()
+  }, [])
+
+  const filteredSalles = Array.isArray(salles) ? salles.filter((salle) => {
+    const matchesSearch =
+      salle.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      salle.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      salle.responsableNom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      salle.adjointNom?.toLowerCase().includes(searchQuery.toLowerCase())
+
+    return matchesSearch
+  }) : []
+
+  const handleView = (salle: Salle) => {
+    alert(`👁️ Affichage de: "${salle.nom}"\n\n(Ouvrir dans une modal ou nouvelle page)`)
   }
 
-  const handleDelete = (id: string, nom: string) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer la salle "${nom}" ?`)) {
-      console.log("Suppression de la salle:", id)
-      // Logique de suppression ici
+  const handleEdit = (salle: Salle) => {
+    alert(`✏️ Modification de: "${salle.nom}"\n\n(Ouvrir dans un formulaire d'édition)`)
+  }
+
+  const handleDelete = async (salle: Salle) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer "${salle.nom}" ?`)) {
+      try {
+        await sallesService.delete(salle.id)
+        setSalles(salles.filter(s => s.id !== salle.id))
+        toast.success(`Salle "${salle.nom}" supprimée avec succès`)
+      } catch (err) {
+        toast.error("Erreur lors de la suppression")
+        console.error("Erreur:", err)
+      }
     }
   }
 
-  const getSalleBadgeColor = (nom: string) => {
-    const colors: { [key: string]: string } = {
-      Jardin: "bg-green-100 text-green-800 border-green-300",
-      Ainés: "bg-blue-100 text-blue-800 border-blue-300",
-      Juniors: "bg-purple-100 text-purple-800 border-purple-300",
-      Cadets: "bg-orange-100 text-orange-800 border-orange-300",
-      Adolescents: "bg-red-100 text-red-800 border-red-300",
-    }
-    return colors[nom] || "bg-gray-100 text-gray-800"
+  if (loading) {
+    return (
+      <div className="col-span-full text-center py-12">
+        <Users className="h-12 w-12 mx-auto text-gray-400 mb-3 animate-pulse" />
+        <p className="text-gray-500">Chargement des salles...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="col-span-full text-center py-12">
+        <Users className="h-12 w-12 mx-auto text-red-400 mb-3" />
+        <p className="text-red-500">{error}</p>
+      </div>
+    )
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {mockSalles.map((salle) => (
-        <Card
-          key={salle.id}
-          className="p-5 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => router.push(`/salles/${salle.id}`)}
-        >
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <Badge variant="outline" className={`${getSalleBadgeColor(salle.nom)} mb-2`}>
-                {salle.nom}
-              </Badge>
-              {!salle.actif && (
-                <Badge variant="outline" className="ml-2 bg-gray-100 text-gray-600">
-                  Inactive
-                </Badge>
+      {filteredSalles.length === 0 ? (
+        <div className="col-span-full text-center py-12">
+          <Users className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+          <p className="text-gray-500">Aucune salle trouvée</p>
+        </div>
+      ) : (
+        filteredSalles.map((salle) => (
+          <Card key={salle.id} className="overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold mb-2">{salle.nom}</h3>
+                  <p className="text-sm text-gray-600 mb-3">{salle.description}</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <Badge variant="secondary" className="text-xs">
+                      Capacité: {salle.capacite} personnes
+                    </Badge>
+                    <Badge
+                      className={`text-xs ${
+                        salle.actif ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    >
+                      {salle.actif ? "Actif" : "Inactif"}
+                    </Badge>
+                  </div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleView(salle)}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Voir
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEdit(salle)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Modifier
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleDelete(salle)}
+                      className="text-red-600"
+                    >
+                      <Trash className="h-4 w-4 mr-2" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {(salle.responsableNom || salle.adjointNom) && (
+                <div className="border-t pt-3">
+                  <div className="text-xs text-gray-500 mb-2">Responsables:</div>
+                  <div className="space-y-1">
+                    {salle.responsableNom && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <Crown className="h-3 w-3 text-yellow-500" />
+                        <span>{salle.responsableNom}</span>
+                        <Badge variant="outline" className="text-xs">Responsable</Badge>
+                      </div>
+                    )}
+                    {salle.adjointNom && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <Shield className="h-3 w-3 text-blue-500" />
+                        <span>{salle.adjointNom}</span>
+                        <Badge variant="outline" className="text-xs">Adjoint</Badge>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {salle.moniteurs && salle.moniteurs.length > 0 && (
+                <div className="border-t pt-3 mt-3">
+                  <div className="text-xs text-gray-500 mb-2">
+                    Moniteurs ({salle.moniteurs.length}):
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {salle.moniteurs.slice(0, 3).map((moniteur: any) => (
+                      <Badge key={moniteur.id} variant="outline" className="text-xs">
+                        {moniteur.nomComplet || moniteur.prenom}
+                      </Badge>
+                    ))}
+                    {salle.moniteurs.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{salle.moniteurs.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    router.push(`/salles/${salle.id}`)
-                  }}
-                >
-                  <Eye className="mr-2 h-4 w-4" />
-                  Voir détails
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => handleEdit(salle, e)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Modifier
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDelete(salle.id, salle.nom)
-                  }}
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Supprimer
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div className="space-y-3">
-            {salle.description && (
-              <p className="text-sm text-gray-600 line-clamp-2">{salle.description}</p>
-            )}
-
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Users className="h-4 w-4" />
-              <span className="font-semibold">{salle.moniteurs.length}</span>
-              <span>moniteur{salle.moniteurs.length > 1 ? "s" : ""}</span>
-              <span className="text-gray-400">•</span>
-              <span>Capacité: {salle.capacite}</span>
-            </div>
-
-            {salle.responsableNom && (
-              <div className="flex items-center gap-2 text-sm">
-                <Crown className="h-4 w-4 text-blue-600" />
-                <span className="text-gray-700">{salle.responsableNom}</span>
-              </div>
-            )}
-
-            {salle.adjointNom && (
-              <div className="flex items-center gap-2 text-sm">
-                <Shield className="h-4 w-4 text-green-600" />
-                <span className="text-gray-700">{salle.adjointNom}</span>
-              </div>
-            )}
-
-            <div className="pt-3 border-t">
-              <div className="flex flex-wrap gap-1">
-                {salle.moniteurs.slice(0, 3).map((moniteur) => (
-                  <Badge key={moniteur.id} variant="secondary" className="text-xs">
-                    {moniteur.prenom} {moniteur.nom.charAt(0)}.
-                  </Badge>
-                ))}
-                {salle.moniteurs.length > 3 && (
-                  <Badge variant="secondary" className="text-xs bg-gray-200">
-                    +{salle.moniteurs.length - 3}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
-        </Card>
-      ))}
-
-      {editingSalle && (
-        <EditSalleDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          salle={editingSalle}
-        />
+          </Card>
+        ))
       )}
     </div>
   )

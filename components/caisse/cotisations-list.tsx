@@ -32,10 +32,12 @@ export function CotisationsList({ searchQuery = "", statut }: CotisationsListPro
       try {
         setLoading(true)
         const data = await cotisationsService.getAll()
-        setCotisations(data)
+        // S'assurer que data est un tableau
+        setCotisations(Array.isArray(data) ? data : [])
       } catch (err) {
         setError("Erreur lors du chargement des cotisations")
         console.error("Erreur:", err)
+        setCotisations([]) // Initialiser avec un tableau vide en cas d'erreur
       } finally {
         setLoading(false)
       }
@@ -44,7 +46,7 @@ export function CotisationsList({ searchQuery = "", statut }: CotisationsListPro
     fetchCotisations()
   }, [])
 
-  const filteredCotisations = cotisations.filter((cotisation) => {
+  const filteredCotisations = Array.isArray(cotisations) ? cotisations.filter((cotisation) => {
     const matchesSearch =
       cotisation.moniteur.toLowerCase().includes(searchQuery.toLowerCase()) ||
       cotisation.periode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -53,7 +55,7 @@ export function CotisationsList({ searchQuery = "", statut }: CotisationsListPro
     const matchesStatut = !statut || cotisation.statut === statut
 
     return matchesSearch && matchesStatut
-  })
+  }) : []
 
   const handleEdit = (cotisation: Cotisation) => {
     setSelectedCotisation(cotisation)
@@ -64,7 +66,7 @@ export function CotisationsList({ searchQuery = "", statut }: CotisationsListPro
     if (confirm(`Êtes-vous sûr de vouloir supprimer la cotisation de "${cotisation.moniteur}" pour ${cotisation.periode} ?`)) {
       try {
         await cotisationsService.delete(cotisation.id)
-        setCotisations(cotisations.filter(c => c.id !== cotisation.id))
+        setCotisations(Array.isArray(cotisations) ? cotisations.filter(c => c.id !== cotisation.id) : [])
         toast.success(`Cotisation supprimée avec succès`)
       } catch (err) {
         toast.error("Erreur lors de la suppression")

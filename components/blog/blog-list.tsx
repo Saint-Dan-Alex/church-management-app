@@ -26,10 +26,12 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
       try {
         setLoading(true)
         const data = await blogsService.getAll({ status })
-        setBlogs(data)
+        // S'assurer que data est un tableau
+        setBlogs(Array.isArray(data) ? data : [])
       } catch (err) {
         setError("Erreur lors du chargement des articles")
         console.error("Erreur:", err)
+        setBlogs([]) // Initialiser avec un tableau vide en cas d'erreur
       } finally {
         setLoading(false)
       }
@@ -38,7 +40,7 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
     fetchBlogs()
   }, [status])
 
-  const filteredBlogs = blogs.filter((blog) => {
+  const filteredBlogs = Array.isArray(blogs) ? blogs.filter((blog) => {
     const matchesSearch =
       (blog.title || blog.titre)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (blog.excerpt || blog.extrait)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -47,7 +49,7 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
     const matchesStatus = !status || blog.status === status || blog.statut === status
 
     return matchesSearch && matchesStatus
-  })
+  }) : []
 
   const handleView = (blog: Blog) => {
     alert(`👁️ Affichage de: "${blog.title || blog.titre}"\n\n(Ouvrir dans une modal ou nouvelle page)`)
@@ -61,7 +63,7 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
     if (confirm(`Êtes-vous sûr de vouloir supprimer "${blog.title || blog.titre}" ?`)) {
       try {
         await blogsService.delete(blog.id)
-        setBlogs(blogs.filter(b => b.id !== blog.id))
+        setBlogs(Array.isArray(blogs) ? blogs.filter(b => b.id !== blog.id) : [])
         toast.success(`Article "${blog.title || blog.titre}" supprimé avec succès`)
       } catch (err) {
         toast.error("Erreur lors de la suppression")

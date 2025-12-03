@@ -38,11 +38,13 @@ export function VideoGallery({ searchQuery = "", categorie }: VideoGalleryProps)
     const fetchVideos = async () => {
       try {
         setLoading(true)
-        const data = await videosService.getAll({ categorie })
-        setVideos(data)
+        const data = await videosService.getAll()
+        // S'assurer que data est un tableau
+        setVideos(Array.isArray(data) ? data : [])
       } catch (err) {
         setError("Erreur lors du chargement des vidéos")
         console.error("Erreur:", err)
+        setVideos([]) // Initialiser avec un tableau vide en cas d'erreur
       } finally {
         setLoading(false)
       }
@@ -51,7 +53,7 @@ export function VideoGallery({ searchQuery = "", categorie }: VideoGalleryProps)
     fetchVideos()
   }, [categorie])
 
-  const filteredVideos = videos.filter((video) => {
+  const filteredVideos = Array.isArray(videos) ? videos.filter((video) => {
     const matchesSearch =
       video.titre.toLowerCase().includes(searchQuery.toLowerCase()) ||
       video.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -59,7 +61,7 @@ export function VideoGallery({ searchQuery = "", categorie }: VideoGalleryProps)
     const matchesCategorie = !categorie || video.categorie === categorie
 
     return matchesSearch && matchesCategorie
-  })
+  }) : []
 
   const handlePlay = (video: Video) => {
     if (video.type === "youtube") {
@@ -78,7 +80,7 @@ export function VideoGallery({ searchQuery = "", categorie }: VideoGalleryProps)
     if (confirm(`Êtes-vous sûr de vouloir supprimer "${video.titre}" ?`)) {
       try {
         await videosService.delete(video.id)
-        setVideos(videos.filter(v => v.id !== video.id))
+        setVideos(Array.isArray(videos) ? videos.filter(v => v.id !== video.id) : [])
         toast.success(`Vidéo "${video.titre}" supprimée avec succès`)
       } catch (err) {
         toast.error("Erreur lors de la suppression")

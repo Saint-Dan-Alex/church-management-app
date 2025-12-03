@@ -9,7 +9,8 @@ import { MoreVertical, Edit, Trash, Eye, Calendar } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { EditChildDialog } from "@/components/children/edit-child-dialog"
-import { childrenService, type Child } from "@/lib/services/children.service"
+import { childrenService } from "@/lib/services/children.service"
+import type { Child } from "@/lib/types/api"
 import { toast } from "sonner"
 
 interface ChildrenListProps {
@@ -30,26 +31,44 @@ export function ChildrenList({ searchQuery = "", group, onSelectChild }: Childre
     const fetchChildren = async () => {
       try {
         setLoading(true)
-        const data = await childrenService.getAll({ group })
-        setChildren(data)
+        const data = await childrenService.getAll()
+        // S'assurer que data est un tableau
+        setChildren(Array.isArray(data) ? data : [])
       } catch (err) {
         setError("Erreur lors du chargement des enfants")
         console.error("Erreur:", err)
+        setChildren([]) // Initialiser avec un tableau vide en cas d'erreur
       } finally {
         setLoading(false)
       }
     }
 
     fetchChildren()
-  }, [group])
+  }, [])
 
-  const filteredChildren = children.filter((child) => {
+  const filteredChildren = Array.isArray(children) ? children.filter((child) => {
     const matchesSearch =
       child.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       child.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       child.parentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      child.group.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      child.group.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    return matchesSearch
+  }) : []
+
+  const handleDelete = (childId: string, childName: string) => {
+    if (window.confirm(`Voulez-vous vraiment supprimer l'enfant ${childName} ?`)) {
+      setChildren(Array.isArray(children) ? children.filter(c => c.id !== childId) : [])
+      childrenService.delete(childId)
+        .then(() => toast.success(`L'enfant ${childName} a été supprimé avec succès`))
+        .catch((err) => toast.error(`Erreur lors de la suppression de l'enfant ${childName}`))
+    }
+  }
+
+  const handleEdit = (child: Child) => {
+    setEditingChild(child)
+    setIsEditDialogOpen(true)
+  }
 
   return (
     <>
