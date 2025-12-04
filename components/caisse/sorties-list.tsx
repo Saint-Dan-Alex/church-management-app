@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -10,55 +10,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Edit, Trash, Calendar, TrendingDown, DollarSign, FileText } from "lucide-react"
-
-// Données mockées
-const mockSorties = [
-  {
-    id: "1",
-    libelle: "Achat fournitures scolaires",
-    montant: 15000,
-    devise: "CDF",
-    categorie: "Matériel",
-    dateSortie: "2025-01-18",
-    beneficiaire: "Fournisseur ABC",
-    modePaiement: "Espèces",
-    remarque: "Cahiers et stylos pour les enfants",
-  },
-  {
-    id: "2",
-    libelle: "Transport moniteurs",
-    montant: 8000,
-    devise: "CDF",
-    categorie: "Transport",
-    dateSortie: "2025-01-15",
-    beneficiaire: "Plusieurs moniteurs",
-    modePaiement: "Mobile Money",
-    remarque: "",
-  },
-  {
-    id: "3",
-    libelle: "Rafraîchissements culte",
-    montant: 12000,
-    devise: "CDF",
-    categorie: "Événement",
-    dateSortie: "2025-01-20",
-    beneficiaire: "Boutique du coin",
-    modePaiement: "Espèces",
-    remarque: "Jus et biscuits",
-  },
-  {
-    id: "4",
-    libelle: "Réparation matériel",
-    montant: 10000,
-    devise: "CDF",
-    categorie: "Maintenance",
-    dateSortie: "2025-01-10",
-    beneficiaire: "Technicien Jean",
-    modePaiement: "Virement",
-    remarque: "Réparation projecteur",
-  },
-]
+import { MoreVertical, Edit, Trash, Calendar, TrendingDown, DollarSign, FileText, Loader2 } from "lucide-react"
+import { sortiesService } from "@/lib/services"
+import { useToast } from "@/hooks/use-toast"
 
 interface SortiesListProps {
   searchQuery: string
@@ -66,28 +20,70 @@ interface SortiesListProps {
 }
 
 export function SortiesList({ searchQuery, categorieFilter }: SortiesListProps) {
-  const [selectedSortie, setSelectedSortie] = useState<typeof mockSorties[0] | null>(null)
+  const { toast } = useToast()
+  const [sorties, setSorties] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedSortie, setSelectedSortie] = useState<any | null>(null)
 
-  const filteredSorties = mockSorties.filter((sortie) => {
+  useEffect(() => {
+    loadSorties()
+  }, [])
+
+  const loadSorties = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await sortiesService.getAll()
+      setSorties(Array.isArray(data) ? data : [])
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erreur de chargement des sorties'
+      setError(errorMessage)
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredSorties = sorties.filter((sortie) => {
     const matchesSearch =
-      sortie.libelle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sortie.beneficiaire.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sortie.categorie.toLowerCase().includes(searchQuery.toLowerCase())
+      sortie.libelle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      sortie.beneficiaire?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      sortie.categorie?.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesCategorie = categorieFilter === "all" || sortie.categorie === categorieFilter
 
     return matchesSearch && matchesCategorie
   })
 
-  const handleEdit = (sortie: typeof mockSorties[0]) => {
+  const handleEdit = (sortie: any) => {
     setSelectedSortie(sortie)
-    alert(`✏️ Modification de la sortie\n\nLibellé: ${sortie.libelle}\nMontant: ${sortie.montant} ${sortie.devise}`)
+    toast({
+      title: "Modifier la sortie",
+      description: `${sortie.libelle} - ${sortie.montant} ${sortie.devise}`,
+    })
   }
 
-  const handleDelete = (sortie: typeof mockSorties[0]) => {
+  const handleDelete = async (sortie: any) => {
     if (confirm(`Êtes-vous sûr de vouloir supprimer cette sortie "${sortie.libelle}" ?`)) {
-      console.log("Sortie supprimée:", sortie.id)
-      alert(`🗑️ Sortie supprimée avec succès !`)
+      try {
+        await sortiesService.delete(sortie.id)
+        toast({
+          title: "Sortie supprimée",
+          description: "La sortie a été supprimée avec succès.",
+        })
+        loadSorties()
+      } catch (err: any) {
+        toast({
+          title: "Erreur",
+          description: err.message || "Impossible de supprimer la sortie",
+          variant: "destructive"
+        })
+      }
     }
   }
 
@@ -103,17 +99,37 @@ export function SortiesList({ searchQuery, categorieFilter }: SortiesListProps) 
   }
 
   // Calcul du total
-  const totalSorties = filteredSorties.reduce((sum, s) => sum + s.montant, 0)
+  const totalSorties = filteredSorties.reduce((sum, s) => sum + (s.montant || 0), 0)
 
   // Statistiques par catégorie
   const statsParCategorie = filteredSorties.reduce((acc, s) => {
     if (!acc[s.categorie]) {
       acc[s.categorie] = { montant: 0, nombre: 0 }
     }
-    acc[s.categorie].montant += s.montant
+    acc[s.categorie].montant += s.montant || 0
     acc[s.categorie].nombre++
     return acc
   }, {} as Record<string, { montant: number; nombre: number }>)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Chargement des sorties...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-destructive mb-4">{error}</p>
+        <Button onClick={loadSorties} variant="outline">
+          Réessayer
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">

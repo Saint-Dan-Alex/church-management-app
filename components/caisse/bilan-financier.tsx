@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,55 +13,98 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { TrendingUp, TrendingDown, DollarSign, Calendar, Download, Printer } from "lucide-react"
-
-// Données mockées - Entrées
-const mockEntrees = [
-  { id: "1", moniteur: "Sophie KAMANDA", montant: 5000, periode: "Janvier 2025", statut: "Payé" },
-  { id: "2", moniteur: "Jacques MUKENDI", montant: 5000, periode: "Janvier 2025", statut: "Payé" },
-  { id: "3", moniteur: "Paul NGEA", montant: 5000, periode: "Janvier 2025", statut: "Payé" },
-  { id: "4", moniteur: "Marie LENGE", montant: 5000, periode: "Janvier 2025", statut: "Payé" },
-  { id: "5", moniteur: "Sophie KAMANDA", montant: 5000, periode: "Décembre 2024", statut: "Payé" },
-  { id: "6", moniteur: "Paul NGEA", montant: 5000, periode: "Décembre 2024", statut: "Payé" },
-]
-
-// Données mockées - Sorties
-const mockSorties = [
-  { id: "1", libelle: "Achat fournitures scolaires", montant: 15000, categorie: "Matériel" },
-  { id: "2", libelle: "Transport moniteurs", montant: 8000, categorie: "Transport" },
-  { id: "3", libelle: "Rafraîchissements culte", montant: 12000, categorie: "Événement" },
-  { id: "4", libelle: "Réparation matériel", montant: 10000, categorie: "Maintenance" },
-]
+import { TrendingUp, TrendingDown, DollarSign, Calendar, Download, Printer, Loader2 } from "lucide-react"
+import { cotisationsService, sortiesService } from "@/lib/services"
+import { useToast } from "@/hooks/use-toast"
 
 export function BilanFinancier() {
+  const { toast } = useToast()
+  const [entrees, setEntrees] = useState<any[]>([])
+  const [sorties, setSorties] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [dateDebut, setDateDebut] = useState("")
   const [dateFin, setDateFin] = useState("")
 
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Charger les entrées (cotisations) et sorties en parallèle
+      const [entreesData, sortiesData] = await Promise.all([
+        cotisationsService.getAll(),
+        sortiesService.getAll()
+      ])
+
+      setEntrees(Array.isArray(entreesData) ? entreesData : [])
+      setSorties(Array.isArray(sortiesData) ? sortiesData : [])
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erreur de chargement du bilan'
+      setError(errorMessage)
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Calculs
-  const totalEntrees = mockEntrees.reduce((sum, e) => sum + e.montant, 0)
-  const totalSorties = mockSorties.reduce((sum, s) => sum + s.montant, 0)
+  const totalEntrees = entrees.reduce((sum, e) => sum + (e.montant || 0), 0)
+  const totalSorties = sorties.reduce((sum, s) => sum + (s.montant || 0), 0)
   const solde = totalEntrees - totalSorties
-  const nombreEntrees = mockEntrees.length
-  const nombreSorties = mockSorties.length
+  const nombreEntrees = entrees.length
+  const nombreSorties = sorties.length
 
   // Statistiques par catégorie de sorties
-  const sortiesParCategorie = mockSorties.reduce((acc, s) => {
-    if (!acc[s.categorie]) {
-      acc[s.categorie] = { montant: 0, nombre: 0 }
+  const sortiesParCategorie = sorties.reduce((acc, s) => {
+    const categorie = s.categorie || 'Autre'
+    if (!acc[categorie]) {
+      acc[categorie] = { montant: 0, nombre: 0 }
     }
-    acc[s.categorie].montant += s.montant
-    acc[s.categorie].nombre++
+    acc[categorie].montant += s.montant || 0
+    acc[categorie].nombre++
     return acc
   }, {} as Record<string, { montant: number; nombre: number }>)
 
   const handleExport = () => {
-    alert("📄 Export du bilan en cours...\n\nLe rapport sera téléchargé en format Excel/PDF")
+    toast({
+      title: "Export en cours",
+      description: "Le bilan sera téléchargé en format Excel/PDF",
+    })
     console.log("Export bilan")
   }
 
   const handlePrint = () => {
     window.print()
     console.log("Impression du bilan")
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Chargement du bilan...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-destructive mb-4">{error}</p>
+        <Button onClick={loadData} variant="outline">
+          Réessayer
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -95,7 +138,7 @@ export function BilanFinancier() {
             </div>
 
             <div className="flex items-end gap-2">
-              <Button className="flex-1">
+              <Button className="flex-1" onClick={loadData}>
                 <Calendar className="mr-2 h-4 w-4" />
                 Générer
               </Button>
@@ -185,9 +228,9 @@ export function BilanFinancier() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockEntrees.slice(0, 5).map((entree) => (
+                {entrees.slice(0, 5).map((entree) => (
                   <TableRow key={entree.id}>
-                    <TableCell className="font-medium">{entree.moniteur}</TableCell>
+                    <TableCell className="font-medium">{entree.membre_nom || entree.moniteur}</TableCell>
                     <TableCell className="text-right text-green-600">
                       +{entree.montant.toLocaleString()} CDF
                     </TableCell>
@@ -195,9 +238,9 @@ export function BilanFinancier() {
                 ))}
               </TableBody>
             </Table>
-            {mockEntrees.length > 5 && (
+            {entrees.length > 5 && (
               <p className="text-xs text-gray-500 mt-2 text-center">
-                Et {mockEntrees.length - 5} autre(s)...
+                Et {entrees.length - 5} autre(s)...
               </p>
             )}
           </CardContent>
@@ -223,7 +266,7 @@ export function BilanFinancier() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockSorties.map((sortie) => (
+                {sorties.slice(0, 5).map((sortie) => (
                   <TableRow key={sortie.id}>
                     <TableCell className="font-medium">{sortie.libelle}</TableCell>
                     <TableCell className="text-right text-red-600">
@@ -233,40 +276,47 @@ export function BilanFinancier() {
                 ))}
               </TableBody>
             </Table>
+            {sorties.length > 5 && (
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Et {sorties.length - 5} autre(s)...
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Répartition des dépenses */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Répartition des dépenses par catégorie</CardTitle>
-          <CardDescription>Analyse des sorties</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Object.entries(sortiesParCategorie)
-              .sort(([, a], [, b]) => b.montant - a.montant)
-              .map(([categorie, stats]) => {
-                const pourcentage = Math.round((stats.montant / totalSorties) * 100)
-                return (
-                  <div key={categorie}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium">{categorie}</span>
-                      <span className="text-sm font-bold">{stats.montant.toLocaleString()} CDF ({pourcentage}%)</span>
+      {Object.keys(sortiesParCategorie).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Répartition des dépenses par catégorie</CardTitle>
+            <CardDescription>Analyse des sorties</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {Object.entries(sortiesParCategorie)
+                .sort(([, a], [, b]) => b.montant - a.montant)
+                .map(([categorie, stats]) => {
+                  const pourcentage = totalSorties > 0 ? Math.round((stats.montant / totalSorties) * 100) : 0
+                  return (
+                    <div key={categorie}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium">{categorie}</span>
+                        <span className="text-sm font-bold">{stats.montant.toLocaleString()} CDF ({pourcentage}%)</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-red-600 h-2 rounded-full"
+                          style={{ width: `${pourcentage}%` }}
+                        ></div>
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-red-600 h-2 rounded-full"
-                        style={{ width: `${pourcentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )
-              })}
-          </div>
-        </CardContent>
-      </Card>
+                  )
+                })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Résumé final */}
       <Card>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,133 +15,87 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Search, Download, Printer, Calendar, TrendingUp, TrendingDown, DollarSign } from "lucide-react"
-
-// Données mockées (plus complètes pour le rapport)
-const mockCotisations = [
-  {
-    id: "1",
-    moniteur: "Sophie KAMANDA",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Janvier 2025",
-    datePaiement: "2025-01-15",
-    statut: "Payé",
-    modePaiement: "Mobile Money",
-  },
-  {
-    id: "2",
-    moniteur: "Jacques MUKENDI",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Janvier 2025",
-    datePaiement: "2025-01-10",
-    statut: "Payé",
-    modePaiement: "Espèces",
-  },
-  {
-    id: "3",
-    moniteur: "Sophie KAMANDA",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Décembre 2024",
-    datePaiement: "2024-12-20",
-    statut: "Payé",
-    modePaiement: "Mobile Money",
-  },
-  {
-    id: "4",
-    moniteur: "Paul NGEA",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Janvier 2025",
-    datePaiement: "2025-01-20",
-    statut: "Payé",
-    modePaiement: "Virement",
-  },
-  {
-    id: "5",
-    moniteur: "Sophie KAMANDA",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Novembre 2024",
-    datePaiement: "2024-11-18",
-    statut: "Payé",
-    modePaiement: "Espèces",
-  },
-  {
-    id: "6",
-    moniteur: "Jacques MUKENDI",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Décembre 2024",
-    datePaiement: null,
-    statut: "En attente",
-    modePaiement: "",
-  },
-  {
-    id: "7",
-    moniteur: "Paul NGEA",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Décembre 2024",
-    datePaiement: "2024-12-15",
-    statut: "Payé",
-    modePaiement: "Mobile Money",
-  },
-  {
-    id: "8",
-    moniteur: "Marie LENGE",
-    montant: 5000,
-    devise: "CDF",
-    periode: "Janvier 2025",
-    datePaiement: "2025-01-12",
-    statut: "Payé",
-    modePaiement: "Espèces",
-  },
-]
+import { Search, Download, Printer, Calendar, TrendingUp, TrendingDown, DollarSign, Loader2 } from "lucide-react"
+import { cotisationsService } from "@/lib/services"
+import { useToast } from "@/hooks/use-toast"
 
 export function RapportCotisations() {
+  const { toast } = useToast()
+  const [cotisations, setCotisations] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [moniteurFilter, setMoniteurFilter] = useState("all")
   const [dateDebut, setDateDebut] = useState("")
   const [dateFin, setDateFin] = useState("")
-  const [filteredData, setFilteredData] = useState(mockCotisations)
+  const [filteredData, setFilteredData] = useState<any[]>([])
+
+  useEffect(() => {
+    loadCotisations()
+  }, [])
+
+  const loadCotisations = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await cotisationsService.getAll()
+      const cotisationsArray = Array.isArray(data) ? data : []
+      setCotisations(cotisationsArray)
+      setFilteredData(cotisationsArray)
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erreur de chargement des cotisations'
+      setError(errorMessage)
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Liste unique des moniteurs
-  const moniteurs = Array.from(new Set(mockCotisations.map((c) => c.moniteur))).sort()
+  const moniteurs = Array.from(new Set(cotisations.map((c) => c.membre_nom || c.moniteur))).sort()
 
   const handleSearch = () => {
-    let results = mockCotisations
+    let results = cotisations
 
     // Filtre par moniteur
     if (moniteurFilter !== "all") {
-      results = results.filter((c) => c.moniteur === moniteurFilter)
+      results = results.filter((c) => (c.membre_nom || c.moniteur) === moniteurFilter)
     }
 
     // Filtre par date
     if (dateDebut && dateFin) {
       results = results.filter((c) => {
-        if (!c.datePaiement) return false
-        const datePaiement = new Date(c.datePaiement)
+        const datePaiement = c.date_cotisation || c.datePaiement
+        if (!datePaiement) return false
+        const date = new Date(datePaiement)
         const debut = new Date(dateDebut)
         const fin = new Date(dateFin)
-        return datePaiement >= debut && datePaiement <= fin
+        return date >= debut && date <= fin
       })
     }
 
     setFilteredData(results)
-    alert(`✅ Recherche effectuée !\n\n${results.length} cotisation(s) trouvée(s)`)
+    toast({
+      title: "Recherche effectuée",
+      description: `${results.length} cotisation(s) trouvée(s)`,
+    })
   }
 
   const handleReset = () => {
     setMoniteurFilter("all")
     setDateDebut("")
     setDateFin("")
-    setFilteredData(mockCotisations)
+    setFilteredData(cotisations)
   }
 
   const handleExport = () => {
-    alert("📄 Export en cours...\n\nLe rapport sera téléchargé en format Excel/PDF")
+    toast({
+      title: "Export en cours",
+      description: "Le rapport sera téléchargé en format Excel/PDF",
+    })
     console.log("Export rapport:", filteredData)
   }
 
@@ -151,37 +105,56 @@ export function RapportCotisations() {
   }
 
   // Calculs statistiques
-  const totalMontant = filteredData.reduce((sum, c) => sum + c.montant, 0)
-  const totalPaye = filteredData.filter((c) => c.statut === "Payé").reduce((sum, c) => sum + c.montant, 0)
-  const totalEnAttente = filteredData.filter((c) => c.statut === "En attente").reduce((sum, c) => sum + c.montant, 0)
+  const totalMontant = filteredData.reduce((sum, c) => sum + (c.montant || 0), 0)
+  const totalPaye = filteredData.filter((c) => c.statut === "Payé" || c.statut === "paid").reduce((sum, c) => sum + (c.montant || 0), 0)
+  const totalEnAttente = filteredData.filter((c) => c.statut === "En attente" || c.statut === "pending").reduce((sum, c) => sum + (c.montant || 0), 0)
   const nombreCotisations = filteredData.length
-  const nombrePayees = filteredData.filter((c) => c.statut === "Payé").length
+  const nombrePayees = filteredData.filter((c) => c.statut === "Payé" || c.statut === "paid").length
   const tauxPaiement = nombreCotisations > 0 ? Math.round((nombrePayees / nombreCotisations) * 100) : 0
 
   // Statistiques par moniteur
   const statsParMoniteur = filteredData.reduce((acc, c) => {
-    if (!acc[c.moniteur]) {
-      acc[c.moniteur] = { total: 0, paye: 0, enAttente: 0, nombre: 0 }
+    const nom = c.membre_nom || c.moniteur
+    if (!acc[nom]) {
+      acc[nom] = { total: 0, paye: 0, enAttente: 0, nombre: 0 }
     }
-    acc[c.moniteur].nombre++
-    acc[c.moniteur].total += c.montant
-    if (c.statut === "Payé") {
-      acc[c.moniteur].paye += c.montant
+    acc[nom].nombre++
+    acc[nom].total += c.montant || 0
+    if (c.statut === "Payé" || c.statut === "paid") {
+      acc[nom].paye += c.montant || 0
     } else {
-      acc[c.moniteur].enAttente += c.montant
+      acc[nom].enAttente += c.montant || 0
     }
     return acc
   }, {} as Record<string, { total: number; paye: number; enAttente: number; nombre: number }>)
 
   const getStatutBadge = (statut: string) => {
-    switch (statut) {
-      case "Payé":
-        return <Badge className="bg-green-500">Payé</Badge>
-      case "En attente":
-        return <Badge variant="secondary">En attente</Badge>
-      default:
-        return <Badge variant="outline">{statut}</Badge>
+    if (statut === "Payé" || statut === "paid") {
+      return <Badge className="bg-green-500">Payé</Badge>
+    } else if (statut === "En attente" || statut === "pending") {
+      return <Badge variant="secondary">En attente</Badge>
     }
+    return <Badge variant="outline">{statut}</Badge>
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Chargement du rapport...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-destructive mb-4">{error}</p>
+        <Button onClick={loadCotisations} variant="outline">
+          Réessayer
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -300,7 +273,7 @@ export function RapportCotisations() {
       </div>
 
       {/* Statistiques par moniteur */}
-      {moniteurFilter === "all" && (
+      {moniteurFilter === "all" && Object.keys(statsParMoniteur).length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Statistiques par moniteur</CardTitle>
@@ -383,17 +356,17 @@ export function RapportCotisations() {
               ) : (
                 filteredData.map((cotisation) => (
                   <TableRow key={cotisation.id}>
-                    <TableCell className="font-medium">{cotisation.moniteur}</TableCell>
-                    <TableCell>{cotisation.periode}</TableCell>
+                    <TableCell className="font-medium">{cotisation.membre_nom || cotisation.moniteur}</TableCell>
+                    <TableCell>{cotisation.mois && cotisation.annee ? `${cotisation.mois} ${cotisation.annee}` : cotisation.periode}</TableCell>
                     <TableCell className="text-right font-semibold">
                       {cotisation.montant.toLocaleString()} {cotisation.devise}
                     </TableCell>
                     <TableCell>
-                      {cotisation.datePaiement
-                        ? new Date(cotisation.datePaiement).toLocaleDateString("fr-FR")
+                      {cotisation.date_cotisation || cotisation.datePaiement
+                        ? new Date(cotisation.date_cotisation || cotisation.datePaiement).toLocaleDateString("fr-FR")
                         : "-"}
                     </TableCell>
-                    <TableCell>{cotisation.modePaiement || "-"}</TableCell>
+                    <TableCell>{cotisation.methode_paiement || cotisation.modePaiement || "-"}</TableCell>
                     <TableCell>{getStatutBadge(cotisation.statut)}</TableCell>
                   </TableRow>
                 ))

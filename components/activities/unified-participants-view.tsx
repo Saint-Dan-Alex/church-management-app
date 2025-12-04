@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,12 +10,13 @@ import {
   Search,
   CheckCircle2,
   XCircle,
-  Clock,
-  DollarSign,
   AlertCircle,
   Download,
+  Loader2,
 } from "lucide-react"
 import type { ActivityType } from "@/types/activity"
+import { activitiesService } from "@/lib/services"
+import { useToast } from "@/hooks/use-toast"
 
 interface UnifiedParticipant {
   id: string
@@ -23,18 +24,18 @@ interface UnifiedParticipant {
   prenom: string
   nomComplet: string
   type: "enfant" | "moniteur"
-  
+
   // Présence
   estPresent: boolean
   statutPresence?: "present" | "retard" | "absent"
   heureArrivee?: string
-  
+
   // Paiement (si activité payante)
   aPaye: boolean
   montantPaye?: number
   montantRequis?: number
   statutPaiement?: "paid" | "partial" | "pending"
-  
+
   // Méthode d'ajout
   ajouteVia: "inscription" | "presence" | "paiement" | "manuel"
 }
@@ -47,69 +48,6 @@ interface UnifiedParticipantsViewProps {
   devise?: "CDF" | "USD"
 }
 
-// Données mockées
-const mockParticipants: UnifiedParticipant[] = [
-  {
-    id: "1",
-    nom: "LENGE",
-    prenom: "Marie",
-    nomComplet: "Marie LENGE",
-    type: "moniteur",
-    estPresent: true,
-    statutPresence: "present",
-    heureArrivee: "09:00",
-    aPaye: true,
-    montantPaye: 10000,
-    montantRequis: 10000,
-    statutPaiement: "paid",
-    ajouteVia: "paiement",
-  },
-  {
-    id: "2",
-    nom: "NGEA",
-    prenom: "Paul",
-    nomComplet: "Paul NGEA",
-    type: "moniteur",
-    estPresent: true,
-    statutPresence: "present",
-    heureArrivee: "09:05",
-    aPaye: true,
-    montantPaye: 5000,
-    montantRequis: 10000,
-    statutPaiement: "partial",
-    ajouteVia: "paiement",
-  },
-  {
-    id: "3",
-    nom: "NFEO",
-    prenom: "Jean",
-    nomComplet: "Jean NFEO",
-    type: "moniteur",
-    estPresent: true,
-    statutPresence: "present",
-    heureArrivee: "09:10",
-    aPaye: false,
-    montantPaye: 0,
-    montantRequis: 10000,
-    statutPaiement: "pending",
-    ajouteVia: "presence",
-  },
-  {
-    id: "4",
-    nom: "JEMMA",
-    prenom: "Sarah",
-    nomComplet: "Sarah JEMMA",
-    type: "enfant",
-    estPresent: false,
-    statutPresence: "absent",
-    aPaye: true,
-    montantPaye: 10000,
-    montantRequis: 10000,
-    statutPaiement: "paid",
-    ajouteVia: "paiement",
-  },
-]
-
 export function UnifiedParticipantsView({
   activiteId,
   activiteNom,
@@ -117,16 +55,44 @@ export function UnifiedParticipantsView({
   montantRequis,
   devise = "CDF",
 }: UnifiedParticipantsViewProps) {
-  const [participants] = useState<UnifiedParticipant[]>(mockParticipants)
+  const { toast } = useToast()
+  const [participants, setParticipants] = useState<UnifiedParticipant[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    loadParticipants()
+  }, [activiteId])
+
+  const loadParticipants = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Charger les participants de l'activité
+      const data = await activitiesService.getParticipants(activiteId)
+      setParticipants(Array.isArray(data) ? data : [])
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erreur de chargement des participants'
+      setError(errorMessage)
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Filtrer les participants
   const filteredParticipants = participants.filter((p) => {
     const searchLower = searchQuery.toLowerCase()
     return (
-      p.nomComplet.toLowerCase().includes(searchLower) ||
-      p.nom.toLowerCase().includes(searchLower) ||
-      p.prenom.toLowerCase().includes(searchLower)
+      p.nomComplet?.toLowerCase().includes(searchLower) ||
+      p.nom?.toLowerCase().includes(searchLower) ||
+      p.prenom?.toLowerCase().includes(searchLower)
     )
   })
 
@@ -165,9 +131,9 @@ export function UnifiedParticipantsView({
 
     // Pour activité payante : combinaison présence + paiement
     const presenceIcon = participant.estPresent ? "✅" : "📝"
-    const paiementIcon = 
-      participant.statutPaiement === "paid" ? "💰" : 
-      participant.statutPaiement === "partial" ? "🟡" : "⏳"
+    const paiementIcon =
+      participant.statutPaiement === "paid" ? "💰" :
+        participant.statutPaiement === "partial" ? "🟡" : "⏳"
 
     let badgeColor = ""
     let statusText = ""
@@ -196,6 +162,26 @@ export function UnifiedParticipantsView({
       <Badge variant="outline" className={badgeColor}>
         {statusText}
       </Badge>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Chargement des participants...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-destructive mb-4">{error}</p>
+        <Button onClick={loadParticipants} variant="outline">
+          Réessayer
+        </Button>
+      </div>
     )
   }
 
@@ -291,8 +277,8 @@ export function UnifiedParticipantsView({
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-semibold">
-                        {participant.prenom.charAt(0)}
-                        {participant.nom.charAt(0)}
+                        {participant.prenom?.charAt(0)}
+                        {participant.nom?.charAt(0)}
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900">{participant.nomComplet}</p>

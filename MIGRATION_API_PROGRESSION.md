@@ -1,76 +1,50 @@
-# ✅ Migration API - Progression
+# 🚀 Migration API - Progression Intermédiaire
 ## Church Management Application
 
 ---
 
-## 📊 ÉTAT ACTUEL
+## 📊 PROGRESSION ACTUELLE
 
-### ✅ Composants migrés (1/13)
+**8/13 composants migrés (62%)**
 
-1. ✅ **expense-list.tsx** - Migré avec succès
-   - Chargement depuis l'API
-   - Gestion des erreurs
-   - Indicateur de chargement
-   - Suppression via API
+### ✅ Composants migrés (8)
 
----
+#### Priorité 1 : Nouveaux modules (4/4) ✅
+1. ✅ expense-list.tsx
+2. ✅ payment-list.tsx
+3. ✅ presence-list.tsx
+4. ✅ cotisation-list.tsx
 
-## 🔄 PROCHAINES ÉTAPES
+#### Priorité 2 : Modules existants (2/2) ✅
+5. ✅ teaching-list.tsx
+6. ✅ worship-report-list.tsx
 
-### Priorité 1 : Nouveaux modules (3 restants)
+#### Priorité 3 : Modules Caisse (2/3) ✅
+7. ✅ sorties-list.tsx
+8. ✅ rapport-cotisations.tsx
 
-2. ⏳ **payment-list.tsx** - À migrer
-3. ⏳ **presence-list.tsx** - À migrer
-4. ⏳ **cotisation-list.tsx** - À migrer
+### ⏳ Composants restants (5)
 
----
+#### Priorité 3 : Modules Caisse (1/3)
+9. ⏳ bilan-financier.tsx - En cours
 
-## 📝 MODIFICATIONS EFFECTUÉES
-
-### expense-list.tsx
-```typescript
-// Ajouté :
-- import { expensesService } from "@/lib/services"
-- import { Loader2 } from "lucide-react"
-- useState pour loading et error
-- useEffect pour charger au montage
-- loadExpenses() async function
-- Gestion d'erreur dans handleDelete
-- UI de chargement
-- UI d'erreur avec bouton réessayer
-
-// Supprimé :
-- const mockExpenses (données mockées)
-- Initialisation avec mockExpenses
-```
+#### Priorité 4 : Sous-modules Activités (4/4)
+10. ⏳ unified-participants-view.tsx
+11. ⏳ presence-manager.tsx
+12. ⏳ payment-manager.tsx
+13. ⏳ expense-manager.tsx
 
 ---
 
-## 🎯 RECOMMANDATION
+## ⏱️ TEMPS ESTIMÉ RESTANT
 
-Pour accélérer la migration, je recommande de :
+- bilan-financier.tsx : ~30 min (complexe - multiple sources)
+- Sous-modules Activités : ~2h (4 composants complexes)
 
-1. **Migrer les 3 composants restants de Priorité 1** (paiements, présences, cotisations)
-2. **Tester chaque composant** après migration
-3. **Vérifier que le backend répond correctement**
-4. **Puis continuer avec les modules existants**
-
----
-
-## ⚠️ POINTS D'ATTENTION
-
-### Backend Laravel
-- Vérifier que le backend est démarré : `php artisan serve`
-- Vérifier que les routes API sont accessibles
-- Vérifier les CORS si nécessaire
-
-### Frontend Next.js
-- Vérifier que `NEXT_PUBLIC_API_URL` est configuré dans `.env.local`
-- Vérifier que le serveur Next.js est démarré : `npm run dev`
+**Total restant : ~2h30**
 
 ---
 
 **📄 Mis à jour le :** 4 décembre 2025  
-**✍️ Pour :** Church Management Application  
-**🎯 Progression :** 1/13 composants migrés (8%)  
-**🔄 Version :** 1.1
+**🎯 Progression :** 8/13 (62%)  
+**🔄 Version :** 1.2
