@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreVertical, Edit, Trash, Eye, Calendar, Users } from "lucide-react"
+import { MoreVertical, Edit, Trash, Eye, Calendar, Users, Loader2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,60 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { WorshipReport } from "@/types/worship-report"
-
-// Données mockées pour test
-const mockReports: WorshipReport[] = [
-  {
-    id: "1",
-    date: "2023-12-03",
-    salle: "Adolescents",
-    orateurs: ["Soeur LENGE", "Frère NGEA"],
-    predicateur: "Frère NFEO",
-    moniteurs: ["Soeur JEMMA", "Frère CHRISTIAN", "MUKEBA"],
-    effectifFreres: 133,
-    effectifSoeurs: 277,
-    effectifTotal: 410,
-    offrandes: "171,700 FC + 1 GN",
-    nombreNouveauxVenus: 1,
-    nouveauxVenus: [
-      {
-        id: "1",
-        prenom: "Nou",
-        nom: "Seulo",
-        adresse: "",
-        contact: "",
-      },
-    ],
-  },
-  {
-    id: "2",
-    date: "2023-11-26",
-    salle: "Jardin",
-    orateurs: ["Frère PAUL"],
-    predicateur: "Frère PAUL",
-    moniteurs: ["Soeur MARIE", "Frère JEAN"],
-    effectifFreres: 45,
-    effectifSoeurs: 52,
-    effectifTotal: 97,
-    offrandes: "85,000 FC",
-    nombreNouveauxVenus: 2,
-    nouveauxVenus: [],
-  },
-  {
-    id: "3",
-    date: "2023-11-26",
-    salle: "Juniors",
-    orateurs: ["Soeur RUTH"],
-    predicateur: "Soeur RUTH",
-    moniteurs: ["Frère DAVID"],
-    effectifFreres: 68,
-    effectifSoeurs: 75,
-    effectifTotal: 143,
-    offrandes: "120,500 FC",
-    nombreNouveauxVenus: 0,
-    nouveauxVenus: [],
-  },
-]
+import { worshipReportsService } from "@/lib/services"
+import { useToast } from "@/hooks/use-toast"
 
 interface WorshipReportListProps {
   searchQuery: string
@@ -74,17 +22,56 @@ interface WorshipReportListProps {
 
 export function WorshipReportList({ searchQuery }: WorshipReportListProps) {
   const router = useRouter()
+  const { toast } = useToast()
+  const [reports, setReports] = useState<WorshipReport[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleDelete = (reportId: string, salle: string) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer le rapport de ${salle} ?`)) {
-      console.log("Suppression du rapport:", reportId)
-      // Logique de suppression ici
+  useEffect(() => {
+    loadReports()
+  }, [])
+
+  const loadReports = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await worshipReportsService.getAll()
+      setReports(Array.isArray(data) ? data : [])
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erreur de chargement des rapports de culte'
+      setError(errorMessage)
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
-  const filteredReports = mockReports.filter(
+  const handleDelete = async (reportId: string, salle: string) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer le rapport de ${salle} ?`)) {
+      try {
+        await worshipReportsService.delete(reportId)
+        toast({
+          title: "Rapport supprimé",
+          description: "Le rapport de culte a été supprimé avec succès.",
+        })
+        loadReports()
+      } catch (err: any) {
+        toast({
+          title: "Erreur",
+          description: err.message || "Impossible de supprimer le rapport",
+          variant: "destructive"
+        })
+      }
+    }
+  }
+
+  const filteredReports = reports.filter(
     (report) =>
-      report.salle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.salle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       new Date(report.date).toLocaleDateString("fr-FR").includes(searchQuery)
   )
 
@@ -106,6 +93,34 @@ export function WorshipReportList({ searchQuery }: WorshipReportListProps) {
       month: "long",
       year: "numeric",
     })
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Chargement des rapports...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-destructive mb-4">{error}</p>
+        <Button onClick={loadReports} variant="outline">
+          Réessayer
+        </Button>
+      </div>
+    )
+  }
+
+  if (filteredReports.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Aucun rapport de culte trouvé</p>
+      </div>
+    )
   }
 
   return (
@@ -151,7 +166,7 @@ export function WorshipReportList({ searchQuery }: WorshipReportListProps) {
                   <div>
                     <strong>Prédicateur:</strong> {report.predicateur}
                   </div>
-                  {report.moniteurs.length > 0 && (
+                  {report.moniteurs?.length > 0 && (
                     <div className="mt-1">
                       <strong>Moniteurs:</strong> {report.moniteurs.slice(0, 2).join(", ")}
                       {report.moniteurs.length > 2 && ` +${report.moniteurs.length - 2}`}
