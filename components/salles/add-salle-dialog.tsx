@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -25,23 +25,18 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type { Salle, MoniteurSalle } from "@/types/salle"
+import { monitorsService } from "@/lib/services/monitors.service"
+import { sallesService } from "@/lib/services/salles.service"
+import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
 interface AddSalleDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
-// Données mockées des moniteurs disponibles
-const moniteursDisponibles = [
-  { id: "1", nom: "LENGE", prenom: "Marie", nomComplet: "Marie LENGE" },
-  { id: "2", nom: "NGEA", prenom: "Paul", nomComplet: "Paul NGEA" },
-  { id: "3", nom: "NFEO", prenom: "Jean", nomComplet: "Jean NFEO" },
-  { id: "4", nom: "JEMMA", prenom: "Sarah", nomComplet: "Sarah JEMMA" },
-  { id: "5", nom: "CHRISTIAN", prenom: "Marc", nomComplet: "Marc CHRISTIAN" },
-  { id: "6", nom: "MUKEBA", prenom: "David", nomComplet: "David MUKEBA" },
-]
-
-export function AddSalleDialog({ open, onOpenChange }: AddSalleDialogProps) {
+export function AddSalleDialog({ open, onOpenChange, onSuccess }: AddSalleDialogProps) {
   const [formData, setFormData] = useState<Partial<Salle>>({
     nom: undefined,
     description: "",
@@ -52,17 +47,52 @@ export function AddSalleDialog({ open, onOpenChange }: AddSalleDialogProps) {
     actif: true,
   })
 
+  // État pour les moniteurs récupérés depuis l'API
+  const [availableMonitors, setAvailableMonitors] = useState<any[]>([])
+  const [loadingMonitors, setLoadingMonitors] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [moniteursSelectionnes, setMoniteursSelectionnes] = useState<string[]>([])
+
+  // Charger les moniteurs à l'ouverture du dialogue
+  useEffect(() => {
+    const fetchMonitors = async () => {
+      if (!open) return
+
+      try {
+        setLoadingMonitors(true)
+        const response = await monitorsService.getAll({ per_page: 999 })
+        // Gestion de la réponse paginée ou tableau direct
+        const monitorsData = response.data || response || []
+
+        if (Array.isArray(monitorsData)) {
+          const formatted = monitorsData.map((m: any) => ({
+            id: m.id,
+            nom: m.nom,
+            prenom: m.prenom,
+            nomComplet: `${m.prenom} ${m.nom}`
+          }))
+          setAvailableMonitors(formatted)
+        }
+      } catch (error) {
+        console.error("Erreur chargement moniteurs:", error)
+        toast.error("Impossible de charger la liste des moniteurs")
+      } finally {
+        setLoadingMonitors(false)
+      }
+    }
+
+    fetchMonitors()
+  }, [open])
 
   const handleMoniteurToggle = (moniteurId: string) => {
     if (moniteursSelectionnes.includes(moniteurId)) {
       setMoniteursSelectionnes(moniteursSelectionnes.filter((id) => id !== moniteurId))
       // Si c'était le responsable ou l'adjoint, le retirer
       if (formData.responsableId === moniteurId) {
-        setFormData({ ...formData, responsableId: undefined })
+        setFormData((prev) => ({ ...prev, responsableId: undefined }))
       }
       if (formData.adjointId === moniteurId) {
-        setFormData({ ...formData, adjointId: undefined })
+        setFormData((prev) => ({ ...prev, adjointId: undefined }))
       }
     } else {
       setMoniteursSelectionnes([...moniteursSelectionnes, moniteurId])
@@ -70,54 +100,54 @@ export function AddSalleDialog({ open, onOpenChange }: AddSalleDialogProps) {
   }
 
   const getMoniteurById = (id: string) => {
-    return moniteursDisponibles.find((m) => m.id === id)
+    return availableMonitors.find((m) => m.id === id)
   }
 
-  const moniteursDisponiblesPourResponsable = moniteursDisponibles.filter((m) =>
+  const moniteursDisponiblesPourResponsable = availableMonitors.filter((m) =>
     moniteursSelectionnes.includes(m.id)
   )
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
 
-    const moniteursSalle: MoniteurSalle[] = moniteursSelectionnes.map((id) => {
-      const moniteur = getMoniteurById(id)!
-      let role: "responsable" | "adjoint" | "membre" = "membre"
-      if (id === formData.responsableId) role = "responsable"
-      else if (id === formData.adjointId) role = "adjoint"
-
-      return {
-        id,
-        nom: moniteur.nom,
-        prenom: moniteur.prenom,
-        nomComplet: moniteur.nomComplet,
-        role,
-        dateAffectation: new Date(),
+    try {
+      // Préparation des données pour l'API
+      // Note: L'API attend peut-être un format différent, on adapte selon le service
+      const payload = {
+        nom: formData.nom,
+        description: formData.description,
+        capacite: formData.capacite,
+        responsable_id: formData.responsableId, // snake_case pour Laravel souvent
+        adjoint_id: formData.adjointId,
+        actif: formData.actif,
+        // On envoie aussi les moniteurs associés si l'API le gère à la création
+        moniteurs_ids: moniteursSelectionnes
       }
-    })
 
-    const responsable = getMoniteurById(formData.responsableId || "")
-    const adjoint = getMoniteurById(formData.adjointId || "")
+      await sallesService.create(payload)
 
-    const salle: Salle = {
-      id: Date.now().toString(),
-      nom: formData.nom!,
-      description: formData.description || "",
-      capacite: formData.capacite || 50,
-      responsableId: formData.responsableId,
-      responsableNom: responsable?.nomComplet,
-      adjointId: formData.adjointId,
-      adjointNom: adjoint?.nomComplet,
-      moniteurs: moniteursSalle,
-      actif: formData.actif || true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      toast.success("Salle créée avec succès")
+      onOpenChange(false)
+      // Reset form
+      setFormData({
+        nom: undefined,
+        description: "",
+        capacite: 50,
+        responsableId: undefined,
+        adjointId: undefined,
+        moniteurs: [],
+        actif: true,
+      })
+      setMoniteursSelectionnes([])
+
+      if (onSuccess) onSuccess()
+    } catch (error) {
+      console.error("Erreur création salle:", error)
+      toast.error("Erreur lors de la création de la salle")
+    } finally {
+      setIsSubmitting(false)
     }
-
-    console.log("Salle ajoutée:", salle)
-    // TODO: Enregistrer dans la base de données
-    // TODO: Créer les entrées d'historique pour chaque moniteur
-    onOpenChange(false)
   }
 
   return (
@@ -185,37 +215,44 @@ export function AddSalleDialog({ open, onOpenChange }: AddSalleDialogProps) {
 
               {/* SÉLECTION DES MONITEURS */}
               <div className="space-y-4 border-t pt-4">
-                <h3 className="font-semibold text-gray-900">
-                  👥 Moniteurs ({moniteursSelectionnes.length})
+                <h3 className="font-semibold text-gray-900 flex items-center justify-between">
+                  <span>👥 Moniteurs ({moniteursSelectionnes.length})</span>
+                  {loadingMonitors && <Loader2 className="h-4 w-4 animate-spin text-gray-500" />}
                 </h3>
                 <Card className="p-4">
-                  <div className="space-y-3">
-                    {moniteursDisponibles.map((moniteur) => (
-                      <div key={moniteur.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`moniteur-${moniteur.id}`}
-                          checked={moniteursSelectionnes.includes(moniteur.id)}
-                          onCheckedChange={() => handleMoniteurToggle(moniteur.id)}
-                        />
-                        <Label
-                          htmlFor={`moniteur-${moniteur.id}`}
-                          className="cursor-pointer flex-1"
-                        >
-                          {moniteur.nomComplet}
-                        </Label>
-                        {formData.responsableId === moniteur.id && (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                            Responsable
-                          </Badge>
-                        )}
-                        {formData.adjointId === moniteur.id && (
-                          <Badge variant="outline" className="bg-green-50 text-green-700">
-                            Adjoint
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  {loadingMonitors ? (
+                    <div className="text-center py-4 text-gray-500">Chargement...</div>
+                  ) : availableMonitors.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">Aucun moniteur disponible</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {availableMonitors.map((moniteur) => (
+                        <div key={moniteur.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`moniteur-${moniteur.id}`}
+                            checked={moniteursSelectionnes.includes(moniteur.id)}
+                            onCheckedChange={() => handleMoniteurToggle(moniteur.id)}
+                          />
+                          <Label
+                            htmlFor={`moniteur-${moniteur.id}`}
+                            className="cursor-pointer flex-1"
+                          >
+                            {moniteur.nomComplet}
+                          </Label>
+                          {formData.responsableId === moniteur.id && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                              Responsable
+                            </Badge>
+                          )}
+                          {formData.adjointId === moniteur.id && (
+                            <Badge variant="outline" className="bg-green-50 text-green-700">
+                              Adjoint
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
                 {moniteursSelectionnes.length > 0 && (
                   <div className="text-sm text-gray-600">
@@ -232,7 +269,7 @@ export function AddSalleDialog({ open, onOpenChange }: AddSalleDialogProps) {
                     <div className="grid gap-2">
                       <Label htmlFor="responsable">Responsable</Label>
                       <Select
-                        value={formData.responsableId}
+                        value={formData.responsableId || ""}
                         onValueChange={(value) => setFormData({ ...formData, responsableId: value })}
                       >
                         <SelectTrigger>
@@ -250,7 +287,7 @@ export function AddSalleDialog({ open, onOpenChange }: AddSalleDialogProps) {
                     <div className="grid gap-2">
                       <Label htmlFor="adjoint">Adjoint</Label>
                       <Select
-                        value={formData.adjointId}
+                        value={formData.adjointId || ""}
                         onValueChange={(value) => setFormData({ ...formData, adjointId: value })}
                       >
                         <SelectTrigger>
@@ -276,7 +313,8 @@ export function AddSalleDialog({ open, onOpenChange }: AddSalleDialogProps) {
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Annuler
               </Button>
-              <Button type="submit" disabled={!formData.nom}>
+              <Button type="submit" disabled={!formData.nom || isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Créer la salle
               </Button>
             </DialogFooter>

@@ -21,29 +21,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { X } from "lucide-react"
 import type { Salle, MoniteurSalle } from "@/types/salle"
+import { monitorsService } from "@/lib/services/monitors.service"
+import { sallesService } from "@/lib/services/salles.service"
+import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
 interface EditSalleDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   salle: Salle
+  onSuccess?: () => void
 }
 
-// Données mockées des moniteurs disponibles
-const moniteursDisponibles = [
-  { id: "1", nom: "LENGE", prenom: "Marie", nomComplet: "Marie LENGE" },
-  { id: "2", nom: "NGEA", prenom: "Paul", nomComplet: "Paul NGEA" },
-  { id: "3", nom: "NFEO", prenom: "Jean", nomComplet: "Jean NFEO" },
-  { id: "4", nom: "JEMMA", prenom: "Sarah", nomComplet: "Sarah JEMMA" },
-  { id: "5", nom: "CHRISTIAN", prenom: "Marc", nomComplet: "Marc CHRISTIAN" },
-  { id: "6", nom: "MUKEBA", prenom: "David", nomComplet: "David MUKEBA" },
-]
-
-export function EditSalleDialog({ open, onOpenChange, salle }: EditSalleDialogProps) {
+export function EditSalleDialog({ open, onOpenChange, salle, onSuccess }: EditSalleDialogProps) {
   const [formData, setFormData] = useState<Partial<Salle>>({
     nom: salle.nom,
     description: salle.description,
@@ -57,30 +50,65 @@ export function EditSalleDialog({ open, onOpenChange, salle }: EditSalleDialogPr
   const [moniteursSelectionnes, setMoniteursSelectionnes] = useState<string[]>(
     salle.moniteurs.map(m => m.id)
   )
+  const [availableMonitors, setAvailableMonitors] = useState<any[]>([])
+  const [loadingMonitors, setLoadingMonitors] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Réinitialiser le formulaire quand la salle change
+  // Initialisation à l'ouverture ou changement de salle
   useEffect(() => {
-    setFormData({
-      nom: salle.nom,
-      description: salle.description,
-      capacite: salle.capacite,
-      responsableId: salle.responsableId,
-      adjointId: salle.adjointId,
-      moniteurs: salle.moniteurs,
-      actif: salle.actif,
-    })
-    setMoniteursSelectionnes(salle.moniteurs.map(m => m.id))
-  }, [salle])
+    if (open) {
+      setFormData({
+        nom: salle.nom,
+        description: salle.description,
+        capacite: salle.capacite,
+        responsableId: salle.responsableId,
+        adjointId: salle.adjointId,
+        moniteurs: salle.moniteurs,
+        actif: salle.actif,
+      })
+      setMoniteursSelectionnes(salle.moniteurs ? salle.moniteurs.map(m => m.id) : [])
+    }
+  }, [salle, open])
+
+  // Charger les moniteurs
+  useEffect(() => {
+    const fetchMonitors = async () => {
+      if (!open) return
+
+      try {
+        setLoadingMonitors(true)
+        const response = await monitorsService.getAll({ per_page: 999 })
+        const monitorsData = response.data || response || []
+
+        if (Array.isArray(monitorsData)) {
+          const formatted = monitorsData.map((m: any) => ({
+            id: m.id,
+            nom: m.nom,
+            prenom: m.prenom,
+            nomComplet: `${m.prenom} ${m.nom}`
+          }))
+          setAvailableMonitors(formatted)
+        }
+      } catch (error) {
+        console.error("Erreur chargement moniteurs:", error)
+        toast.error("Impossible de charger la liste des moniteurs")
+      } finally {
+        setLoadingMonitors(false)
+      }
+    }
+
+    fetchMonitors()
+  }, [open])
 
   const handleMoniteurToggle = (moniteurId: string) => {
     if (moniteursSelectionnes.includes(moniteurId)) {
       setMoniteursSelectionnes(moniteursSelectionnes.filter((id) => id !== moniteurId))
       // Si c'était le responsable ou l'adjoint, le retirer
       if (formData.responsableId === moniteurId) {
-        setFormData({ ...formData, responsableId: undefined })
+        setFormData((prev) => ({ ...prev, responsableId: undefined }))
       }
       if (formData.adjointId === moniteurId) {
-        setFormData({ ...formData, adjointId: undefined })
+        setFormData((prev) => ({ ...prev, adjointId: undefined }))
       }
     } else {
       setMoniteursSelectionnes([...moniteursSelectionnes, moniteurId])
@@ -88,45 +116,39 @@ export function EditSalleDialog({ open, onOpenChange, salle }: EditSalleDialogPr
   }
 
   const getMoniteurById = (id: string) => {
-    return moniteursDisponibles.find((m) => m.id === id)
+    return availableMonitors.find((m) => m.id === id)
   }
 
-  const moniteursDisponiblesPourResponsable = moniteursDisponibles.filter((m) =>
+  const moniteursDisponiblesPourResponsable = availableMonitors.filter((m) =>
     moniteursSelectionnes.includes(m.id)
   )
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
 
-    const moniteursSalle: MoniteurSalle[] = moniteursSelectionnes.map((id) => {
-      const moniteur = getMoniteurById(id)!
-      let role: "responsable" | "adjoint" | "membre" = "membre"
-      if (id === formData.responsableId) role = "responsable"
-      else if (id === formData.adjointId) role = "adjoint"
-
-      return {
-        id,
-        nom: moniteur.nom,
-        prenom: moniteur.prenom,
-        nomComplet: moniteur.nomComplet,
-        role,
-        dateAffectation: new Date(),
+    try {
+      const payload = {
+        nom: formData.nom,
+        description: formData.description,
+        capacite: formData.capacite,
+        responsable_id: formData.responsableId,
+        adjoint_id: formData.adjointId,
+        actif: formData.actif,
+        moniteurs_ids: moniteursSelectionnes
       }
-    })
 
-    const responsable = getMoniteurById(formData.responsableId || "")
-    const adjoint = getMoniteurById(formData.adjointId || "")
+      await sallesService.update(salle.id, payload)
 
-    const salleData = {
-      ...formData,
-      moniteurs: moniteursSalle,
-      responsableNom: responsable?.nomComplet,
-      adjointNom: adjoint?.nomComplet,
+      toast.success("Salle mise à jour avec succès")
+      onOpenChange(false)
+      if (onSuccess) onSuccess()
+    } catch (error) {
+      console.error("Erreur mise à jour salle:", error)
+      toast.error("Erreur lors de la mise à jour de la salle")
+    } finally {
+      setIsSubmitting(false)
     }
-
-    console.log("Salle mise à jour:", salleData)
-    // TODO: Enregistrer dans la base de données
-    onOpenChange(false)
   }
 
   return (
@@ -172,7 +194,7 @@ export function EditSalleDialog({ open, onOpenChange, salle }: EditSalleDialogPr
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    value={formData.description}
+                    value={formData.description || ""}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Brève description de la salle..."
                     rows={3}
@@ -193,45 +215,56 @@ export function EditSalleDialog({ open, onOpenChange, salle }: EditSalleDialogPr
               </div>
 
               {/* SÉLECTION DES MONITEURS */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 border-b pb-2">
-                  👥 Moniteurs affectés
+              <div className="space-y-4 border-t pt-4">
+                <h3 className="font-semibold text-gray-900 flex items-center justify-between">
+                  <span>👥 Moniteurs affectés ({moniteursSelectionnes.length})</span>
+                  {loadingMonitors && <Loader2 className="h-4 w-4 animate-spin text-gray-500" />}
                 </h3>
-                <div className="grid gap-2">
-                  {moniteursDisponibles.map((moniteur) => (
-                    <div
-                      key={moniteur.id}
-                      className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
-                    >
-                      <Checkbox
-                        id={`moniteur-${moniteur.id}`}
-                        checked={moniteursSelectionnes.includes(moniteur.id)}
-                        onCheckedChange={() => handleMoniteurToggle(moniteur.id)}
-                      />
-                      <Label
-                        htmlFor={`moniteur-${moniteur.id}`}
-                        className="flex-1 cursor-pointer font-medium"
-                      >
-                        {moniteur.nomComplet}
-                      </Label>
-                      {moniteursSelectionnes.includes(moniteur.id) && (
-                        <Badge variant="outline" className="text-xs">
-                          {moniteur.id === formData.responsableId
-                            ? "Responsable"
-                            : moniteur.id === formData.adjointId
-                            ? "Adjoint"
-                            : "Membre"}
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
+
+                {loadingMonitors ? (
+                  <div className="text-center py-4 text-gray-500">Chargement des moniteurs...</div>
+                ) : availableMonitors.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">Aucun moniteur disponible</div>
+                ) : (
+                  <div className="grid gap-2 bg-gray-50 p-4 rounded-md max-h-[300px] overflow-y-auto">
+                    {availableMonitors.map((moniteur) => {
+                      const isSelected = moniteursSelectionnes.includes(moniteur.id);
+                      return (
+                        <div
+                          key={moniteur.id}
+                          className={`flex items-center space-x-3 p-2 rounded-lg transition-colors ${isSelected ? 'bg-white shadow-sm border' : 'hover:bg-gray-100'}`}
+                        >
+                          <Checkbox
+                            id={`moniteur-${moniteur.id}`}
+                            checked={isSelected}
+                            onCheckedChange={() => handleMoniteurToggle(moniteur.id)}
+                          />
+                          <Label
+                            htmlFor={`moniteur-${moniteur.id}`}
+                            className="flex-1 cursor-pointer font-medium"
+                          >
+                            {moniteur.nomComplet}
+                          </Label>
+                          {isSelected && (
+                            <Badge variant="outline" className="text-xs">
+                              {moniteur.id === formData.responsableId
+                                ? "Responsable"
+                                : moniteur.id === formData.adjointId
+                                  ? "Adjoint"
+                                  : "Membre"}
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* RÔLES DES MONITEURS */}
               {moniteursSelectionnes.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900 border-b pb-2">🔑 Rôles</h3>
+                <div className="space-y-4 border-t pt-4">
+                  <h3 className="font-semibold text-gray-900">🔑 Rôles</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="grid gap-2">
                       <Label htmlFor="responsable">Responsable</Label>
@@ -245,7 +278,7 @@ export function EditSalleDialog({ open, onOpenChange, salle }: EditSalleDialogPr
                           <SelectValue placeholder="Sélectionner un responsable" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Aucun</SelectItem>
+                          <SelectItem value="_aucun">Aucun</SelectItem>
                           {moniteursDisponiblesPourResponsable.map((moniteur) => (
                             <SelectItem key={moniteur.id} value={moniteur.id}>
                               {moniteur.nomComplet}
@@ -266,7 +299,7 @@ export function EditSalleDialog({ open, onOpenChange, salle }: EditSalleDialogPr
                           <SelectValue placeholder="Sélectionner un adjoint" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Aucun</SelectItem>
+                          <SelectItem value="_aucun">Aucun</SelectItem>
                           {moniteursDisponiblesPourResponsable
                             .filter((m) => m.id !== formData.responsableId)
                             .map((moniteur) => (
@@ -285,7 +318,10 @@ export function EditSalleDialog({ open, onOpenChange, salle }: EditSalleDialogPr
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Annuler
               </Button>
-              <Button type="submit">Enregistrer les modifications</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Enregistrer les modifications
+              </Button>
             </DialogFooter>
           </form>
         </ScrollArea>

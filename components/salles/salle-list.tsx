@@ -30,13 +30,26 @@ export function SalleList({ searchQuery = "" }: SalleListProps) {
     const fetchSalles = async () => {
       try {
         setLoading(true)
-        const data = await sallesService.getAll()
-        // S'assurer que data est un tableau
-        setSalles(Array.isArray(data) ? data : [])
+        const response: any = await sallesService.getAll()
+        console.log("Salles API Response:", response);
+
+        let data = [];
+        if (Array.isArray(response)) {
+          data = response;
+        } else if (response && Array.isArray(response.data)) {
+          // Cas de la pagination Laravel (objet avec propriété data)
+          data = response.data;
+        } else if (response && response.data && Array.isArray(response.data.data)) {
+          // Cas où axios enveloppe déjà dans data, et Laravel renvoie aussi une propriété data
+          data = response.data.data;
+        }
+
+        console.log("Processed Salles Data:", data);
+        setSalles(data)
       } catch (err) {
         setError("Erreur lors du chargement des salles")
         console.error("Erreur:", err)
-        setSalles([]) // Initialiser avec un tableau vide en cas d'erreur
+        setSalles([])
       } finally {
         setLoading(false)
       }
@@ -114,9 +127,8 @@ export function SalleList({ searchQuery = "" }: SalleListProps) {
                       Capacité: {salle.capacite} personnes
                     </Badge>
                     <Badge
-                      className={`text-xs ${
-                        salle.actif ? "bg-green-500" : "bg-red-500"
-                      }`}
+                      className={`text-xs ${salle.actif ? "bg-green-500" : "bg-red-500"
+                        }`}
                     >
                       {salle.actif ? "Actif" : "Inactif"}
                     </Badge>
@@ -137,7 +149,7 @@ export function SalleList({ searchQuery = "" }: SalleListProps) {
                       <Edit className="h-4 w-4 mr-2" />
                       Modifier
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => handleDelete(salle)}
                       className="text-red-600"
                     >
