@@ -19,6 +19,7 @@ use App\Http\Controllers\API\SortieController;
 use App\Http\Controllers\API\RoleController;
 use App\Http\Controllers\API\DashboardController;
 use App\Http\Controllers\API\NotificationController;
+use App\Http\Controllers\API\UserManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -96,6 +97,8 @@ Route::prefix('v1')->group(function () {
 
     // Roles (Spatie Permission)
     Route::get('roles', [RoleController::class, 'index']);
+    // Users Management
+    Route::apiResource('users', UserManagementController::class);
 });
 
 // Health check route
