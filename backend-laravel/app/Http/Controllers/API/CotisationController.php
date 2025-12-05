@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCotisationRequest;
 use App\Models\Cotisation;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -46,6 +47,19 @@ class CotisationController extends Controller
     public function store(StoreCotisationRequest $request): JsonResponse
     {
         $cotisation = Cotisation::create($request->validated());
+
+        // Créer une notification
+        NotificationService::notifyCotisation(
+            auth()->id() ?? 1,
+            [
+                'id' => $cotisation->id,
+                'membre_nom' => $cotisation->membre_nom,
+                'montant' => $cotisation->montant,
+                'devise' => $cotisation->devise,
+                'mois' => $cotisation->mois,
+                'annee' => $cotisation->annee,
+            ]
+        );
 
         return response()->json([
             'message' => 'Cotisation enregistrée avec succès',

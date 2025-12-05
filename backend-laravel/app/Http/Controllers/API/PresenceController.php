@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePresenceRequest;
 use App\Models\Presence;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -57,6 +58,18 @@ class PresenceController extends Controller
     public function store(StorePresenceRequest $request): JsonResponse
     {
         $presence = Presence::create($request->validated());
+
+        // Créer une notification
+        NotificationService::notifyPresence(
+            auth()->id() ?? 1,
+            [
+                'id' => $presence->id,
+                'moniteur_nom' => $presence->moniteur_nom,
+                'activity_nom' => $presence->activity_nom ?? 'Activité',
+                'activity_id' => $presence->activity_id,
+                'statut' => $presence->statut,
+            ]
+        );
 
         return response()->json([
             'message' => 'Présence enregistrée avec succès',

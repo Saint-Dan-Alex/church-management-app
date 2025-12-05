@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreActivityRequest;
 use App\Http\Requests\UpdateActivityRequest;
 use App\Models\Activity;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -109,6 +110,17 @@ class ActivityController extends Controller
     public function store(StoreActivityRequest $request): JsonResponse
     {
         $activity = Activity::create($request->validated());
+
+        // Créer une notification
+        NotificationService::notifyActivity(
+            auth()->id() ?? 1,
+            [
+                'id' => $activity->id,
+                'nom' => $activity->nom,
+                'date_debut' => $activity->date_debut,
+                'type' => $activity->type,
+            ]
+        );
 
         return response()->json([
             'message' => 'Activité créée avec succès',

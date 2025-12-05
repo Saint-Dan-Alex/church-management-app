@@ -18,6 +18,7 @@ use App\Http\Controllers\API\CotisationController;
 use App\Http\Controllers\API\SortieController;
 use App\Http\Controllers\API\RoleController;
 use App\Http\Controllers\API\DashboardController;
+use App\Http\Controllers\API\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -83,6 +84,15 @@ Route::prefix('v1')->group(function () {
 
     // Dashboard global statistics
     Route::get('dashboard-statistics', [DashboardController::class, 'statistics']);
+
+    // Notifications Routes
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('notifications', [NotificationController::class, 'store']);
+    Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::post('notifications/{id}/mark-read', [NotificationController::class, 'markAsRead']);
+    Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
+    Route::delete('notifications/delete-all-read', [NotificationController::class, 'deleteAllRead']);
 
     // Roles (Spatie Permission)
     Route::get('roles', [RoleController::class, 'index']);

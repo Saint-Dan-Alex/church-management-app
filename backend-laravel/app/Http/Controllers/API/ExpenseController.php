@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreExpenseRequest;
 use App\Models\Expense;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -58,6 +59,18 @@ class ExpenseController extends Controller
     public function store(StoreExpenseRequest $request): JsonResponse
     {
         $expense = Expense::create($request->validated());
+
+        // Créer une notification
+        NotificationService::notifyExpense(
+            auth()->id() ?? 1,
+            [
+                'id' => $expense->id,
+                'description' => $expense->description,
+                'montant' => $expense->montant,
+                'devise' => $expense->devise,
+                'categorie' => $expense->categorie,
+            ]
+        );
 
         return response()->json([
             'message' => 'Dépense créée avec succès',

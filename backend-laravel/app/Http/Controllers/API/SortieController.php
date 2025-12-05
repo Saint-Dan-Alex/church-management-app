@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSortieRequest;
 use App\Models\Sortie;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -40,6 +41,14 @@ class SortieController extends Controller
     public function store(StoreSortieRequest $request): JsonResponse
     {
         $sortie = Sortie::create($request->validated());
+
+        // Créer une notification d'avertissement pour les sorties
+        NotificationService::notifyInfo(
+            auth()->id() ?? 1,
+            'Nouvelle sortie enregistrée',
+            "Sortie de {$sortie->montant} {$sortie->devise} pour {$sortie->libelle}",
+            "/sorties"
+        );
 
         return response()->json([
             'message' => 'Sortie enregistrée avec succès',

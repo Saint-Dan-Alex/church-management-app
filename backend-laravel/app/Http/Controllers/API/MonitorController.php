@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreMonitorRequest;
 use App\Http\Requests\UpdateMonitorRequest;
 use App\Models\Monitor;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -108,6 +109,14 @@ class MonitorController extends Controller
     public function store(StoreMonitorRequest $request): JsonResponse
     {
         $monitor = Monitor::create($request->validated());
+
+        // Créer une notification
+        NotificationService::notifySuccess(
+            auth()->id() ?? 1,
+            'Nouveau moniteur ajouté',
+            "{$monitor->prenom} {$monitor->nom} a été ajouté comme moniteur",
+            "/monitors/{$monitor->id}"
+        );
 
         return response()->json([
             'message' => 'Moniteur créé avec succès',

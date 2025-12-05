@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePaymentRequest;
 use App\Models\Payment;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -53,6 +54,17 @@ class PaymentController extends Controller
     public function store(StorePaymentRequest $request): JsonResponse
     {
         $payment = Payment::create($request->validated());
+
+        // Créer une notification
+        NotificationService::notifyPayment(
+            auth()->id() ?? 1, // ID de l'utilisateur (ou 1 par défaut pour les tests)
+            [
+                'id' => $payment->id,
+                'participant_nom' => $payment->participant_nom_complet,
+                'montant' => $payment->montant,
+                'devise' => $payment->devise,
+            ]
+        );
 
         return response()->json([
             'message' => 'Paiement créé avec succès',
