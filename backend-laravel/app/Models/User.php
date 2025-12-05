@@ -18,16 +18,12 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'nom',
-        'prenom',
+        'name',
         'email',
-        'telephone',
-        'role',
-        'avatar',
-        'actif',
-        'dateCreation',
         'password',
-        'user_type', // 'monitor' ou 'child'
+        'telephone', // Assuming this exists or will be added, keeping for now if used, but strictly DB only has name/email/pwd/user_type
+        'avatar', // Keeping as might be virtual or added later
+        'user_type', // 'monitor', 'child', 'admin'
         'user_id', // ID du Monitor ou Child
         'temporary_password', // Mot de passe temporaire (pour envoi email)
     ];
