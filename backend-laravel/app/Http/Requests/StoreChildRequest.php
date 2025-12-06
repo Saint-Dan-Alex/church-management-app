@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreChildRequest extends FormRequest
 {
@@ -22,7 +23,11 @@ class StoreChildRequest extends FormRequest
             'etat_civil' => 'required|string',
             'adresse' => 'required|string',
             'telephone' => 'required|string',
-            'email' => 'required|email',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('children')->whereNull('deleted_at')
+            ],
             'photo' => 'nullable|string',
             'nom_pere' => 'required|string|max:255',
             'nom_mere' => 'required|string|max:255',

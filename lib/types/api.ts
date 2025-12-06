@@ -95,6 +95,7 @@ export interface Child {
   nom: string;
   post_nom: string;
   prenom: string;
+  nom_complet?: string; // Appended attribute
   date_naissance: string;
   genre: 'Masculin' | 'Féminin';
   etat_civil: 'Célibataire' | 'Marié(e)' | 'Veuf(ve)' | 'Divorcé(e)';
@@ -124,7 +125,18 @@ export interface Child {
   autorisation_soins: boolean;
   salle_id?: string | null;
   salle_nom?: string | null;
-  // Champs ajoutés pour compatibilité frontend
+
+  // Champs d'évaluation personnelle
+  vie_chretienne?: string | null;
+  vie_priere?: string | null;
+  comprehension_bible?: string | null;
+  qualite_enseignements?: string | null;
+  gagne_une_ame?: 'Oui' | 'Non' | 'NSP' | string | null;
+  encadreur?: 'Oui' | 'Non' | 'NSP' | string | null;
+  sujet_souhaite?: string | null;
+  besoin_suggestion?: string | null;
+
+  // Champs ajoutés pour compatibilité frontend (Legacy/Optional)
   firstName?: string;
   lastName?: string;
   age?: number;

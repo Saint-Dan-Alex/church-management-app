@@ -16,17 +16,21 @@ class UpdateChildRequest extends FormRequest
     {
         return [
             'nom' => 'sometimes|string|max:255',
-            'post_nom' => 'sometimes|string|max:255',
+            'post_nom' => 'sometimes|nullable|string|max:255',
             'prenom' => 'sometimes|string|max:255',
-            'date_naissance' => 'sometimes|date',
-            'genre' => 'sometimes|in:Masculin,Féminin',
-            'etat_civil' => 'sometimes|in:Célibataire,Marié(e),Veuf(ve),Divorcé(e)',
-            'adresse' => 'sometimes|string',
-            'telephone' => 'sometimes|string|max:255',
+            'nom_complet' => 'sometimes|nullable|string|max:255',
+            'date_naissance' => 'sometimes|nullable|date',
+            'genre' => 'sometimes|nullable|in:Masculin,Féminin',
+            'etat_civil' => 'sometimes|nullable|in:Célibataire,Marié(e),Veuf(ve),Divorcé(e)',
+            'adresse' => 'sometimes|nullable|string',
+            'telephone' => 'sometimes|nullable|string|max:255',
             'email' => [
                 'sometimes',
+                'nullable',
                 'email',
-                Rule::unique('children')->ignore($this->child)
+                Rule::unique('children')
+                    ->ignore($this->route('child') instanceof \App\Models\Child ? $this->route('child')->id : $this->route('child'))
+                    ->whereNull('deleted_at')
             ],
             'photo' => 'nullable|string',
             
@@ -42,8 +46,8 @@ class UpdateChildRequest extends FormRequest
             // Parcours spirituel
             'date_conversion' => 'nullable|date',
             'date_bapteme' => 'nullable|date',
-            'baptise_saint_esprit' => 'sometimes|in:Oui,Non,NSP',
-            'vie_donnee_a_jesus' => 'sometimes|in:Oui,Non,Je ne sais pas',
+            'baptise_saint_esprit' => 'sometimes|nullable|in:Oui,Non,NSP',
+            'vie_donnee_a_jesus' => 'sometimes|nullable|in:Oui,Non,Je ne sais pas',
             'est_ouvrier' => 'boolean',
             'commission_actuelle' => 'nullable|string|max:255',
             'commission_souhaitee' => 'nullable|string|max:255',
@@ -60,8 +64,8 @@ class UpdateChildRequest extends FormRequest
             'vie_chretienne' => 'nullable|in:Très bonne,Bonne,Moyenne,Faible,Très mauvaise',
             'vie_priere' => 'nullable|in:Excellente,Bonne,Moyenne,Faible,Très faible',
             'comprehension_bible' => 'nullable|in:Excellente,Bonne,Moyenne,Faible,Très faible',
-            'gagne_une_ame' => 'sometimes|in:Oui,Non,Je ne sais pas',
-            'encadreur' => 'sometimes|in:Oui,Non,NSP',
+            'gagne_une_ame' => 'sometimes|nullable|in:Oui,Non,Je ne sais pas',
+            'encadreur' => 'sometimes|nullable|in:Oui,Non,NSP',
             'qualite_enseignements' => 'nullable|in:Bonne,Moyenne,Faible',
             'sujet_souhaite' => 'nullable|string',
             'besoin_suggestion' => 'nullable|string',
