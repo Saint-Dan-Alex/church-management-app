@@ -108,7 +108,29 @@ class MonitorController extends Controller
      */
     public function store(StoreMonitorRequest $request): JsonResponse
     {
-        $monitor = Monitor::create($request->validated());
+        $data = $request->validated();
+        
+        $monitorData = [
+            'nom' => $data['nom'],
+            'post_nom' => $data['postNom'],
+            'prenom' => $data['prenom'],
+            'date_naissance' => $data['dateNaissance'],
+            'email' => $data['email'],
+            'telephone' => $data['telephone'],
+            'adresse' => $data['adresse'],
+            'photo' => $data['photo'] ?? null,
+            'date_conversion' => $data['dateConversion'] ?? null,
+            'date_bapteme' => $data['dateBapteme'] ?? null,
+            'baptise_saint_esprit' => $data['baptiseSaintEsprit'] ?? false,
+            'etat_civil' => $data['etatCivil'],
+            'date_adhesion' => $data['dateAdhesion'],
+            'salle_actuelle_id' => $data['salleActuelleId'] ?? null,
+            'salle_actuelle_nom' => $data['salleActuelleNom'] ?? null,
+            'role_actuel' => $data['roleActuel'] ?? null,
+            'date_affectation_actuelle' => $data['dateAffectationActuelle'] ?? null,
+        ];
+
+        $monitor = Monitor::create($monitorData);
 
         // Créer une notification
         NotificationService::notifySuccess(
@@ -183,7 +205,29 @@ class MonitorController extends Controller
      */
     public function update(UpdateMonitorRequest $request, Monitor $monitor): JsonResponse
     {
-        $monitor->update($request->validated());
+        $data = $request->validated();
+        
+        // Mapping manuel pour update
+        $monitorData = [];
+        if (array_key_exists('nom', $data)) $monitorData['nom'] = $data['nom'];
+        if (array_key_exists('postNom', $data)) $monitorData['post_nom'] = $data['postNom'];
+        if (array_key_exists('prenom', $data)) $monitorData['prenom'] = $data['prenom'];
+        if (array_key_exists('dateNaissance', $data)) $monitorData['date_naissance'] = $data['dateNaissance'];
+        if (array_key_exists('email', $data)) $monitorData['email'] = $data['email'];
+        if (array_key_exists('telephone', $data)) $monitorData['telephone'] = $data['telephone'];
+        if (array_key_exists('adresse', $data)) $monitorData['adresse'] = $data['adresse'];
+        if (array_key_exists('photo', $data)) $monitorData['photo'] = $data['photo'];
+        if (array_key_exists('dateConversion', $data)) $monitorData['date_conversion'] = $data['dateConversion'];
+        if (array_key_exists('dateBapteme', $data)) $monitorData['date_bapteme'] = $data['dateBapteme'];
+        if (array_key_exists('baptiseSaintEsprit', $data)) $monitorData['baptise_saint_esprit'] = $data['baptiseSaintEsprit'];
+        if (array_key_exists('etatCivil', $data)) $monitorData['etat_civil'] = $data['etatCivil'];
+        if (array_key_exists('dateAdhesion', $data)) $monitorData['date_adhesion'] = $data['dateAdhesion'];
+        if (array_key_exists('salleActuelleId', $data)) $monitorData['salle_actuelle_id'] = $data['salleActuelleId'];
+        if (array_key_exists('salleActuelleNom', $data)) $monitorData['salle_actuelle_nom'] = $data['salleActuelleNom'];
+        if (array_key_exists('roleActuel', $data)) $monitorData['role_actuel'] = $data['roleActuel'];
+        if (array_key_exists('dateAffectationActuelle', $data)) $monitorData['date_affectation_actuelle'] = $data['dateAffectationActuelle'];
+
+        $monitor->update($monitorData);
 
         return response()->json([
             'message' => 'Moniteur mis à jour avec succès',

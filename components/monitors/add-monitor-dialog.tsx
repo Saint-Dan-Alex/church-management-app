@@ -59,7 +59,7 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
     salleActuelleId: undefined,
     roleActuel: undefined,
   })
-  
+
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -145,7 +145,7 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Validation des champs obligatoires
     if (!formData.nom || !formData.prenom || !formData.email || !formData.telephone || !formData.adresse) {
       toast.error("Veuillez remplir tous les champs obligatoires")
@@ -159,11 +159,12 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
       // Préparer les données pour l'envoi
       const monitorData = {
         ...formData,
-        // Convertir les dates au format attendu par l'API
-        dateNaissance: formData.dateNaissance ? new Date(formData.dateNaissance).toISOString() : null,
-        dateConversion: formData.dateConversion ? new Date(formData.dateConversion).toISOString() : null,
-        dateBapteme: formData.dateBapteme ? new Date(formData.dateBapteme).toISOString() : null,
-        dateAdhesion: formData.dateAdhesion ? new Date(formData.dateAdhesion).toISOString() : null,
+        // Convertir les dates au format attendu par l'API (YYYY-MM-DD)
+        // Les inputs type="date" renvoient déjà ce format, pas besoin de toISOString() qui ajoute l'heure et peut décaler le jour
+        dateNaissance: formData.dateNaissance || null,
+        dateConversion: formData.dateConversion || null,
+        dateBapteme: formData.dateBapteme || null,
+        dateAdhesion: formData.dateAdhesion || null,
         // S'assurer que les booléens sont des booléens
         baptiseSaintEsprit: Boolean(formData.baptiseSaintEsprit),
         // Si une photo a été téléchargée, l'envoyer
@@ -173,36 +174,34 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
       const newMonitor = await monitorsService.create(monitorData)
       toast.success("Moniteur ajouté avec succès")
       onOpenChange(false)
-      
+
       // Réinitialiser le formulaire
-      setFormData({
-        nom: "",
-        postNom: "",
-        prenom: "",
-        dateNaissance: "",
-        email: "",
-        telephone: "",
-        adresse: "",
-        photo: "",
-        dateConversion: "",
-        dateBapteme: "",
-        baptiseSaintEsprit: false,
-        etatCivil: "Célibataire",
-        dateAdhesion: "",
-        salleActuelleId: undefined,
-        roleActuel: undefined,
-      })
-      setPhotoPreview(null)
-      
+      resetForm()
+
       // Recharger la liste des moniteurs si nécessaire
       if (onMonitorAdded) {
         onMonitorAdded(newMonitor)
       }
-      
-    } catch (err) {
+
+    } catch (err: any) {
       console.error('Erreur lors de l\'ajout du moniteur:', err)
-      setError('Une erreur est survenue lors de l\'ajout du moniteur')
-      toast.error("Erreur lors de l'ajout du moniteur")
+
+      let errorMessage = "Une erreur est survenue lors de l'ajout du moniteur";
+
+      if (err.status === 422 && err.data) {
+        // Erreur de validation Laravel
+        if (err.data.errors) {
+          const validationErrors = Object.values(err.data.errors).flat().join(', ');
+          errorMessage = `Erreur de validation: ${validationErrors}`;
+        } else if (err.data.message) {
+          errorMessage = err.data.message;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -227,7 +226,7 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
                 {error}
               </div>
             )}
-            
+
             {/* Photo */}
             <div className="flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24">
@@ -480,9 +479,9 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
           </div>
 
           <DialogFooter className="mt-6">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >

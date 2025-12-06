@@ -13,31 +13,31 @@ class Monitor extends Model
 
     protected $fillable = [
         'nom',
-        'postNom',
+        'post_nom',
         'prenom',
-        'dateNaissance',
+        'date_naissance',
         'email',
         'telephone',
         'adresse',
         'photo',
-        'dateConversion',
-        'dateBapteme',
-        'baptiseSaintEsprit',
-        'etatCivil',
-        'dateAdhesion',
-        'salleActuelleId',
-        'salleActuelleNom',
-        'roleActuel',
-        'dateAffectationActuelle',
+        'date_conversion',
+        'date_bapteme',
+        'baptise_saint_esprit',
+        'etat_civil',
+        'date_adhesion',
+        'salle_actuelle_id',
+        'salle_actuelle_nom',
+        'role_actuel',
+        'date_affectation_actuelle',
     ];
 
     protected $casts = [
-        'dateNaissance' => 'date',
-        'dateConversion' => 'date',
-        'dateBapteme' => 'date',
-        'dateAdhesion' => 'date',
-        'dateAffectationActuelle' => 'date',
-        'baptiseSaintEsprit' => 'boolean',
+        'date_naissance' => 'date',
+        'date_conversion' => 'date',
+        'date_bapteme' => 'date',
+        'date_adhesion' => 'date',
+        'date_affectation_actuelle' => 'date',
+        'baptise_saint_esprit' => 'boolean',
     ];
 
     protected $appends = ['nom_complet'];

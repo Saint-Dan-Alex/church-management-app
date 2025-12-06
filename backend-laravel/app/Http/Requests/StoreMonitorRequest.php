@@ -15,7 +15,7 @@ class StoreMonitorRequest extends FormRequest
     {
         return [
             'nom' => 'required|string|max:255',
-            'postNom' => 'required|string|max:255',
+            'postNom' => 'nullable|string|max:255',
             'prenom' => 'required|string|max:255',
             'dateNaissance' => 'required|date',
             'email' => 'required|email|unique:monitors,email',
@@ -29,7 +29,7 @@ class StoreMonitorRequest extends FormRequest
             'dateAdhesion' => 'required|date',
             'salleActuelleId' => 'nullable|uuid|exists:salles,id',
             'salleActuelleNom' => 'nullable|string|max:255',
-            'roleActuel' => 'nullable|in:responsable,adjoint,membre',
+            'roleActuel' => 'nullable|string',
             'dateAffectationActuelle' => 'nullable|date',
         ];
     }
