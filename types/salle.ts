@@ -14,6 +14,7 @@ export interface Salle {
   adjointId?: string // ID de l'adjoint
   adjointNom?: string // Nom complet de l'adjoint
   moniteurs: MoniteurSalle[] // Liste des moniteurs membres
+  historique?: MoniteurSalleHistorique[] // Historique complet
   actif: boolean
   createdAt: Date
   updatedAt: Date

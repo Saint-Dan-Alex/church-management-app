@@ -183,10 +183,14 @@ export function EditSalleDialog({ open, onOpenChange, salle, onSuccess }: EditSa
                       id="capacite"
                       type="number"
                       min="1"
-                      value={formData.capacite}
-                      onChange={(e) =>
-                        setFormData({ ...formData, capacite: parseInt(e.target.value) || 50 })
-                      }
+                      value={formData.capacite === undefined || isNaN(formData.capacite) ? "" : formData.capacite}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData({
+                          ...formData,
+                          capacite: val === "" ? 0 : parseInt(val)
+                        })
+                      }}
                     />
                   </div>
                 </div>

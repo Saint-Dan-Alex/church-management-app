@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,135 +20,57 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Loader2
 } from "lucide-react"
 import { EditSalleDialog } from "@/components/salles/edit-salle-dialog"
 import type { Salle, MoniteurSalleHistorique } from "@/types/salle"
+import { sallesService } from "@/lib/services/salles.service"
+import { toast } from "sonner"
 
-// Données mockées
-const mockSalle: Salle = {
-  id: "1",
-  nom: "Adolescents",
-  description: "Salle pour les adolescents de 13 à 17 ans",
-  capacite: 80,
-  responsableId: "1",
-  responsableNom: "Marie LENGE",
-  adjointId: "2",
-  adjointNom: "Paul NGEA",
-  moniteurs: [
-    {
-      id: "1",
-      nom: "LENGE",
-      prenom: "Marie",
-      nomComplet: "Marie LENGE",
-      role: "responsable",
-      dateAffectation: "2023-01-15" as any,
-    },
-    {
-      id: "2",
-      nom: "NGEA",
-      prenom: "Paul",
-      nomComplet: "Paul NGEA",
-      role: "adjoint",
-      dateAffectation: "2023-01-15" as any,
-    },
-    {
-      id: "3",
-      nom: "NFEO",
-      prenom: "Jean",
-      nomComplet: "Jean NFEO",
-      role: "membre",
-      dateAffectation: "2023-03-20" as any,
-    },
-  ],
-  actif: true,
-  createdAt: "2023-01-15" as any,
-  updatedAt: "2024-10-20" as any,
-}
-
-// Historique des moniteurs
-const mockHistorique: MoniteurSalleHistorique[] = [
-  {
-    id: "1",
-    moniteurId: "1",
-    moniteurNom: "LENGE",
-    moniteurPrenom: "Marie",
-    moniteurNomComplet: "Marie LENGE",
-    salleId: "1",
-    salleNom: "Adolescents",
-    role: "responsable",
-    dateDebut: "2023-01-15" as any,
-    dateFin: undefined,
-    actif: true,
-    createdAt: "2023-01-15" as any,
-  },
-  {
-    id: "2",
-    moniteurId: "2",
-    moniteurNom: "NGEA",
-    moniteurPrenom: "Paul",
-    moniteurNomComplet: "Paul NGEA",
-    salleId: "1",
-    salleNom: "Adolescents",
-    role: "adjoint",
-    dateDebut: "2023-01-15" as any,
-    dateFin: undefined,
-    actif: true,
-    createdAt: "2023-01-15" as any,
-  },
-  {
-    id: "3",
-    moniteurId: "3",
-    moniteurNom: "NFEO",
-    moniteurPrenom: "Jean",
-    moniteurNomComplet: "Jean NFEO",
-    salleId: "1",
-    salleNom: "Adolescents",
-    role: "membre",
-    dateDebut: "2023-03-20" as any,
-    dateFin: undefined,
-    actif: true,
-    createdAt: "2023-03-20" as any,
-  },
-  {
-    id: "4",
-    moniteurId: "4",
-    moniteurNom: "JEMMA",
-    moniteurPrenom: "Sarah",
-    moniteurNomComplet: "Sarah JEMMA",
-    salleId: "1",
-    salleNom: "Adolescents",
-    role: "membre",
-    dateDebut: "2022-09-01" as any,
-    dateFin: "2023-01-10" as any,
-    actif: false,
-    motifChangement: "Mutation vers la salle Juniors",
-    createdAt: "2022-09-01" as any,
-  },
-  {
-    id: "5",
-    moniteurId: "5",
-    moniteurNom: "CHRISTIAN",
-    moniteurPrenom: "Marc",
-    moniteurNomComplet: "Marc CHRISTIAN",
-    salleId: "1",
-    salleNom: "Adolescents",
-    role: "membre",
-    dateDebut: "2022-06-15" as any,
-    dateFin: "2022-12-31" as any,
-    actif: false,
-    motifChangement: "Départ du ministère",
-    createdAt: "2022-06-15" as any,
-  },
-]
-
-export default function SalleDetailsPage({ params }: { params: { id: string } }) {
+export default function SalleDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const [salle] = useState<Salle>(mockSalle)
-  const [historique] = useState<MoniteurSalleHistorique[]>(mockHistorique)
+  // Déballage des paramètres avec use() comme recommandé par Next.js 15
+  const { id } = use(params)
+
+  const [salle, setSalle] = useState<Salle | null>(null)
+  const [historique, setHistorique] = useState<MoniteurSalleHistorique[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const itemsPerPage = 10
+
+  useEffect(() => {
+    const fetchSalleDetails = async () => {
+      try {
+        setLoading(true)
+        const data = await sallesService.getById(id)
+        setSalle(data)
+        if (data.historique) {
+          setHistorique(data.historique)
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement de la salle:", error)
+        toast.error("Impossible de charger les détails de la salle")
+        // Optionnel : rediriger vers la liste si non trouvé
+        // router.push('/salles') 
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (id) {
+      fetchSalleDetails()
+    }
+  }, [id])
+
+  const handleEditSuccess = () => {
+    // Recharger les données après modification
+    if (id) {
+      // Simple recharge pour l'instant
+      window.location.reload();
+    }
+  }
 
   const getSalleBadgeColor = (nom: string) => {
     const colors: { [key: string]: string } = {
@@ -173,7 +95,8 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
     return <Users className="h-4 w-4" />
   }
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string) => {
+    if (!date) return "-"
     return new Date(date).toLocaleDateString("fr-FR", {
       day: "numeric",
       month: "long",
@@ -182,13 +105,14 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
   }
 
   const calculateDuree = (dateDebut: Date | string, dateFin?: Date | string) => {
+    if (!dateDebut) return "-"
     const debut = new Date(dateDebut)
     const fin = dateFin ? new Date(dateFin) : new Date()
     const diffTime = Math.abs(fin.getTime() - debut.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     const years = Math.floor(diffDays / 365)
     const months = Math.floor((diffDays % 365) / 30)
-    
+
     if (years > 0) {
       return `${years} an${years > 1 ? "s" : ""} ${months > 0 ? `et ${months} mois` : ""}`
     }
@@ -198,11 +122,39 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
     return `${diffDays} jour${diffDays > 1 ? "s" : ""}`
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    if (!salle) return
     if (confirm("Êtes-vous sûr de vouloir supprimer cette salle ?")) {
-      console.log("Suppression de la salle:", salle.id)
-      router.push("/salles")
+      try {
+        await sallesService.delete(salle.id)
+        toast.success("Salle supprimée avec succès")
+        router.push("/salles")
+      } catch (error) {
+        console.error("Erreur suppression salle:", error)
+        toast.error("Erreur lors de la suppression")
+      }
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-12 w-12 text-blue-600 animate-spin mb-4" />
+        <p className="text-gray-500">Chargement des détails de la salle...</p>
+      </div>
+    )
+  }
+
+  if (!salle) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh]">
+        <p className="text-red-500 text-xl font-semibold">Salle introuvable</p>
+        <Button variant="outline" className="mt-4" onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Retour
+        </Button>
+      </div>
+    )
   }
 
   const moniteurActifs = historique.filter((h) => h.actif)
@@ -214,7 +166,7 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
     return (
       entry.moniteurNomComplet.toLowerCase().includes(searchLower) ||
       entry.role.toLowerCase().includes(searchLower) ||
-      entry.motifChangement?.toLowerCase().includes(searchLower) ||
+      (entry.motifChangement && entry.motifChangement.toLowerCase().includes(searchLower)) ||
       formatDate(entry.dateDebut).toLowerCase().includes(searchLower)
     )
   })
@@ -285,7 +237,7 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Moniteurs actifs</span>
-                  <span className="text-2xl font-bold text-green-600">{moniteurActifs.length}</span>
+                  <span className="text-2xl font-bold text-green-600">{salle.moniteurs ? salle.moniteurs.length : 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Total passages</span>
@@ -347,35 +299,39 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Moniteurs Actuels ({salle.moniteurs.length})
+                Moniteurs Actuels ({salle.moniteurs ? salle.moniteurs.length : 0})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {salle.moniteurs.map((moniteur) => (
-                  <div
-                    key={moniteur.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-semibold">
-                        {moniteur.prenom.charAt(0)}
-                        {moniteur.nom.charAt(0)}
+              {!salle.moniteurs || salle.moniteurs.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">Aucun moniteur affecté</div>
+              ) : (
+                <div className="space-y-3">
+                  {salle.moniteurs.map((moniteur) => (
+                    <div
+                      key={moniteur.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-semibold">
+                          {moniteur.prenom ? moniteur.prenom.charAt(0) : ''}
+                          {moniteur.nom ? moniteur.nom.charAt(0) : ''}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{moniteur.nomComplet}</p>
+                          <p className="text-xs text-gray-500">
+                            Depuis le {formatDate(moniteur.dateAffectation)}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{moniteur.nomComplet}</p>
-                        <p className="text-xs text-gray-500">
-                          Depuis le {formatDate(moniteur.dateAffectation)}
-                        </p>
-                      </div>
+                      <Badge variant="outline" className={getRoleBadge(moniteur.role)}>
+                        <span className="mr-1">{getRoleIcon(moniteur.role)}</span>
+                        {moniteur.role ? moniteur.role.charAt(0).toUpperCase() + moniteur.role.slice(1) : 'Membre'}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className={getRoleBadge(moniteur.role)}>
-                      <span className="mr-1">{getRoleIcon(moniteur.role)}</span>
-                      {moniteur.role.charAt(0).toUpperCase() + moniteur.role.slice(1)}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -401,7 +357,7 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
             <CardContent>
               {paginatedHistorique.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  Aucun résultat trouvé
+                  Aucun résultat trouvé dans l'historique
                 </div>
               ) : (
                 <>
@@ -409,17 +365,16 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
                     {paginatedHistorique.map((entry) => (
                       <div
                         key={entry.id}
-                        className={`p-4 rounded-lg border-l-4 ${
-                          entry.actif
-                            ? "bg-green-50 border-green-500"
-                            : "bg-gray-50 border-gray-300"
-                        }`}
+                        className={`p-4 rounded-lg border-l-4 ${entry.actif
+                          ? "bg-green-50 border-green-500"
+                          : "bg-gray-50 border-gray-300"
+                          }`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <p className="font-semibold text-gray-900">{entry.moniteurNomComplet}</p>
                             <p className="text-sm text-gray-600">
-                              {formatDate(entry.dateDebut)} 
+                              {formatDate(entry.dateDebut)}
                               {entry.dateFin ? ` - ${formatDate(entry.dateFin)}` : " - Aujourd'hui"}
                             </p>
                           </div>
@@ -480,10 +435,11 @@ export default function SalleDetailsPage({ params }: { params: { id: string } })
         </div>
       </div>
 
-      <EditSalleDialog 
-        open={isEditDialogOpen} 
+      <EditSalleDialog
+        open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         salle={salle}
+        onSuccess={handleEditSuccess}
       />
     </div>
   )

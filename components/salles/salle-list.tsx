@@ -68,12 +68,26 @@ export function SalleList({ searchQuery = "" }: SalleListProps) {
     return matchesSearch
   }) : []
 
+  /* State for editing dialog */
+  const [selectedSalle, setSelectedSalle] = useState<Salle | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
   const handleView = (salle: Salle) => {
-    alert(`👁️ Affichage de: "${salle.nom}"\n\n(Ouvrir dans une modal ou nouvelle page)`)
+    router.push(`/salles/${salle.id}`)
   }
 
   const handleEdit = (salle: Salle) => {
-    alert(`✏️ Modification de: "${salle.nom}"\n\n(Ouvrir dans un formulaire d'édition)`)
+    setSelectedSalle(salle)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleEditSuccess = () => {
+    // Optionally refresh the list or update local state
+    // For simplicity, we can reload or let the parent/swr handle it.
+    // Here we'll just trigger a reload of the component's data logic if we were using a refetchable hook
+    // But since we use simple useEffect, we can just reload the page or re-fetch.
+    // A clean way is to re-call fetchSalles. Since fetchSalles is inside useEffect, we can separate it.
+    window.location.reload() // Simple but effective for now, or implement a refresh callback prop
   }
 
   const handleDelete = async (salle: Salle) => {
@@ -204,6 +218,15 @@ export function SalleList({ searchQuery = "" }: SalleListProps) {
             </div>
           </Card>
         ))
+      )}
+
+      {selectedSalle && (
+        <EditSalleDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          salle={selectedSalle}
+          onSuccess={handleEditSuccess}
+        />
       )}
     </div>
   )
