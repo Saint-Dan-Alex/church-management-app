@@ -19,8 +19,10 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Upload } from "lucide-react"
+import { Upload, Loader2 } from "lucide-react"
 import type { ChildFormData } from "@/types/child"
+import { childrenService } from "@/lib/services/children.service"
+import { toast } from "sonner"
 
 interface AddChildDialogProps {
   open: boolean
@@ -74,6 +76,7 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
     besoinSuggestion: "",
   })
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -87,15 +90,77 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Calculer le nom complet
-    const nomComplet = `${formData.prenom} ${formData.postNom} ${formData.nom}`.trim()
-    const dataToSubmit = { ...formData, nomComplet }
-    console.log("Enfant ajouté:", dataToSubmit)
-    // Ici vous enregistrerez dans la base de données
-    onOpenChange(false)
-    setPhotoPreview(null)
+    setIsLoading(true)
+
+    try {
+      // Calculer le nom complet
+      const nomComplet = `${formData.prenom} ${formData.postNom} ${formData.nom}`.trim()
+
+      const payload: any = {
+        nom: formData.nom,
+        post_nom: formData.postNom,
+        prenom: formData.prenom,
+        nom_complet: nomComplet,
+        date_naissance: formData.dateNaissance,
+        genre: formData.genre,
+        etat_civil: formData.etatCivil,
+        adresse: formData.adresse,
+        telephone: formData.telephone,
+        email: formData.email,
+        photo: formData.photo,
+        nom_pere: formData.nomPere,
+        nom_mere: formData.nomMere,
+        telephone_parent1: formData.telephoneParent1,
+        telephone_parent2: formData.telephoneParent2,
+        email_parents: formData.emailParents,
+        contact_urgence: formData.contactUrgence,
+        lien_contact_urgence: formData.lienContactUrgence,
+        date_conversion: formData.dateConversion || null,
+        date_bapteme: formData.dateBapteme || null,
+        baptise_saint_esprit: formData.baptiseSaintEsprit,
+        vie_donnee_a_jesus: formData.vieDonneeAJesus,
+        est_ouvrier: Boolean(formData.estOuvrier),
+        commission_actuelle: formData.commissionActuelle,
+        commission_souhaitee: formData.commissionSouhaitee,
+        date_adhesion: formData.dateAdhesion || null,
+        allergies_connues: Boolean(formData.allergiesConnues),
+        allergies_details: formData.allergiesDetails,
+        maladies: formData.maladies,
+        traitement: formData.traitement,
+        autorisation_soins: Boolean(formData.autorisationSoins),
+        vie_chretienne: formData.vieChretienne,
+        vie_priere: formData.viePriere,
+        comprehension_bible: formData.comprehensionBible,
+        gagne_une_ame: formData.gagneUneAme,
+        encadreur: formData.encadreur,
+        qualite_enseignements: formData.qualiteEnseignements,
+        sujet_souhaite: formData.sujetSouhaite,
+        besoin_suggestion: formData.besoinSuggestion,
+      }
+
+      await childrenService.create(payload)
+      toast.success("Enfant ajouté avec succès")
+      onOpenChange(false)
+      setPhotoPreview(null)
+      setFormData({
+        nom: "", postNom: "", prenom: "", dateNaissance: "",
+        genre: "Masculin", etatCivil: "Célibataire", adresse: "", telephone: "", email: "", photo: "",
+        nomPere: "", nomMere: "", telephoneParent1: "", telephoneParent2: "", emailParents: "",
+        contactUrgence: "", lienContactUrgence: "",
+        dateConversion: "", dateBapteme: "", baptiseSaintEsprit: "NSP", vieDonneeAJesus: "Je ne sais pas",
+        estOuvrier: false, commissionActuelle: "", commissionSouhaitee: "", dateAdhesion: "",
+        allergiesConnues: false, allergiesDetails: "", maladies: "", traitement: "", autorisationSoins: false,
+        vieChretienne: undefined, viePriere: undefined, comprehensionBible: undefined, gagneUneAme: "Je ne sais pas",
+        encadreur: "NSP", qualiteEnseignements: undefined, sujetSouhaite: "", besoinSuggestion: ""
+      })
+    } catch (error) {
+      console.error("Erreur ajout enfant:", error)
+      toast.error("Erreur lors de l'enregistrement")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -111,7 +176,7 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
               {/* Photo */}
               <div className="flex flex-col items-center gap-4">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={photoPreview || ""} />
+                  <AvatarImage src={photoPreview || undefined} />
                   <AvatarFallback className="bg-blue-100 text-blue-600">
                     <Upload className="h-8 w-8" />
                   </AvatarFallback>

@@ -73,7 +73,7 @@ export function EditChildDialog({ open, onOpenChange, child }: EditChildDialogPr
               {/* Photo */}
               <div className="flex flex-col items-center gap-4">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={photoPreview || ""} />
+                  <AvatarImage src={photoPreview || undefined} />
                   <AvatarFallback className="bg-blue-100 text-blue-600">
                     <Upload className="h-8 w-8" />
                   </AvatarFallback>
