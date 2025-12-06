@@ -147,7 +147,7 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
     e.preventDefault()
 
     // Validation des champs obligatoires
-    if (!formData.nom || !formData.prenom || !formData.email || !formData.telephone || !formData.adresse) {
+    if (!formData.nom || !formData.prenom || !formData.email || !formData.telephone || !formData.adresse || !formData.dateAdhesion) {
       toast.error("Veuillez remplir tous les champs obligatoires")
       return
     }
@@ -170,6 +170,8 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
         // Si une photo a été téléchargée, l'envoyer
         ...(photoPreview && { photo: photoPreview })
       }
+
+      console.log("Données envoyées:", monitorData)
 
       const newMonitor = await monitorsService.create(monitorData)
       toast.success("Moniteur ajouté avec succès")
@@ -230,7 +232,7 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
             {/* Photo */}
             <div className="flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={photoPreview || ""} />
+                <AvatarImage src={photoPreview || undefined} />
                 <AvatarFallback className="bg-blue-100 text-blue-600">
                   <Upload className="h-8 w-8" />
                 </AvatarFallback>
@@ -393,12 +395,13 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
               <h3 className="font-semibold text-gray-900">Adhésion</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="dateAdhesion">Date d'adhésion</Label>
+                  <Label htmlFor="dateAdhesion">Date d'adhésion *</Label>
                   <Input
                     id="dateAdhesion"
                     type="date"
                     value={formData.dateAdhesion ? new Date(formData.dateAdhesion).toISOString().split('T')[0] : ''}
                     onChange={(e) => setFormData({ ...formData, dateAdhesion: e.target.value })}
+                    required
                     disabled={isLoading}
                   />
                 </div>

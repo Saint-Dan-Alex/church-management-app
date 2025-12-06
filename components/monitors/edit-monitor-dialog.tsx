@@ -34,7 +34,7 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [salles, setSalles] = useState<{id: string, nom: string}[]>([])
+  const [salles, setSalles] = useState<{ id: string, nom: string }[]>([])
 
   useEffect(() => {
     const fetchSalles = async () => {
@@ -52,13 +52,13 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
 
     if (open) {
       fetchSalles()
-      
+
       if (monitor) {
         setFormData(monitor)
         setPhotoPreview(monitor.photo || null)
       }
     }
-    
+
     return () => {
       setFormData({})
       setPhotoPreview(null)
@@ -82,10 +82,10 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.id) return
-    
+
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const updatedMonitor = await monitorsService.update(formData.id, formData)
       onSave(updatedMonitor)
@@ -114,7 +114,7 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
             {/* Photo */}
             <div className="flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={photoPreview || ""} />
+                <AvatarImage src={photoPreview || undefined} />
                 <AvatarFallback className="bg-blue-100 text-blue-600">
                   <Upload className="h-8 w-8" />
                 </AvatarFallback>
@@ -308,8 +308,8 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                     value={formData.salleActuelleId || ""}
                     onValueChange={(value) => {
                       const salle = salles.find(s => s.id === value)
-                      setFormData({ 
-                        ...formData, 
+                      setFormData({
+                        ...formData,
                         salleActuelleId: value,
                         salleActuelleNom: salle?.nom
                       })
@@ -334,7 +334,7 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                   <Label htmlFor="roleActuel">Rôle dans la salle</Label>
                   <Select
                     value={formData.roleActuel || "none"}
-                    onValueChange={(value: RoleMoniteur | "none") => 
+                    onValueChange={(value: RoleMoniteur | "none") =>
                       setFormData({ ...formData, roleActuel: value === "none" ? undefined : value })
                     }
                     disabled={!formData.salleActuelleId}
@@ -370,8 +370,8 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                     <span className="font-semibold">Affectation actuelle :</span> {formData.salleActuelleNom}
                     {formData.roleActuel && (
                       <span> - Rôle : <span className="font-semibold">
-                        {formData.roleActuel === "responsable" ? "Responsable" : 
-                         formData.roleActuel === "adjoint" ? "Adjoint" : "Membre"}
+                        {formData.roleActuel === "responsable" ? "Responsable" :
+                          formData.roleActuel === "adjoint" ? "Adjoint" : "Membre"}
                       </span></span>
                     )}
                   </p>

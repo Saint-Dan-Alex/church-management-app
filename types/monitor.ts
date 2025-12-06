@@ -3,7 +3,7 @@ import type { RoleMoniteur } from "./salle"
 export interface Monitor {
   id: string
   nom: string
-  postNom: string
+  postNom?: string
   prenom: string
   dateNaissance: Date | string
   email: string
@@ -18,7 +18,7 @@ export interface Monitor {
   // Affectation actuelle
   salleActuelleId?: string
   salleActuelleNom?: string
-  roleActuel?: RoleMoniteur
+  roleActuel?: string
   dateAffectationActuelle?: Date | string
   createdAt?: Date
   updatedAt?: Date

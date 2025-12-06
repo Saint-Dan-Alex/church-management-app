@@ -108,42 +108,57 @@ class MonitorController extends Controller
      */
     public function store(StoreMonitorRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        
-        $monitorData = [
-            'nom' => $data['nom'],
-            'post_nom' => $data['postNom'],
-            'prenom' => $data['prenom'],
-            'date_naissance' => $data['dateNaissance'],
-            'email' => $data['email'],
-            'telephone' => $data['telephone'],
-            'adresse' => $data['adresse'],
-            'photo' => $data['photo'] ?? null,
-            'date_conversion' => $data['dateConversion'] ?? null,
-            'date_bapteme' => $data['dateBapteme'] ?? null,
-            'baptise_saint_esprit' => $data['baptiseSaintEsprit'] ?? false,
-            'etat_civil' => $data['etatCivil'],
-            'date_adhesion' => $data['dateAdhesion'],
-            'salle_actuelle_id' => $data['salleActuelleId'] ?? null,
-            'salle_actuelle_nom' => $data['salleActuelleNom'] ?? null,
-            'role_actuel' => $data['roleActuel'] ?? null,
-            'date_affectation_actuelle' => $data['dateAffectationActuelle'] ?? null,
-        ];
+        try {
+            $data = $request->validated();
+            
+            $monitorData = [
+                'nom' => $data['nom'],
+                // Utiliser ?? null pour éviter "Undefined array key" si le champ est absent
+                'post_nom' => $data['postNom'] ?? null,
+                'prenom' => $data['prenom'],
+                'date_naissance' => $data['dateNaissance'],
+                'email' => $data['email'],
+                'telephone' => $data['telephone'],
+                'adresse' => $data['adresse'],
+                'photo' => $data['photo'] ?? null,
+                'date_conversion' => $data['dateConversion'] ?? null,
+                'date_bapteme' => $data['dateBapteme'] ?? null,
+                'baptise_saint_esprit' => $data['baptiseSaintEsprit'] ?? false,
+                'etat_civil' => $data['etatCivil'],
+                'date_adhesion' => $data['dateAdhesion'],
+                'salle_actuelle_id' => $data['salleActuelleId'] ?? null,
+                'salle_actuelle_nom' => $data['salleActuelleNom'] ?? null,
+                'role_actuel' => $data['roleActuel'] ?? null,
+                'date_affectation_actuelle' => $data['dateAffectationActuelle'] ?? null,
+            ];
 
-        $monitor = Monitor::create($monitorData);
+            $monitor = Monitor::create($monitorData);
 
-        // Créer une notification
-        NotificationService::notifySuccess(
-            auth()->id() ?? 1,
-            'Nouveau moniteur ajouté',
-            "{$monitor->prenom} {$monitor->nom} a été ajouté comme moniteur",
-            "/monitors/{$monitor->id}"
-        );
+            // Créer une notification (wrappé pour éviter de bloquer la réponse en cas d'erreur)
+            try {
+                NotificationService::notifySuccess(
+                    auth()->id() ?? \App\Models\User::first()?->id ?? 1,
+                    'Nouveau moniteur ajouté',
+                    "{$monitor->prenom} {$monitor->nom} a été ajouté comme moniteur",
+                    "/monitors/{$monitor->id}"
+                );
+            } catch (\Exception $e) {
+                // Log l'erreur de notification mais ne pas échouer la requête
+                \Illuminate\Support\Facades\Log::error('Erreur notification création moniteur: ' . $e->getMessage());
+            }
 
-        return response()->json([
-            'message' => 'Moniteur créé avec succès',
-            'data' => $monitor
-        ], 201);
+            return response()->json([
+                'message' => 'Moniteur créé avec succès',
+                'data' => $monitor
+            ], 201);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur création moniteur: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Erreur lors de la création du moniteur',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

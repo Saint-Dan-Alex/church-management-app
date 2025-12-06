@@ -17,7 +17,7 @@ export const monitorsService = {
     const queryParams = new URLSearchParams();
     if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
     if (params?.page) queryParams.append('page', params.page.toString());
-    
+
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     // Laravel renvoie directement les données avec les métadonnées de pagination
     return await api.get(`/monitors${query}`);
@@ -36,22 +36,22 @@ export const monitorsService = {
   async create(data: any): Promise<ApiMonitor> {
     const payload: any = {
       nom: data.nom,
-      post_nom: data.postNom,
+      postNom: data.postNom,
       prenom: data.prenom,
-      date_naissance: toApiDate(data.dateNaissance),
+      dateNaissance: toApiDate(data.dateNaissance),
       email: data.email,
       telephone: data.telephone,
       adresse: data.adresse,
       photo: data.photo ?? null,
-      date_conversion: toApiDate(data.dateConversion),
-      date_bapteme: toApiDate(data.dateBapteme),
-      baptise_saint_esprit: Boolean(data.baptiseSaintEsprit),
-      etat_civil: data.etatCivil,
-      date_adhesion: toApiDate(data.dateAdhesion),
-      salle_actuelle_id: data.salleActuelleId ?? null,
-      salle_actuelle_nom: data.salleActuelleNom ?? null,
-      role_actuel: data.roleActuel ?? null,
-      date_affectation_actuelle: toApiDate(data.dateAffectationActuelle),
+      dateConversion: toApiDate(data.dateConversion),
+      dateBapteme: toApiDate(data.dateBapteme),
+      baptiseSaintEsprit: Boolean(data.baptiseSaintEsprit),
+      etatCivil: data.etatCivil,
+      dateAdhesion: toApiDate(data.dateAdhesion),
+      salleActuelleId: data.salleActuelleId ?? null,
+      salleActuelleNom: data.salleActuelleNom ?? null,
+      roleActuel: data.roleActuel ?? null,
+      dateAffectationActuelle: toApiDate(data.dateAffectationActuelle),
     };
 
     return api.post<ApiMonitor>('/monitors', payload);
@@ -63,22 +63,22 @@ export const monitorsService = {
   async update(id: string, data: any): Promise<ApiMonitor> {
     const payload: any = {
       ...(data.nom !== undefined && { nom: data.nom }),
-      ...(data.postNom !== undefined && { post_nom: data.postNom }),
+      ...(data.postNom !== undefined && { postNom: data.postNom }),
       ...(data.prenom !== undefined && { prenom: data.prenom }),
-      ...(data.dateNaissance !== undefined && { date_naissance: toApiDate(data.dateNaissance) }),
+      ...(data.dateNaissance !== undefined && { dateNaissance: toApiDate(data.dateNaissance) }),
       ...(data.email !== undefined && { email: data.email }),
       ...(data.telephone !== undefined && { telephone: data.telephone }),
       ...(data.adresse !== undefined && { adresse: data.adresse }),
       ...(data.photo !== undefined && { photo: data.photo }),
-      ...(data.dateConversion !== undefined && { date_conversion: toApiDate(data.dateConversion) }),
-      ...(data.dateBapteme !== undefined && { date_bapteme: toApiDate(data.dateBapteme) }),
-      ...(data.baptiseSaintEsprit !== undefined && { baptise_saint_esprit: Boolean(data.baptiseSaintEsprit) }),
-      ...(data.etatCivil !== undefined && { etat_civil: data.etatCivil }),
-      ...(data.dateAdhesion !== undefined && { date_adhesion: toApiDate(data.dateAdhesion) }),
-      ...(data.salleActuelleId !== undefined && { salle_actuelle_id: data.salleActuelleId }),
-      ...(data.salleActuelleNom !== undefined && { salle_actuelle_nom: data.salleActuelleNom }),
-      ...(data.roleActuel !== undefined && { role_actuel: data.roleActuel }),
-      ...(data.dateAffectationActuelle !== undefined && { date_affectation_actuelle: toApiDate(data.dateAffectationActuelle) }),
+      ...(data.dateConversion !== undefined && { dateConversion: toApiDate(data.dateConversion) }),
+      ...(data.dateBapteme !== undefined && { dateBapteme: toApiDate(data.dateBapteme) }),
+      ...(data.baptiseSaintEsprit !== undefined && { baptiseSaintEsprit: Boolean(data.baptiseSaintEsprit) }),
+      ...(data.etatCivil !== undefined && { etatCivil: data.etatCivil }),
+      ...(data.dateAdhesion !== undefined && { dateAdhesion: toApiDate(data.dateAdhesion) }),
+      ...(data.salleActuelleId !== undefined && { salleActuelleId: data.salleActuelleId }),
+      ...(data.salleActuelleNom !== undefined && { salleActuelleNom: data.salleActuelleNom }),
+      ...(data.roleActuel !== undefined && { roleActuel: data.roleActuel }),
+      ...(data.dateAffectationActuelle !== undefined && { dateAffectationActuelle: toApiDate(data.dateAffectationActuelle) }),
     };
 
     return api.put<ApiMonitor>(`/monitors/${id}`, payload);
