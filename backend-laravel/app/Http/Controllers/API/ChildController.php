@@ -95,7 +95,15 @@ class ChildController extends Controller
      */
     public function store(StoreChildRequest $request): JsonResponse
     {
-        $child = Child::create($request->validated());
+        $data = $request->validated();
+        $child = new Child($data);
+        
+        // Calcul automatique de la salle selon l'âge
+        $salleInfo = $child->computeSalleForAge();
+        $child->salle_id = $salleInfo['salle_id'];
+        $child->salle_nom = $salleInfo['salle_nom'];
+        
+        $child->save();
 
         return response()->json([
             'message' => 'Enfant créé avec succès',
@@ -160,7 +168,15 @@ class ChildController extends Controller
      */
     public function update(UpdateChildRequest $request, Child $child): JsonResponse
     {
-        $child->update($request->validated());
+        $data = $request->validated();
+        $child->fill($data);
+        
+        // Recalcul automatique de la salle si la date de naissance change (ou toujours)
+        $salleInfo = $child->computeSalleForAge();
+        $child->salle_id = $salleInfo['salle_id'];
+        $child->salle_nom = $salleInfo['salle_nom'];
+        
+        $child->save();
 
         return response()->json([
             'message' => 'Enfant mis à jour avec succès',
