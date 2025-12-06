@@ -21,6 +21,8 @@ import { Upload, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import type { Monitor } from "@/types/monitor"
 import { monitorsService } from "@/lib/services/monitors.service"
+import { sallesService } from "@/lib/services/salles.service"
+import { rolesService } from "@/lib/services/roles.service"
 
 interface EditMonitorDialogProps {
   open: boolean
@@ -35,26 +37,55 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [salles, setSalles] = useState<{ id: string, nom: string }[]>([])
+  const [roles, setRoles] = useState<{ id: string, name: string }[]>([])
 
   useEffect(() => {
     const fetchSalles = async () => {
       try {
-        // Récupération des salles depuis l'API
-        const response = await fetch('/api/salles')
-        if (response.ok) {
-          const data = await response.json()
-          setSalles(data)
-        }
+        const response = await sallesService.getAll()
+        const sallesArray = Array.isArray(response)
+          ? response
+          : Array.isArray((response as any).data)
+            ? (response as any).data
+            : []
+        setSalles(sallesArray)
       } catch (err) {
         console.error('Erreur lors du chargement des salles:', err)
       }
     }
 
+    const fetchRoles = async () => {
+      try {
+        const data = await rolesService.getAll()
+        // Adaptation si l'API retourne { data: [...] }
+        const rolesArray = Array.isArray(data)
+          ? data
+          : Array.isArray((data as any).data)
+            ? (data as any).data
+            : []
+        setRoles(rolesArray)
+      } catch (err) {
+        console.error('Erreur lors du chargement des rôles:', err)
+      }
+    }
+
     if (open) {
       fetchSalles()
+      fetchRoles()
 
       if (monitor) {
-        setFormData(monitor)
+        console.log("Loading monitor for edit:", monitor)
+        setFormData({
+          ...monitor,
+          // Ensure dates are formatted YYYY-MM-DD for inputs
+          dateNaissance: monitor.dateNaissance ? new Date(monitor.dateNaissance).toISOString().split('T')[0] : '',
+          dateAdhesion: monitor.dateAdhesion ? new Date(monitor.dateAdhesion).toISOString().split('T')[0] : '',
+          dateConversion: monitor.dateConversion ? new Date(monitor.dateConversion).toISOString().split('T')[0] : '',
+          dateBapteme: monitor.dateBapteme ? new Date(monitor.dateBapteme).toISOString().split('T')[0] : '',
+          dateAffectationActuelle: monitor.dateAffectationActuelle ? new Date(monitor.dateAffectationActuelle).toISOString().split('T')[0] : '',
+          salleActuelleId: monitor.salleActuelleId || undefined,
+          roleActuel: monitor.roleActuel || undefined
+        })
         setPhotoPreview(monitor.photo || null)
       }
     }
@@ -310,8 +341,9 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                       const salle = salles.find(s => s.id === value)
                       setFormData({
                         ...formData,
-                        salleActuelleId: value,
-                        salleActuelleNom: salle?.nom
+                        salleActuelleId: value === "none" ? undefined : value,
+                        salleActuelleNom: salle?.nom,
+                        dateAffectationActuelle: value !== "none" ? new Date().toISOString().split('T')[0] : undefined
                       })
                     }}
                   >
@@ -343,12 +375,11 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                       <SelectValue placeholder="Sélectionner un rôle" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none" className="text-muted-foreground">
-                        Aucun rôle
-                      </SelectItem>
-                      <SelectItem value="responsable">Responsable</SelectItem>
-                      <SelectItem value="adjoint">Adjoint</SelectItem>
-                      <SelectItem value="membre">Membre</SelectItem>
+                      {roles.map((role) => (
+                        <SelectItem key={role.id} value={role.name}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
