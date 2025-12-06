@@ -47,6 +47,31 @@ class Monitor extends Model
         return "{$this->nom} {$this->post_nom} {$this->prenom}";
     }
 
+    /**
+     * Surcharge de toArray pour inclure les versions camelCase
+     * nécessaires au frontend.
+     */
+    public function toArray()
+    {
+        $attributes = parent::toArray();
+        
+        $camelCaseAttributes = [
+            'postNom' => $this->post_nom,
+            'dateNaissance' => $this->date_naissance,
+            'dateConversion' => $this->date_conversion,
+            'dateBapteme' => $this->date_bapteme,
+            'baptiseSaintEsprit' => $this->baptise_saint_esprit,
+            'etatCivil' => $this->etat_civil,
+            'dateAdhesion' => $this->date_adhesion,
+            'salleActuelleId' => $this->salle_actuelle_id,
+            'salleActuelleNom' => $this->salle_actuelle_nom ?? $this->salleActuelle?->nom,
+            'roleActuel' => $this->role_actuel,
+            'dateAffectationActuelle' => $this->date_affectation_actuelle,
+        ];
+
+        return array_merge($attributes, $camelCaseAttributes);
+    }
+
     // Relations
     public function salleActuelle()
     {

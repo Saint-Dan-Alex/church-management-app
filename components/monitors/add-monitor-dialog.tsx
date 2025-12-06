@@ -165,6 +165,7 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
         dateConversion: formData.dateConversion || null,
         dateBapteme: formData.dateBapteme || null,
         dateAdhesion: formData.dateAdhesion || null,
+        dateAffectationActuelle: formData.dateAffectationActuelle || null,
         // S'assurer que les booléens sont des booléens
         baptiseSaintEsprit: Boolean(formData.baptiseSaintEsprit),
         // Si une photo a été téléchargée, l'envoyer
@@ -440,6 +441,7 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
                       setFormData({
                         ...formData,
                         salleActuelleId: value,
+                        dateAffectationActuelle: new Date().toISOString().split('T')[0],
                       })
                     }
                     disabled={isLoading}
