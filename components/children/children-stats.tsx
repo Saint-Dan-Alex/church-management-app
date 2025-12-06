@@ -1,23 +1,44 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Pie, PieChart, Cell } from "recharts"
-
-const ageGroupData = [
-  { group: "0-2 ans", count: 8 },
-  { group: "3-5 ans", count: 24 },
-  { group: "5-7 ans", count: 32 },
-  { group: "8-10 ans", count: 45 },
-  { group: "11-13 ans", count: 28 },
-  { group: "14+ ans", count: 19 },
-]
-
-const attendanceData = [
-  { name: "Présents", value: 142, color: "hsl(var(--primary))" },
-  { name: "Absents", value: 14, color: "hsl(var(--muted))" },
-]
+import { childrenService } from "@/lib/services/children.service"
+import { Loader2 } from "lucide-react"
 
 export function ChildrenStats() {
+  const [stats, setStats] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await childrenService.getStatistics()
+        setStats(data)
+      } catch (error) {
+        console.error("Failed to fetch child statistics", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[200px] w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (!stats) {
+    return <div className="p-4 text-center text-muted-foreground">Impossible de charger les statistiques.</div>
+  }
+
+  const ageGroupData = stats.ageDistribution || []
+  const attendanceData = stats.attendance || []
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Card>
@@ -66,7 +87,7 @@ export function ChildrenStats() {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {attendanceData.map((entry, index) => (
+                  {attendanceData.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -81,7 +102,7 @@ export function ChildrenStats() {
             </ResponsiveContainer>
           </div>
           <div className="mt-4 flex justify-center gap-6">
-            {attendanceData.map((item) => (
+            {attendanceData.map((item: any) => (
               <div key={item.name} className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
                 <span className="text-sm">
@@ -101,19 +122,21 @@ export function ChildrenStats() {
           <div className="grid gap-4 md:grid-cols-4">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Total Enfants</p>
-              <p className="text-3xl font-bold">156</p>
+              <p className="text-3xl font-bold">{stats.total}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Nouveaux ce Mois</p>
-              <p className="text-3xl font-bold text-green-600">+12</p>
+              <p className="text-3xl font-bold text-green-600">
+                {stats.nouveaux_mois > 0 ? `+${stats.nouveaux_mois}` : stats.nouveaux_mois}
+              </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Taux de Présence</p>
-              <p className="text-3xl font-bold">91%</p>
+              <p className="text-sm text-muted-foreground">Ouvriers</p>
+              <p className="text-3xl font-bold">{stats.ouvriers}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Allergies Signalées</p>
-              <p className="text-3xl font-bold text-orange-600">18</p>
+              <p className="text-3xl font-bold text-orange-600">{stats.allergies}</p>
             </div>
           </div>
         </CardContent>

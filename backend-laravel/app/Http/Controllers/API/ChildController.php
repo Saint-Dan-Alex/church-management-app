@@ -236,11 +236,54 @@ class ChildController extends Controller
      */
     public function statistics(): JsonResponse
     {
+        $children = Child::all();
+        $total = $children->count();
+        
+        // Age groups calculation
+        $ageGroups = [
+            '0-2 ans' => 0,
+            '3-5 ans' => 0,
+            '5-7 ans' => 0,
+            '8-10 ans' => 0,
+            '11-13 ans' => 0,
+            '14+ ans' => 0,
+        ];
+        
+        $now = new \DateTime();
+        
+        foreach ($children as $child) {
+            if (!$child->date_naissance) continue;
+            try {
+                $dob = new \DateTime($child->date_naissance);
+                $age = $dob->diff($now)->y;
+                
+                if ($age <= 2) $ageGroups['0-2 ans']++;
+                elseif ($age <= 5) $ageGroups['3-5 ans']++;
+                elseif ($age <= 7) $ageGroups['5-7 ans']++;
+                elseif ($age <= 10) $ageGroups['8-10 ans']++;
+                elseif ($age <= 13) $ageGroups['11-13 ans']++;
+                else $ageGroups['14+ ans']++;
+            } catch (\Exception $e) {}
+        }
+        
+        $ageDistribution = [];
+        foreach ($ageGroups as $group => $count) {
+            $ageDistribution[] = ['group' => $group, 'count' => $count];
+        }
+
         $stats = [
-            'total' => Child::count(),
-            'garcons' => Child::where('genre', 'Masculin')->count(),
-            'filles' => Child::where('genre', 'Féminin')->count(),
-            'ouvriers' => Child::where('est_ouvrier', true)->count(),
+            'total' => $total,
+            'garcons' => $children->where('genre', 'Masculin')->count(),
+            'filles' => $children->where('genre', 'Féminin')->count(),
+            'ouvriers' => $children->where('est_ouvrier', true)->count(),
+            'nouveaux_mois' => $children->where('created_at', '>=', $now->modify('first day of this month'))->count(),
+            'allergies' => $children->where('allergies_connues', true)->count(),
+            'ageDistribution' => $ageDistribution,
+            // Placeholder for attendance until feature is implemented
+            'attendance' => [
+                ['name' => 'Présents', 'value' => 0, 'color' => 'hsl(var(--primary))'],
+                ['name' => 'Absents', 'value' => $total, 'color' => 'hsl(var(--muted))'],
+            ]
         ];
 
         return response()->json($stats);
