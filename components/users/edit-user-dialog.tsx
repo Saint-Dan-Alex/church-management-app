@@ -15,71 +15,103 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { UserRole, getRoleLabel } from "@/lib/permissions"
 import { Switch } from "@/components/ui/switch"
+import { usersService } from "@/lib/services/users.service"
+import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
 interface User {
   id: string
-  nom: string
-  prenom: string
+  name: string
   email: string
   telephone: string
   role: UserRole
-  actif: boolean
+  active: boolean
 }
 
 interface EditUserDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   user: User | null
+  onSuccess?: () => void
 }
 
-export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps) {
+export function EditUserDialog({ open, onOpenChange, user, onSuccess }: EditUserDialogProps) {
   const [formData, setFormData] = useState({
-    nom: "",
-    prenom: "",
+    name: "",
     email: "",
     telephone: "",
     role: UserRole.MONITEUR,
-    actif: true,
+    active: true,
   })
 
+  const [roles, setRoles] = useState<any[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Charger les données de l'utilisateur
   useEffect(() => {
     if (user) {
       setFormData({
-        nom: user.nom,
-        prenom: user.prenom,
+        name: user.name,
         email: user.email,
         telephone: user.telephone,
         role: user.role,
-        actif: user.actif,
+        active: user.active,
       })
     }
   }, [user])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Charger les rôles depuis l'API
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/roles`)
+        if (response.ok) {
+          const data = await response.json()
+          setRoles(data)
+        }
+      } catch (error) {
+        console.error("Erreur chargement roles:", error)
+      }
+    }
+    fetchRoles()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.nom || !formData.prenom || !formData.email) {
-      alert("⚠️ Veuillez remplir tous les champs obligatoires")
+    if (!user) return
+
+    if (!formData.name || !formData.email) {
+      toast.error("Veuillez remplir tous les champs obligatoires")
       return
     }
 
-    // Validation email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(formData.email)) {
-      alert("⚠️ Veuillez entrer un email valide")
-      return
+    try {
+      setIsSubmitting(true)
+
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.telephone,
+        role: formData.role,
+        active: formData.active,
+      }
+
+      await usersService.update(user.id, payload as any)
+
+      toast.success(`Utilisateur "${formData.name}" modifié avec succès !`)
+      onOpenChange(false)
+      if (onSuccess) onSuccess()
+
+      // Refresh global optional if managed by parent
+      window.location.reload()
+
+    } catch (error) {
+      console.error("Erreur modification utilisateur:", error)
+      toast.error("Erreur lors de la modification de l'utilisateur")
+    } finally {
+      setIsSubmitting(false)
     }
-
-    const updatedUser = {
-      ...user,
-      ...formData,
-      dateModif: new Date().toISOString(),
-    }
-
-    console.log("Utilisateur modifié:", updatedUser)
-    alert(`✅ Utilisateur "${formData.prenom} ${formData.nom}" modifié avec succès !\n\nRôle: ${getRoleLabel(formData.role)}\nStatut: ${formData.actif ? 'Actif' : 'Inactif'}`)
-
-    onOpenChange(false)
   }
 
   if (!user) return null
@@ -96,28 +128,15 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-nom">Nom *</Label>
-                <Input
-                  id="edit-nom"
-                  value={formData.nom}
-                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                  placeholder="Nom de famille"
-                  required
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="edit-prenom">Prénom *</Label>
-                <Input
-                  id="edit-prenom"
-                  value={formData.prenom}
-                  onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-                  placeholder="Prénom"
-                  required
-                />
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-name">Nom complet *</Label>
+              <Input
+                id="edit-name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Nom complet"
+                required
+              />
             </div>
 
             <div className="grid gap-2">
@@ -151,31 +170,38 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
                 required
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Sélectionner un rôle" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={UserRole.ADMIN}>{getRoleLabel(UserRole.ADMIN)}</SelectItem>
-                  <SelectItem value={UserRole.COORDINATION}>{getRoleLabel(UserRole.COORDINATION)}</SelectItem>
-                  <SelectItem value={UserRole.CHEF_SALLE}>{getRoleLabel(UserRole.CHEF_SALLE)}</SelectItem>
-                  <SelectItem value={UserRole.MONITEUR}>{getRoleLabel(UserRole.MONITEUR)}</SelectItem>
-                  <SelectItem value={UserRole.FINANCIER}>{getRoleLabel(UserRole.FINANCIER)}</SelectItem>
-                  <SelectItem value={UserRole.PARENT}>{getRoleLabel(UserRole.PARENT)}</SelectItem>
-                  <SelectItem value={UserRole.ENFANT}>{getRoleLabel(UserRole.ENFANT)}</SelectItem>
+                  {roles.length > 0 ? (
+                    roles.map((role: any) => (
+                      <SelectItem key={role.id} value={role.name}>
+                        {getRoleLabel(role.name as UserRole) || role.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    // Fallback si pas de roles chargés
+                    Object.values(UserRole).map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {getRoleLabel(role)}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="space-y-0.5">
-                <Label htmlFor="edit-actif">Statut du compte</Label>
+                <Label htmlFor="edit-active">Statut du compte</Label>
                 <p className="text-xs text-gray-500">
-                  {formData.actif ? "Le compte est actif" : "Le compte est désactivé"}
+                  {formData.active ? "Le compte est actif" : "Le compte est désactivé"}
                 </p>
               </div>
               <Switch
-                id="edit-actif"
-                checked={formData.actif}
-                onCheckedChange={(checked) => setFormData({ ...formData, actif: checked })}
+                id="edit-active"
+                checked={formData.active}
+                onCheckedChange={(checked) => setFormData({ ...formData, active: checked })}
               />
             </div>
           </div>
@@ -184,7 +210,8 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Annuler
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Enregistrer les modifications
             </Button>
           </DialogFooter>

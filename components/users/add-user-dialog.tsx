@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -29,6 +29,24 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
     role: UserRole.MONITEUR,
     password: "",
   })
+
+  const [roles, setRoles] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        // Direct fetch since userService doesn't have listRoles yet, or use custom method
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/roles`)
+        if (response.ok) {
+          const data = await response.json()
+          setRoles(data)
+        }
+      } catch (error) {
+        console.error("Erreur chargement roles:", error)
+      }
+    }
+    fetchRoles()
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -136,20 +154,26 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
               <Label htmlFor="role">Rôle *</Label>
               <Select
                 value={formData.role}
-                onValueChange={(value: UserRole) => setFormData({ ...formData, role: value })}
+                onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}
                 required
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Sélectionner un rôle" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={UserRole.ADMIN}>{getRoleLabel(UserRole.ADMIN)}</SelectItem>
-                  <SelectItem value={UserRole.COORDINATION}>{getRoleLabel(UserRole.COORDINATION)}</SelectItem>
-                  <SelectItem value={UserRole.CHEF_SALLE}>{getRoleLabel(UserRole.CHEF_SALLE)}</SelectItem>
-                  <SelectItem value={UserRole.MONITEUR}>{getRoleLabel(UserRole.MONITEUR)}</SelectItem>
-                  <SelectItem value={UserRole.FINANCIER}>{getRoleLabel(UserRole.FINANCIER)}</SelectItem>
-                  <SelectItem value={UserRole.PARENT}>{getRoleLabel(UserRole.PARENT)}</SelectItem>
-                  <SelectItem value={UserRole.ENFANT}>{getRoleLabel(UserRole.ENFANT)}</SelectItem>
+                  {roles.length > 0 ? (
+                    roles.map((role: any) => (
+                      <SelectItem key={role.id} value={role.name}>
+                        {role.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    Object.values(UserRole).map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {getRoleLabel(role)}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
