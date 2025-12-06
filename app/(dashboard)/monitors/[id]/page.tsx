@@ -9,13 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
-  Mail, 
-  Phone, 
-  MapPin, 
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Mail,
+  Phone,
+  MapPin,
   Calendar,
   Heart,
   User,
@@ -51,18 +51,18 @@ export default function MonitorDetailsPage() {
   useEffect(() => {
     const fetchData = async () => {
       if (!params?.id) return
-      
+
       try {
         setIsLoading(true)
         // Récupérer les informations du moniteur
         const monitorData = await monitorsService.getById(params.id as string)
         setMonitor(monitorData)
-        
+
         // Récupérer l'historique des affectations
         // Remarque : Vous devrez peut-être implémenter cette méthode dans votre service
         // const historiqueData = await monitorsService.getMonitorHistory(params.id as string)
         // setHistorique(historiqueData)
-        
+
         // Pour l'instant, on initialise avec un tableau vide
         setHistorique([])
       } catch (err) {
@@ -99,7 +99,7 @@ export default function MonitorDetailsPage() {
 
   const handleDelete = async () => {
     if (!monitor) return
-    
+
     if (confirm("Êtes-vous sûr de vouloir supprimer ce moniteur ?")) {
       try {
         await monitorsService.delete(monitor.id)
@@ -131,7 +131,7 @@ export default function MonitorDetailsPage() {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     const years = Math.floor(diffDays / 365)
     const months = Math.floor((diffDays % 365) / 30)
-    
+
     if (years > 0) {
       return `${years} an${years > 1 ? "s" : ""} ${months > 0 ? `et ${months} mois` : ""}`
     }
@@ -178,8 +178,8 @@ export default function MonitorDetailsPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <p className="text-red-500">{error || "Moniteur non trouvé"}</p>
         <div className="flex space-x-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => router.push('/monitors')}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -194,9 +194,9 @@ export default function MonitorDetailsPage() {
     <div className="space-y-6">
 
       <div className="flex justify-between items-center">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => router.push('/monitors')}
           className="mb-4"
         >
@@ -204,7 +204,7 @@ export default function MonitorDetailsPage() {
           Retour à la liste
         </Button>
         <div className="space-x-2">
-          <Button 
+          <Button
             variant="outline"
             size="sm"
             onClick={() => setIsEditDialogOpen(true)}
@@ -212,8 +212,8 @@ export default function MonitorDetailsPage() {
             <Edit className="mr-2 h-4 w-4" />
             Modifier
           </Button>
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             size="sm"
             onClick={handleDelete}
           >
@@ -229,7 +229,7 @@ export default function MonitorDetailsPage() {
           <CardContent className="pt-6">
             <div className="flex flex-col items-center space-y-4">
               <Avatar className="h-32 w-32">
-                <AvatarImage src={monitor.photo} />
+                <AvatarImage src={monitor.photo || undefined} />
                 <AvatarFallback className="bg-blue-600 text-white text-3xl">
                   {monitor.prenom.charAt(0)}{monitor.nom.charAt(0)}
                 </AvatarFallback>
@@ -418,17 +418,16 @@ export default function MonitorDetailsPage() {
                     {paginatedHistorique.map((entry) => (
                       <div
                         key={entry.id}
-                        className={`p-4 rounded-lg border-l-4 ${
-                          entry.actif
+                        className={`p-4 rounded-lg border-l-4 ${entry.actif
                             ? "bg-green-50 border-green-500"
                             : "bg-gray-50 border-gray-300"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <p className="font-semibold text-gray-900">{entry.salleNom}</p>
                             <p className="text-sm text-gray-600">
-                              {formatDate(entry.dateDebut)} 
+                              {formatDate(entry.dateDebut)}
                               {entry.dateFin ? ` - ${formatDate(entry.dateFin)}` : " - Aujourd'hui"}
                             </p>
                           </div>
@@ -489,8 +488,8 @@ export default function MonitorDetailsPage() {
         </div>
       </div>
 
-      <EditMonitorDialog 
-        open={isEditDialogOpen} 
+      <EditMonitorDialog
+        open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         monitor={monitor}
       />

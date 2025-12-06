@@ -182,7 +182,7 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
 
       // Recharger la liste des moniteurs si nécessaire
       if (onMonitorAdded) {
-        onMonitorAdded(newMonitor)
+        onMonitorAdded(newMonitor as any)
       }
 
     } catch (err: any) {
