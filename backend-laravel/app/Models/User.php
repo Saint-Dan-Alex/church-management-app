@@ -26,6 +26,7 @@ class User extends Authenticatable
         'user_type', // 'monitor', 'child', 'admin'
         'user_id', // ID du Monitor ou Child
         'temporary_password', // Mot de passe temporaire (pour envoi email)
+        'active',
     ];
 
     /**
@@ -48,7 +49,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'actif' => 'boolean',
+            'active' => 'boolean',
             'dateCreation' => 'date',
         ];
     }

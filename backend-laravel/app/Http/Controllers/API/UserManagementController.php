@@ -20,10 +20,11 @@ class UserManagementController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'phone' => $user->telephone ?? '',
-                'role' => $user->user_type === 'admin' ? 'ADMIN' : ($user->user_type ?? 'user'), // Map user_type to role mapping
+                'telephone' => $user->telephone ?? '',
+                // Le frontend attend 'role' qui match UserRole enum (uppercase), ou le role name
+                'role' => strtoupper($user->user_type ?? 'USER'), 
                 'avatar' => $user->avatar ?? null,
-                'active' => true, // Default to true as 'actif' column might not exist
+                'active' => (bool)$user->active, 
                 'dateCreation' => $user->created_at,
             ];
         });
@@ -37,17 +38,21 @@ class UserManagementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255', // Nom complet
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:6',
             'role' => 'nullable|string',
+            'active' => 'boolean',
+            'telephone' => 'nullable|string',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'user_type' => $validated['role'] ?? 'user',
+            'user_type' => $validated['role'] ?? 'MONITEUR',
+            'active' => $validated['active'] ?? true,
+            'telephone' => $validated['telephone'] ?? null,
         ]);
 
         return response()->json($user, 201);
@@ -59,12 +64,14 @@ class UserManagementController extends Controller
     public function show(string $id)
     {
         $user = User::findOrFail($id);
+        
         return response()->json([
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'role' => $user->user_type,
-            'active' => true,
+            'telephone' => $user->telephone,
+            'role' => strtoupper($user->user_type),
+            'active' => (bool)$user->active,
         ]);
     }
 
@@ -79,6 +86,8 @@ class UserManagementController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
             'role' => 'sometimes|string',
+            'active' => 'sometimes|boolean',
+            'telephone' => 'nullable|string',
         ]);
 
         if ($request->has('name')) {
@@ -89,6 +98,12 @@ class UserManagementController extends Controller
         }
         if ($request->has('role')) {
             $user->user_type = $request->input('role');
+        }
+        if ($request->has('active')) {
+            $user->active = $request->input('active');
+        }
+        if ($request->has('telephone')) {
+            $user->telephone = $request->input('telephone');
         }
 
         $user->save();

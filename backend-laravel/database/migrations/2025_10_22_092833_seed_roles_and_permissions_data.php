@@ -1,21 +1,24 @@
 <?php
 
-namespace Database\Seeders;
-
-use Illuminate\Database\Seeder;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
-class RolesAndPermissionsSeeder extends Seeder
+return new class extends Migration
 {
-    public function run(): void
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
         // Nettoyer le cache de permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         $guard = 'web';
 
-        // Liste des permissions (basée sur lib/permissions.ts)
+        // Liste des permissions
         $permissions = [
             // Dashboard
             'dashboard.view',
@@ -70,9 +73,9 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::firstOrCreate(['name' => $name, 'guard_name' => $guard]);
         }
 
-        // Définition des Rôles et de leurs permissions (Match lib/permissions.ts)
+        // Définition des Rôles et de leurs permissions
         $rolePermissions = [
-            'ADMIN' => $permissions, // Accès total
+            'ADMIN' => $permissions,
 
             'COORDINATION' => [
                 'dashboard.view',
@@ -161,4 +164,19 @@ class RolesAndPermissionsSeeder extends Seeder
 
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
     }
-}
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // On ne souhaite pas forcément supprimer les rôles et permissions lors d'un rollback standard
+        // Mais pour être propre :
+        $roles = [
+            'ADMIN', 'COORDINATION', 'CHEF_SALLE', 
+            'MONITEUR', 'FINANCIER', 'PARENT', 'ENFANT'
+        ];
+        Role::whereIn('name', $roles)->delete();
+        // Les permissions seraient trop nombreuses à lister ici, on peut faire un delete global ou laisser
+    }
+};
