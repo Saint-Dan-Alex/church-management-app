@@ -39,6 +39,14 @@ class PresenceController extends Controller
             $query->where('statut', $request->statut);
         }
 
+        if ($request->has('date_debut')) {
+            $query->whereDate('date_presence', '>=', $request->date_debut);
+        }
+
+        if ($request->has('date_fin')) {
+            $query->whereDate('date_presence', '<=', $request->date_fin);
+        }
+
         $perPage = $request->get('per_page', 15);
         $presences = $query->orderBy('date_presence', 'desc')->paginate($perPage);
 

@@ -20,12 +20,14 @@ export interface Presence {
 }
 
 export const presencesService = {
-  async getAll(params?: { activity_id?: string; moniteur_id?: string; statut?: string }): Promise<Presence[]> {
+  async getAll(params?: { activity_id?: string; moniteur_id?: string; statut?: string; date_debut?: string; date_fin?: string }): Promise<Presence[]> {
     const queryParams = new URLSearchParams();
     if (params?.activity_id) queryParams.append('activity_id', params.activity_id);
     if (params?.moniteur_id) queryParams.append('moniteur_id', params.moniteur_id);
     if (params?.statut) queryParams.append('statut', params.statut);
-    
+    if (params?.date_debut) queryParams.append('date_debut', params.date_debut);
+    if (params?.date_fin) queryParams.append('date_fin', params.date_fin);
+
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     return api.get<Presence[]>(`/presences${query}`);
   },

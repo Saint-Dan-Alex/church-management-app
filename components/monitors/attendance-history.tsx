@@ -2,63 +2,71 @@
 
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, CheckCircle2 } from "lucide-react"
+import { Calendar, Clock, CheckCircle2, Loader2, User } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState } from "react"
-
-const attendanceData = [
-  {
-    id: "1",
-    monitorName: "Marie Dupont",
-    date: "2024-10-13",
-    time: "09:45",
-    event: "Culte Dominical",
-    status: "present",
-  },
-  {
-    id: "2",
-    monitorName: "Jean Martin",
-    date: "2024-10-13",
-    time: "09:50",
-    event: "Culte Dominical",
-    status: "present",
-  },
-  {
-    id: "3",
-    monitorName: "Sophie Bernard",
-    date: "2024-10-13",
-    time: "09:42",
-    event: "Culte Dominical",
-    status: "present",
-  },
-  {
-    id: "4",
-    monitorName: "Marie Dupont",
-    date: "2024-10-06",
-    time: "09:48",
-    event: "Culte Dominical",
-    status: "present",
-  },
-  {
-    id: "5",
-    monitorName: "Jean Martin",
-    date: "2024-10-06",
-    time: "09:55",
-    event: "Culte Dominical",
-    status: "present",
-  },
-  {
-    id: "6",
-    monitorName: "Sophie Bernard",
-    date: "2024-10-06",
-    time: "09:40",
-    event: "Culte Dominical",
-    status: "present",
-  },
-]
+import { useState, useEffect } from "react"
+import { presencesService, type Presence } from "@/lib/services/presences.service"
+import { format } from "date-fns"
+import { fr } from "date-fns/locale"
 
 export function AttendanceHistory() {
   const [filterPeriod, setFilterPeriod] = useState("all")
+  const [presences, setPresences] = useState<Presence[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  const fetchPresences = async () => {
+    setIsLoading(true)
+    try {
+      let date_debut: string | undefined
+      const today = new Date()
+
+      if (filterPeriod === "week") {
+        const firstDayOfWeek = new Date(today)
+        const day = today.getDay()
+        const diff = today.getDate() - day + (day === 0 ? -6 : 1) // adjust when day is sunday
+        firstDayOfWeek.setDate(diff)
+        date_debut = firstDayOfWeek.toISOString().split('T')[0]
+      } else if (filterPeriod === "month") {
+        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+        date_debut = firstDayOfMonth.toISOString().split('T')[0]
+      } else if (filterPeriod === "year") {
+        const firstDayOfYear = new Date(today.getFullYear(), 0, 1)
+        date_debut = firstDayOfYear.toISOString().split('T')[0]
+      }
+
+      const response = await presencesService.getAll({
+        date_debut
+      })
+
+      // Handle pagination if api returns { data: [] }
+      const data = Array.isArray(response) ? response : (response as any).data || []
+
+      setPresences(data)
+    } catch (error) {
+      console.error("Erreur chargement présences", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPresences()
+  }, [filterPeriod])
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'present':
+        return <Badge className="bg-green-600 hover:bg-green-700">Présent</Badge>
+      case 'absent':
+        return <Badge variant="destructive">Absent</Badge>
+      case 'retard':
+        return <Badge className="bg-orange-500 hover:bg-orange-600">Retard</Badge>
+      case 'excuse':
+        return <Badge className="bg-blue-500 hover:bg-blue-600">Excusé</Badge>
+      default:
+        return <Badge variant="outline">{status}</Badge>
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -77,36 +85,48 @@ export function AttendanceHistory() {
         </Select>
       </div>
 
-      <div className="space-y-2">
-        {attendanceData.map((record) => (
-          <Card key={record.id} className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : presences.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          Aucun historique trouvé pour cette période
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {presences.map((record) => (
+            <Card key={record.id} className="p-4">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-4">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${record.statut === 'present' ? 'bg-green-100 text-green-600' :
+                      record.statut === 'absent' ? 'bg-red-100 text-red-600' :
+                        record.statut === 'retard' ? 'bg-orange-100 text-orange-600' :
+                          'bg-gray-100 text-gray-600'
+                    }`}>
+                    {record.statut === 'present' ? <CheckCircle2 className="h-5 w-5" /> : <User className="h-5 w-5" />}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm">{record.moniteur_nom_complet || `${record.moniteur_prenom} ${record.moniteur_nom}`}</h4>
+                    <p className="text-sm text-muted-foreground">{record.activity_nom}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-sm">{record.monitorName}</h4>
-                  <p className="text-sm text-muted-foreground">{record.event}</p>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span>{format(new Date(record.date_presence), 'dd/MM/yyyy')}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>{record.heure_arrivee?.substring(0, 5) || '--:--'}</span>
+                  </div>
+                  {getStatusBadge(record.statut)}
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>{new Date(record.date).toLocaleDateString("fr-FR")}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>{record.time}</span>
-                </div>
-                <Badge variant="default" className="bg-green-600">
-                  Présent
-                </Badge>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
