@@ -12,6 +12,11 @@ export default function WorshipPage() {
   const router = useRouter()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const handleReportAdded = () => {
+    setRefreshKey(prev => prev + 1)
+  }
 
   return (
     <div className="space-y-6">
@@ -64,9 +69,13 @@ export default function WorshipPage() {
       </div>
 
       {/* Liste des rapports */}
-      <WorshipReportList searchQuery={searchQuery} />
+      <WorshipReportList key={refreshKey} searchQuery={searchQuery} />
 
-      <AddWorshipReportDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      <AddWorshipReportDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={handleReportAdded}
+      />
     </div>
   )
 }
