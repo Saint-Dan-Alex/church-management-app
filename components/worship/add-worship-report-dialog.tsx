@@ -202,7 +202,9 @@ export function AddWorshipReportDialog({ open, onOpenChange, onSuccess }: AddWor
             aria-expanded={open}
             className="w-full justify-between"
           >
-            Sélectionner...
+            {formData[field].length > 0
+              ? `${formData[field].length} sélectionné(s)`
+              : "Sélectionner..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -216,8 +218,11 @@ export function AddWorshipReportDialog({ open, onOpenChange, onSuccess }: AddWor
                   key={personne.id}
                   value={personne.nom}
                   onSelect={() => {
-                    addPersonne(field, personne.nom)
-                    setOpen(false)
+                    if (formData[field].includes(personne.nom)) {
+                      removePersonne(field, personne.nom)
+                    } else {
+                      addPersonne(field, personne.nom)
+                    }
                   }}
                 >
                   <Check

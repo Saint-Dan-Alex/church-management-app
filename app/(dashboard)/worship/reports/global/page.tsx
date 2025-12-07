@@ -20,9 +20,9 @@ import { toast } from "sonner"
 
 export default function GlobalReportPage() {
   const router = useRouter()
-  const [periode, setPeriode] = useState("mois")
-  const [dateDebut, setDateDebut] = useState("2023-11-01")
-  const [dateFin, setDateFin] = useState("2023-12-31")
+  const [periode, setPeriode] = useState("annee")
+  const [dateDebut, setDateDebut] = useState("2025-01-01")
+  const [dateFin, setDateFin] = useState("2025-12-31")
   const [stats, setStats] = useState<GlobalStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 

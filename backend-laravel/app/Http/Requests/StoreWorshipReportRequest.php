@@ -15,15 +15,13 @@ class StoreWorshipReportRequest extends FormRequest
     {
         return [
             'date' => 'required|date',
-            'salle' => 'required|in:Jardin,Ainés,Juniors,Cadets,Adolescents',
-            'orateurs' => 'required|array',
-            'orateurs.*' => 'string',
+            'salle' => 'required|string',
+            'orateurs' => 'required|string', // JSON string
             'predicateur' => 'required|string|max:255',
-            'moniteurs' => 'required|array',
-            'moniteurs.*' => 'string',
+            'moniteurs' => 'required|string', // JSON string
             'effectif_freres' => 'required|integer|min:0',
             'effectif_soeurs' => 'required|integer|min:0',
-            'offrandes' => 'required|string',
+            'offrandes' => 'nullable|string',
             'nombre_nouveaux_venus' => 'required|integer|min:0',
             
             // Nouveaux venus
