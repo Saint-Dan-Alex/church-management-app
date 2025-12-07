@@ -54,6 +54,7 @@ Route::prefix('v1')->group(function () {
     // Worship Reports Routes
     Route::apiResource('worship-reports', WorshipReportController::class);
     Route::get('worship-reports-global-statistics', [WorshipReportController::class, 'globalStatistics']);
+    Route::get('worship-reports-room-statistics', [WorshipReportController::class, 'roomStatistics']);
 
     // Blog Routes
     Route::apiResource('blogs', BlogController::class);

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,43 +14,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ArrowLeft, Calendar, Users, TrendingUp, Download, BarChart3, DollarSign } from "lucide-react"
-import type { GlobalStats } from "@/types/worship-report"
+import { ArrowLeft, Calendar, Users, TrendingUp, Download, BarChart3, DollarSign, Loader2 } from "lucide-react"
+import { worshipReportsService, type GlobalStats } from "@/lib/services/worship-reports.service"
+import { toast } from "sonner"
 
 export default function GlobalReportPage() {
   const router = useRouter()
   const [periode, setPeriode] = useState("mois")
   const [dateDebut, setDateDebut] = useState("2023-11-01")
   const [dateFin, setDateFin] = useState("2023-12-31")
+  const [stats, setStats] = useState<GlobalStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Données mockées
-  const stats: GlobalStats = {
-    totalEffectif: 1247,
-    totalFreres: 478,
-    totalSoeurs: 769,
-    totalNouveauxVenus: 15,
-    moyenneEffectif: 155.88,
-    moyenneFreres: 59.75,
-    moyenneSoeurs: 96.13,
-    moyenneNouveauxVenus: 1.88,
-    offrandes: [
-      "171,700 FC + 1 GN",
-      "85,000 FC",
-      "120,500 FC",
-      "95,200 FC + 2 GN",
-      "148,300 FC",
-      "102,800 FC + 1 GN",
-      "156,400 FC",
-      "205,500 FC + 3 GN",
-    ],
-    totalOffrandes: "1,085,400 FC + 7 GN",
-    rapportsParSalle: {
-      Jardin: 8,
-      Ainés: 8,
-      Juniors: 8,
-      Cadets: 8,
-      Adolescents: 8,
-    },
+  useEffect(() => {
+    fetchStatistics()
+  }, [dateDebut, dateFin])
+
+  const fetchStatistics = async () => {
+    try {
+      setIsLoading(true)
+      const data = await worshipReportsService.getGlobalStatistics({
+        date_debut: dateDebut,
+        date_fin: dateFin,
+      })
+      setStats(data)
+    } catch (error) {
+      console.error("Erreur lors du chargement des statistiques:", error)
+      toast.error("Impossible de charger les statistiques")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
+  if (!stats) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <p className="text-gray-500">Aucune donnée disponible</p>
+      </div>
+    )
   }
 
   const handleDownloadPDF = () => {
@@ -145,15 +154,15 @@ export default function GlobalReportPage() {
           <h2>🏢 Rapports par Salle</h2>
           <div class="salle-stats">
             ${Object.entries(stats.rapportsParSalle)
-              .map(
-                ([salle, count]) => `
+        .map(
+          ([salle, count]) => `
               <div class="salle-item">
                 <strong>${salle}</strong>
                 <span>${count} rapport${count > 1 ? "s" : ""}</span>
               </div>
             `
-              )
-              .join("")}
+        )
+        .join("")}
           </div>
         </body>
       </html>

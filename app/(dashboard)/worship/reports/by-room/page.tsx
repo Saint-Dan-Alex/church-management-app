@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,49 +14,90 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ArrowLeft, Calendar, Users, TrendingUp, Download, TrendingDown, DollarSign } from "lucide-react"
+import { ArrowLeft, Calendar, Users, TrendingUp, Download, TrendingDown, DollarSign, Loader2 } from "lucide-react"
 import type { SalleType, SalleStats } from "@/types/worship-report"
-
-const salles: SalleType[] = ["Jardin", "Ainés", "Juniors", "Cadets", "Adolescents"]
+import { worshipReportsService, type GlobalStats } from "@/lib/services/worship-reports.service"
+import { sallesService } from "@/lib/services/salles.service"
+import type { Salle } from "@/lib/types/api"
+import { toast } from "sonner"
 
 export default function RoomReportPage() {
   const router = useRouter()
-  const [salleSelectionnee, setSalleSelectionnee] = useState<SalleType>("Adolescents")
+  const [salles, setSalles] = useState<Salle[]>([])
+  const [salleSelectionnee, setSalleSelectionnee] = useState<string>("")
   const [periode, setPeriode] = useState("mois")
   const [dateDebut, setDateDebut] = useState("2023-11-01")
   const [dateFin, setDateFin] = useState("2023-12-31")
+  const [stats, setStats] = useState<GlobalStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingSalles, setIsLoadingSalles] = useState(true)
 
-  // Données mockées
-  const stats: SalleStats = {
-    salle: salleSelectionnee,
-    nombreCultes: 8,
-    totalEffectif: 410,
-    totalFreres: 133,
-    totalSoeurs: 277,
-    totalNouveauxVenus: 3,
-    moyenneEffectif: 51.25,
-    moyenneFreres: 16.63,
-    moyenneSoeurs: 34.63,
-    moyenneNouveauxVenus: 0.38,
-    offrandes: [
-      "171,700 FC + 1 GN",
-      "85,000 FC",
-      "120,500 FC",
-      "95,200 FC + 2 GN",
-      "148,300 FC",
-      "102,800 FC + 1 GN",
-      "156,400 FC",
-      "205,500 FC + 3 GN",
-    ],
-    totalOffrandes: "1,085,400 FC + 7 GN",
-    meilleurePresence: {
-      date: "2023-12-03",
-      effectif: 410,
-    },
-    moinsPresence: {
-      date: "2023-11-05",
-      effectif: 385,
-    },
+  useEffect(() => {
+    loadSalles()
+  }, [])
+
+  useEffect(() => {
+    if (salleSelectionnee) {
+      fetchStatistics()
+    }
+  }, [salleSelectionnee, dateDebut, dateFin])
+
+  const loadSalles = async () => {
+    try {
+      setIsLoadingSalles(true)
+      const response = await sallesService.getAll()
+      // L'API retourne une réponse paginée avec { data: [], current_page, total, etc. }
+      const sallesData = Array.isArray(response) ? response : (response as any).data || []
+      setSalles(sallesData)
+      // Sélectionner la première salle par défaut
+      if (sallesData.length > 0) {
+        setSalleSelectionnee(sallesData[0].nom)
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des salles:", error)
+      toast.error("Impossible de charger les salles")
+    } finally {
+      setIsLoadingSalles(false)
+    }
+  }
+
+  const fetchStatistics = async () => {
+    try {
+      setIsLoading(true)
+      const data = await worshipReportsService.getRoomStatistics({
+        salle: salleSelectionnee,
+        date_debut: dateDebut,
+        date_fin: dateFin,
+      })
+      setStats(data)
+    } catch (error) {
+      console.error("Erreur lors du chargement des statistiques:", error)
+      toast.error("Impossible de charger les statistiques")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Show loading spinner only when salles are being loaded initially
+  if (isLoadingSalles) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-gray-600">Chargement des salles...</span>
+      </div>
+    )
+  }
+
+  // Show message if no salles are available
+  if (salles.length === 0) {
+    return (
+      <div className="flex h-[400px] items-center justify-center flex-col gap-4">
+        <p className="text-gray-500">Aucune salle disponible</p>
+        <Button onClick={() => router.push("/salles")}>
+          Gérer les salles
+        </Button>
+      </div>
+    )
   }
 
   const getSalleBadgeColor = (salle: string) => {
@@ -101,11 +142,11 @@ export default function RoomReportPage() {
           <div class="header">
             <div class="periode">📅 Période: ${dateDebut} au ${dateFin}</div>
             <h1>📊 Rapport de Salle</h1>
-            <div class="salle-badge">${stats.salle}</div>
+            <div class="salle-badge">${stats.salle ?? salleSelectionnee}</div>
           </div>
 
           <div class="highlight-box">
-            <strong>${stats.nombreCultes} culte${stats.nombreCultes > 1 ? "s" : ""} enregistré${stats.nombreCultes > 1 ? "s" : ""}</strong> pour cette période
+            <strong>${stats.nombreCultes ?? 0} culte${(stats.nombreCultes ?? 0) > 1 ? "s" : ""} enregistré${(stats.nombreCultes ?? 0) > 1 ? "s" : ""}</strong> pour cette période
           </div>
 
           <h2>📈 Statistiques Totales</h2>
@@ -164,18 +205,20 @@ export default function RoomReportPage() {
           </div>
 
           <h2>🏆 Records</h2>
+          ${stats.meilleurePresence && stats.moinsPresence ? `
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-label">🔼 Meilleure Présence</div>
-              <div class="stat-value">${stats.meilleurePresence.effectif}</div>
-              <div class="stat-subtitle">${new Date(stats.meilleurePresence.date).toLocaleDateString("fr-FR")}</div>
+              <div class="stat-value">${stats.meilleurePresence!.effectif}</div>
+              <div class="stat-subtitle">${new Date(stats.meilleurePresence!.date).toLocaleDateString("fr-FR")}</div>
             </div>
             <div class="stat-card">
               <div class="stat-label">🔽 Moins Bonne Présence</div>
-              <div class="stat-value">${stats.moinsPresence.effectif}</div>
-              <div class="stat-subtitle">${new Date(stats.moinsPresence.date).toLocaleDateString("fr-FR")}</div>
+              <div class="stat-value">${stats.moinsPresence!.effectif}</div>
+              <div class="stat-subtitle">${new Date(stats.moinsPresence!.date).toLocaleDateString("fr-FR")}</div>
             </div>
           </div>
+          ` : '<p style="text-align: center; color: #6b7280;">Aucun rapport disponible pour calculer les records</p>'}
         </body>
       </html>
     `
@@ -221,14 +264,18 @@ export default function RoomReportPage() {
           <div className="grid gap-4 md:grid-cols-4">
             <div className="grid gap-2">
               <Label htmlFor="salle">Salle *</Label>
-              <Select value={salleSelectionnee} onValueChange={(value: SalleType) => setSalleSelectionnee(value)}>
+              <Select
+                value={salleSelectionnee}
+                onValueChange={(value: string) => setSalleSelectionnee(value)}
+                disabled={isLoadingSalles}
+              >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder={isLoadingSalles ? "Chargement..." : "Sélectionner une salle"} />
                 </SelectTrigger>
                 <SelectContent>
                   {salles.map((salle) => (
-                    <SelectItem key={salle} value={salle}>
-                      {salle}
+                    <SelectItem key={salle.id} value={salle.nom}>
+                      {salle.nom}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -276,176 +323,208 @@ export default function RoomReportPage() {
         </CardContent>
       </Card>
 
-      {/* Salle sélectionnée */}
-      <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-blue-700 mb-2">Salle sélectionnée</p>
-              <Badge variant="outline" className={`text-lg py-2 px-4 ${getSalleBadgeColor(stats.salle)}`}>
-                {stats.salle}
-              </Badge>
+      {/* Loading state for statistics */}
+      {isLoading ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex h-[300px] items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-gray-600">Chargement des statistiques...</span>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-blue-700">Nombre de cultes</p>
-              <p className="text-3xl font-bold text-blue-900">{stats.nombreCultes}</p>
+          </CardContent>
+        </Card>
+      ) : !stats ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex h-[300px] items-center justify-center">
+              <p className="text-gray-500">Aucune donnée disponible pour cette salle</p>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Statistiques Totales */}
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Statistiques Totales</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Effectif</p>
-                  <p className="text-3xl font-bold text-gray-900">{stats.totalEffectif}</p>
-                  <p className="text-xs text-gray-500 mt-1">participants</p>
-                </div>
-                <Users className="h-10 w-10 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Nouveaux Venus</p>
-                  <p className="text-3xl font-bold text-yellow-600">{stats.totalNouveauxVenus}</p>
-                  <p className="text-xs text-gray-500 mt-1">personnes</p>
-                </div>
-                <TrendingUp className="h-10 w-10 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-gray-600">Total Frères</p>
-              <p className="text-3xl font-bold text-blue-700">{stats.totalFreres}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {((stats.totalFreres / stats.totalEffectif) * 100).toFixed(1)}% de l'effectif
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-gray-600">Total Sœurs</p>
-              <p className="text-3xl font-bold text-pink-600">{stats.totalSoeurs}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {((stats.totalSoeurs / stats.totalEffectif) * 100).toFixed(1)}% de l'effectif
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-green-700">Total Offrandes</p>
-                  <p className="text-2xl font-bold text-green-900">{stats.totalOffrandes}</p>
-                  <p className="text-xs text-green-600 mt-1">{stats.offrandes.length} cultes</p>
-                </div>
-                <DollarSign className="h-10 w-10 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Moyennes */}
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Moyennes par Culte</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <p className="text-sm text-green-700">Moyenne Effectif</p>
-              <p className="text-3xl font-bold text-green-900">{stats.moyenneEffectif.toFixed(2)}</p>
-              <p className="text-xs text-green-600 mt-1">participants/culte</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-yellow-200 bg-yellow-50">
-            <CardContent className="pt-6">
-              <p className="text-sm text-yellow-700">Moyenne Nouveaux Venus</p>
-              <p className="text-3xl font-bold text-yellow-900">{stats.moyenneNouveauxVenus.toFixed(2)}</p>
-              <p className="text-xs text-yellow-600 mt-1">personnes/culte</p>
-            </CardContent>
-          </Card>
-
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Salle sélectionnée */}
           <Card className="border-blue-200 bg-blue-50">
             <CardContent className="pt-6">
-              <p className="text-sm text-blue-700">Moyenne Frères</p>
-              <p className="text-3xl font-bold text-blue-900">{stats.moyenneFreres.toFixed(2)}</p>
-              <p className="text-xs text-blue-600 mt-1">frères/culte</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-pink-200 bg-pink-50">
-            <CardContent className="pt-6">
-              <p className="text-sm text-pink-700">Moyenne Sœurs</p>
-              <p className="text-3xl font-bold text-pink-900">{stats.moyenneSoeurs.toFixed(2)}</p>
-              <p className="text-xs text-pink-600 mt-1">sœurs/culte</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Records */}
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Records de Présence</h2>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="border-green-300 bg-green-50">
-            <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-5 w-5 text-green-600" />
-                    <p className="text-sm font-medium text-green-700">Meilleure Présence</p>
-                  </div>
-                  <p className="text-4xl font-bold text-green-900">{stats.meilleurePresence.effectif}</p>
-                  <p className="text-sm text-green-600 mt-2">
-                    {new Date(stats.meilleurePresence.date).toLocaleDateString("fr-FR", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
+                  <p className="text-sm text-blue-700 mb-2">Salle sélectionnée</p>
+                  <Badge variant="outline" className={`text-lg py-2 px-4 ${getSalleBadgeColor(stats.salle ?? salleSelectionnee)}`}>
+                    {stats.salle ?? salleSelectionnee}
+                  </Badge>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-blue-700">Nombre de cultes</p>
+                  <p className="text-3xl font-bold text-blue-900">{stats.nombreCultes ?? 0}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-red-300 bg-red-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingDown className="h-5 w-5 text-red-600" />
-                    <p className="text-sm font-medium text-red-700">Moins Bonne Présence</p>
+          {/* Statistiques Totales */}
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Statistiques Totales</h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Total Effectif</p>
+                      <p className="text-3xl font-bold text-gray-900">{stats.totalEffectif}</p>
+                      <p className="text-xs text-gray-500 mt-1">participants</p>
+                    </div>
+                    <Users className="h-10 w-10 text-blue-600" />
                   </div>
-                  <p className="text-4xl font-bold text-red-900">{stats.moinsPresence.effectif}</p>
-                  <p className="text-sm text-red-600 mt-2">
-                    {new Date(stats.moinsPresence.date).toLocaleDateString("fr-FR", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Nouveaux Venus</p>
+                      <p className="text-3xl font-bold text-yellow-600">{stats.totalNouveauxVenus}</p>
+                      <p className="text-xs text-gray-500 mt-1">personnes</p>
+                    </div>
+                    <TrendingUp className="h-10 w-10 text-yellow-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-sm text-gray-600">Total Frères</p>
+                  <p className="text-3xl font-bold text-blue-700">{stats.totalFreres}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {((stats.totalFreres / stats.totalEffectif) * 100).toFixed(1)}% de l'effectif
                   </p>
-                </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-sm text-gray-600">Total Sœurs</p>
+                  <p className="text-3xl font-bold text-pink-600">{stats.totalSoeurs}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {((stats.totalSoeurs / stats.totalEffectif) * 100).toFixed(1)}% de l'effectif
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-green-200 bg-green-50">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-green-700">Total Offrandes</p>
+                      <p className="text-2xl font-bold text-green-900">{stats.totalOffrandes}</p>
+                      <p className="text-xs text-green-600 mt-1">{stats.offrandes.length} cultes</p>
+                    </div>
+                    <DollarSign className="h-10 w-10 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Moyennes */}
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Moyennes par Culte</h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card className="border-green-200 bg-green-50">
+                <CardContent className="pt-6">
+                  <p className="text-sm text-green-700">Moyenne Effectif</p>
+                  <p className="text-3xl font-bold text-green-900">{stats.moyenneEffectif.toFixed(2)}</p>
+                  <p className="text-xs text-green-600 mt-1">participants/culte</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-yellow-200 bg-yellow-50">
+                <CardContent className="pt-6">
+                  <p className="text-sm text-yellow-700">Moyenne Nouveaux Venus</p>
+                  <p className="text-3xl font-bold text-yellow-900">{stats.moyenneNouveauxVenus.toFixed(2)}</p>
+                  <p className="text-xs text-yellow-600 mt-1">personnes/culte</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="pt-6">
+                  <p className="text-sm text-blue-700">Moyenne Frères</p>
+                  <p className="text-3xl font-bold text-blue-900">{stats.moyenneFreres.toFixed(2)}</p>
+                  <p className="text-xs text-blue-600 mt-1">frères/culte</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-pink-200 bg-pink-50">
+                <CardContent className="pt-6">
+                  <p className="text-sm text-pink-700">Moyenne Sœurs</p>
+                  <p className="text-3xl font-bold text-pink-900">{stats.moyenneSoeurs.toFixed(2)}</p>
+                  <p className="text-xs text-pink-600 mt-1">sœurs/culte</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Records */}
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Records de Présence</h2>
+            {stats.meilleurePresence && stats.moinsPresence ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card className="border-green-300 bg-green-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <TrendingUp className="h-5 w-5 text-green-600" />
+                          <p className="text-sm font-medium text-green-700">Meilleure Présence</p>
+                        </div>
+                        <p className="text-4xl font-bold text-green-900">{stats.meilleurePresence.effectif}</p>
+                        <p className="text-sm text-green-600 mt-2">
+                          {new Date(stats.meilleurePresence.date).toLocaleDateString("fr-FR", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-red-300 bg-red-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <TrendingDown className="h-5 w-5 text-red-600" />
+                          <p className="text-sm font-medium text-red-700">Moins Bonne Présence</p>
+                        </div>
+                        <p className="text-4xl font-bold text-red-900">{stats.moinsPresence.effectif}</p>
+                        <p className="text-sm text-red-600 mt-2">
+                          {new Date(stats.moinsPresence.date).toLocaleDateString("fr-FR", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-gray-500 py-8">
+                    Aucun rapport disponible pour calculer les records de présence
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }

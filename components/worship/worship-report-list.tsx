@@ -145,18 +145,18 @@ export function WorshipReportList({ searchQuery }: WorshipReportListProps) {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="h-3 w-3 text-gray-500" />
-                  <span className="font-semibold text-gray-900">{report.effectifTotal}</span>
+                  <span className="font-semibold text-gray-900">{report.effectif_total}</span>
                   <span className="text-gray-600">participants</span>
                 </div>
 
                 <div className="text-sm text-gray-600">
-                  <span className="text-blue-600 font-medium">{report.effectifFreres}</span> Frères •{" "}
-                  <span className="text-pink-600 font-medium">{report.effectifSoeurs}</span> Sœurs
+                  <span className="text-blue-600 font-medium">{report.effectif_freres}</span> Frères •{" "}
+                  <span className="text-pink-600 font-medium">{report.effectif_soeurs}</span> Sœurs
                 </div>
 
-                {report.nombreNouveauxVenus > 0 && (
+                {report.nombre_nouveaux_venus > 0 && (
                   <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                    ✨ {report.nombreNouveauxVenus} nouveau{report.nombreNouveauxVenus > 1 ? "x" : ""}
+                    ✨ {report.nombre_nouveaux_venus} nouveau{report.nombre_nouveaux_venus > 1 ? "x" : ""}
                   </Badge>
                 )}
               </div>

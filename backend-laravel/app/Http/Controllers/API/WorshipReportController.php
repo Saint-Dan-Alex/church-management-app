@@ -85,15 +85,159 @@ class WorshipReportController extends Controller
             $query->whereBetween('date', [$request->date_debut, $request->date_fin]);
         }
 
-        $reports = $query->get();
+        $reports = $query->orderBy('date', 'asc')->get();
+        $totalCultes = $reports->count();
+
+        // Calcul des totaux
+        $totalEffectif = $reports->sum('effectif_total');
+        $totalFreres = $reports->sum('effectif_freres');
+        $totalSoeurs = $reports->sum('effectif_soeurs');
+        $totalNouveauxVenus = $reports->sum('nombre_nouveaux_venus');
+
+        // Calcul des moyennes
+        $moyenneEffectif = $totalCultes > 0 ? $totalEffectif / $totalCultes : 0;
+        $moyenneFreres = $totalCultes > 0 ? $totalFreres / $totalCultes : 0;
+        $moyenneSoeurs = $totalCultes > 0 ? $totalSoeurs / $totalCultes : 0;
+        $moyenneNouveauxVenus = $totalCultes > 0 ? $totalNouveauxVenus / $totalCultes : 0;
+
+        // Liste des offrandes et calcul du total
+        $offrandes = $reports->pluck('offrandes')->filter()->values()->toArray();
+        
+        // Calculer le total des offrandes (somme des montants en FC et GN)
+        $totalFC = 0;
+        $totalGN = 0;
+        
+        foreach ($offrandes as $offrande) {
+            // Parse les offrandes au format "123,456 FC + 2 GN" ou "123,456 FC"
+            if (preg_match('/([0-9,]+)\s*FC/', $offrande, $matchesFC)) {
+                $totalFC += (float) str_replace(',', '', $matchesFC[1]);
+            }
+            if (preg_match('/(\d+)\s*GN/', $offrande, $matchesGN)) {
+                $totalGN += (int) $matchesGN[1];
+            }
+        }
+        
+        $totalOffrandes = number_format($totalFC, 0, ',', ',') . ' FC';
+        if ($totalGN > 0) {
+            $totalOffrandes .= ' + ' . $totalGN . ' GN';
+        }
+
+        // Rapports par salle
+        $rapportsParSalle = $reports->groupBy('salle')->map(function ($group) {
+            return $group->count();
+        })->toArray();
 
         $stats = [
-            'total_cultes' => $reports->count(),
-            'total_effectif' => $reports->sum('effectif_total'),
-            'total_freres' => $reports->sum('effectif_freres'),
-            'total_soeurs' => $reports->sum('effectif_soeurs'),
-            'total_nouveaux_venus' => $reports->sum('nombre_nouveaux_venus'),
-            'moyenne_effectif' => $reports->avg('effectif_total'),
+            'totalEffectif' => $totalEffectif,
+            'totalFreres' => $totalFreres,
+            'totalSoeurs' => $totalSoeurs,
+            'totalNouveauxVenus' => $totalNouveauxVenus,
+            'moyenneEffectif' => round($moyenneEffectif, 2),
+            'moyenneFreres' => round($moyenneFreres, 2),
+            'moyenneSoeurs' => round($moyenneSoeurs, 2),
+            'moyenneNouveauxVenus' => round($moyenneNouveauxVenus, 2),
+            'offrandes' => $offrandes,
+            'totalOffrandes' => $totalOffrandes,
+            'rapportsParSalle' => $rapportsParSalle,
+            'totalCultes' => $totalCultes,
+        ];
+
+        return response()->json($stats);
+    }
+
+    /** @OA\Get(path="/worship-reports-room-statistics", tags={"Worship Reports"}, summary="Statistiques par salle", @OA\Parameter(name="salle", in="query", required=true, @OA\Schema(type="string")), @OA\Parameter(name="date_debut", in="query", required=false, @OA\Schema(type="string", format="date")), @OA\Parameter(name="date_fin", in="query", required=false, @OA\Schema(type="string", format="date")), @OA\Response(response=200, description="Statistiques pour une salle spécifique")) */
+    public function roomStatistics(Request $request): JsonResponse
+    {
+        $request->validate([
+            'salle' => 'required|string',
+        ]);
+
+        $query = WorshipReport::where('salle', $request->salle);
+
+        if ($request->has('date_debut') && $request->has('date_fin')) {
+            $query->whereBetween('date', [$request->date_debut, $request->date_fin]);
+        }
+
+        $reports = $query->orderBy('date', 'asc')->get();
+        $nombreCultes = $reports->count();
+
+        if ($nombreCultes === 0) {
+            return response()->json([
+                'salle' => $request->salle,
+                'nombreCultes' => 0,
+                'totalEffectif' => 0,
+                'totalFreres' => 0,
+                'totalSoeurs' => 0,
+                'totalNouveauxVenus' => 0,
+                'moyenneEffectif' => 0,
+                'moyenneFreres' => 0,
+                'moyenneSoeurs' => 0,
+                'moyenneNouveauxVenus' => 0,
+                'offrandes' => [],
+                'totalOffrandes' => '0 FC',
+                'meilleurePresence' => null,
+                'moinsPresence' => null,
+            ]);
+        }
+
+        // Calcul des totaux
+        $totalEffectif = $reports->sum('effectif_total');
+        $totalFreres = $reports->sum('effectif_freres');
+        $totalSoeurs = $reports->sum('effectif_soeurs');
+        $totalNouveauxVenus = $reports->sum('nombre_nouveaux_venus');
+
+        // Calcul des moyennes
+        $moyenneEffectif = $totalEffectif / $nombreCultes;
+        $moyenneFreres = $totalFreres / $nombreCultes;
+        $moyenneSoeurs = $totalSoeurs / $nombreCultes;
+        $moyenneNouveauxVenus = $totalNouveauxVenus / $nombreCultes;
+
+        // Liste des offrandes et calcul du total
+        $offrandes = $reports->pluck('offrandes')->filter()->values()->toArray();
+        
+        // Calculer le total des offrandes
+        $totalFC = 0;
+        $totalGN = 0;
+        
+        foreach ($offrandes as $offrande) {
+            if (preg_match('/([0-9,]+)\s*FC/', $offrande, $matchesFC)) {
+                $totalFC += (float) str_replace(',', '', $matchesFC[1]);
+            }
+            if (preg_match('/(\d+)\s*GN/', $offrande, $matchesGN)) {
+                $totalGN += (int) $matchesGN[1];
+            }
+        }
+        
+        $totalOffrandes = number_format($totalFC, 0, ',', ',') . ' FC';
+        if ($totalGN > 0) {
+            $totalOffrandes .= ' + ' . $totalGN . ' GN';
+        }
+
+        // Meilleure et moins bonne présence
+        $meilleurePresence = $reports->sortByDesc('effectif_total')->first();
+        $moinsPresence = $reports->sortBy('effectif_total')->first();
+
+        $stats = [
+            'salle' => $request->salle,
+            'nombreCultes' => $nombreCultes,
+            'totalEffectif' => $totalEffectif,
+            'totalFreres' => $totalFreres,
+            'totalSoeurs' => $totalSoeurs,
+            'totalNouveauxVenus' => $totalNouveauxVenus,
+            'moyenneEffectif' => round($moyenneEffectif, 2),
+            'moyenneFreres' => round($moyenneFreres, 2),
+            'moyenneSoeurs' => round($moyenneSoeurs, 2),
+            'moyenneNouveauxVenus' => round($moyenneNouveauxVenus, 2),
+            'offrandes' => $offrandes,
+            'totalOffrandes' => $totalOffrandes,
+            'meilleurePresence' => $meilleurePresence ? [
+                'date' => $meilleurePresence->date,
+                'effectif' => $meilleurePresence->effectif_total,
+            ] : null,
+            'moinsPresence' => $moinsPresence ? [
+                'date' => $moinsPresence->date,
+                'effectif' => $moinsPresence->effectif_total,
+            ] : null,
         ];
 
         return response()->json($stats);
