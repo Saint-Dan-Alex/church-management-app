@@ -23,6 +23,7 @@ import { Upload, Loader2 } from "lucide-react"
 import type { Child } from "@/lib/types/api"
 import { childrenService } from "@/lib/services/children.service"
 import { toast } from "sonner"
+import { CommissionCombobox } from "./commission-combobox"
 
 interface EditChildDialogProps {
   open: boolean
@@ -277,7 +278,6 @@ export function EditChildDialog({ open, onOpenChange, child }: EditChildDialogPr
                     <RadioGroup value={formData.baptise_saint_esprit} onValueChange={(value: any) => setFormData({ ...formData, baptise_saint_esprit: value })}>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="bse-oui-edit" /><Label htmlFor="bse-oui-edit" className="font-normal cursor-pointer">Oui</Label></div>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="bse-non-edit" /><Label htmlFor="bse-non-edit" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="NSP" id="bse-nsp-edit" /><Label htmlFor="bse-nsp-edit" className="font-normal cursor-pointer">NSP</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="grid gap-2">
@@ -285,7 +285,6 @@ export function EditChildDialog({ open, onOpenChange, child }: EditChildDialogPr
                     <RadioGroup value={formData.vie_donnee_a_jesus} onValueChange={(value: any) => setFormData({ ...formData, vie_donnee_a_jesus: value })}>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="vie-oui-edit" /><Label htmlFor="vie-oui-edit" className="font-normal cursor-pointer">Oui</Label></div>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="vie-non-edit" /><Label htmlFor="vie-non-edit" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Je ne sais pas" id="vie-nsp-edit" /><Label htmlFor="vie-nsp-edit" className="font-normal cursor-pointer">Je ne sais pas</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -295,22 +294,21 @@ export function EditChildDialog({ open, onOpenChange, child }: EditChildDialogPr
                   {formData.est_ouvrier && (
                     <div className="grid gap-2">
                       <Label htmlFor="commission_actuelle">Commission actuelle</Label>
-                      <Input id="commission_actuelle" value={formData.commission_actuelle || ''} onChange={(e) => setFormData({ ...formData, commission_actuelle: e.target.value })} />
+                      <CommissionCombobox
+                        value={formData.commission_actuelle || ''}
+                        onValueChange={(value) => setFormData({ ...formData, commission_actuelle: value })}
+                        placeholder="Sélectionner ou créer une commission..."
+                      />
                     </div>
                   )}
                   {!formData.est_ouvrier && (
                     <div className="grid gap-2">
                       <Label htmlFor="commission_souhaitee">Commission souhaitée</Label>
-                      <Select value={formData.commission_souhaitee} onValueChange={(value) => setFormData({ ...formData, commission_souhaitee: value })}>
-                        <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Louange">Louange</SelectItem>
-                          <SelectItem value="Accueil">Accueil</SelectItem>
-                          <SelectItem value="Technique">Technique</SelectItem>
-                          <SelectItem value="Intercession">Intercession</SelectItem>
-                          <SelectItem value="Enseignement">Enseignement</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <CommissionCombobox
+                        value={formData.commission_souhaitee || ''}
+                        onValueChange={(value) => setFormData({ ...formData, commission_souhaitee: value })}
+                        placeholder="Sélectionner ou créer une commission..."
+                      />
                     </div>
                   )}
                 </div>
@@ -406,7 +404,6 @@ export function EditChildDialog({ open, onOpenChange, child }: EditChildDialogPr
                     <RadioGroup value={formData.gagne_une_ame} onValueChange={(value: any) => setFormData({ ...formData, gagne_une_ame: value })}>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="ame-oui-edit" /><Label htmlFor="ame-oui-edit" className="font-normal cursor-pointer">Oui</Label></div>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="ame-non-edit" /><Label htmlFor="ame-non-edit" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Je ne sais pas" id="ame-nsp-edit" /><Label htmlFor="ame-nsp-edit" className="font-normal cursor-pointer">Je ne sais pas</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="grid gap-2">
@@ -414,7 +411,6 @@ export function EditChildDialog({ open, onOpenChange, child }: EditChildDialogPr
                     <RadioGroup value={formData.encadreur} onValueChange={(value: any) => setFormData({ ...formData, encadreur: value })}>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="enc-oui-edit" /><Label htmlFor="enc-oui-edit" className="font-normal cursor-pointer">Oui</Label></div>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="enc-non-edit" /><Label htmlFor="enc-non-edit" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="NSP" id="enc-nsp-edit" /><Label htmlFor="enc-nsp-edit" className="font-normal cursor-pointer">NSP</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="grid gap-2">

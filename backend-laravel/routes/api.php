@@ -20,6 +20,7 @@ use App\Http\Controllers\API\RoleController;
 use App\Http\Controllers\API\DashboardController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\UserManagementController;
+use App\Http\Controllers\API\CommissionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,9 @@ Route::prefix('v1')->group(function () {
     // Children Routes
     Route::apiResource('children', ChildController::class);
     Route::get('children-statistics', [ChildController::class, 'statistics']);
+
+    // Commissions Routes
+    Route::apiResource('commissions', CommissionController::class);
 
     // Salles Routes
     Route::apiResource('salles', SalleController::class);

@@ -23,6 +23,7 @@ import { Upload, Loader2 } from "lucide-react"
 import type { ChildFormData } from "@/types/child"
 import { childrenService } from "@/lib/services/children.service"
 import { toast } from "sonner"
+import { CommissionCombobox } from "./commission-combobox"
 
 interface AddChildDialogProps {
   open: boolean
@@ -53,8 +54,8 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
     // Parcours spirituel
     dateConversion: "",
     dateBapteme: "",
-    baptiseSaintEsprit: "NSP",
-    vieDonneeAJesus: "Je ne sais pas",
+    baptiseSaintEsprit: "Non",
+    vieDonneeAJesus: "Non",
     estOuvrier: false,
     commissionActuelle: "",
     commissionSouhaitee: "",
@@ -69,8 +70,8 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
     vieChretienne: undefined,
     viePriere: undefined,
     comprehensionBible: undefined,
-    gagneUneAme: "Je ne sais pas",
-    encadreur: "NSP",
+    gagneUneAme: "Non",
+    encadreur: "Non",
     qualiteEnseignements: undefined,
     sujetSouhaite: "",
     besoinSuggestion: "",
@@ -149,11 +150,11 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
         genre: "Masculin", etatCivil: "Célibataire", adresse: "", telephone: "", email: "", photo: "",
         nomPere: "", nomMere: "", telephoneParent1: "", telephoneParent2: "", emailParents: "",
         contactUrgence: "", lienContactUrgence: "",
-        dateConversion: "", dateBapteme: "", baptiseSaintEsprit: "NSP", vieDonneeAJesus: "Je ne sais pas",
+        dateConversion: "", dateBapteme: "", baptiseSaintEsprit: "Non", vieDonneeAJesus: "Non",
         estOuvrier: false, commissionActuelle: "", commissionSouhaitee: "", dateAdhesion: "",
         allergiesConnues: false, allergiesDetails: "", maladies: "", traitement: "", autorisationSoins: false,
-        vieChretienne: undefined, viePriere: undefined, comprehensionBible: undefined, gagneUneAme: "Je ne sais pas",
-        encadreur: "NSP", qualiteEnseignements: undefined, sujetSouhaite: "", besoinSuggestion: ""
+        vieChretienne: undefined, viePriere: undefined, comprehensionBible: undefined, gagneUneAme: "Non",
+        encadreur: "Non", qualiteEnseignements: undefined, sujetSouhaite: "", besoinSuggestion: ""
       })
     } catch (error) {
       console.error("Erreur ajout enfant:", error)
@@ -307,7 +308,6 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
                     <RadioGroup value={formData.baptiseSaintEsprit} onValueChange={(value: any) => setFormData({ ...formData, baptiseSaintEsprit: value })}>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="bse-oui" /><Label htmlFor="bse-oui" className="font-normal cursor-pointer">Oui</Label></div>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="bse-non" /><Label htmlFor="bse-non" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="NSP" id="bse-nsp" /><Label htmlFor="bse-nsp" className="font-normal cursor-pointer">NSP</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="grid gap-2">
@@ -315,7 +315,6 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
                     <RadioGroup value={formData.vieDonneeAJesus} onValueChange={(value: any) => setFormData({ ...formData, vieDonneeAJesus: value })}>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="vie-oui" /><Label htmlFor="vie-oui" className="font-normal cursor-pointer">Oui</Label></div>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="vie-non" /><Label htmlFor="vie-non" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Je ne sais pas" id="vie-nsp" /><Label htmlFor="vie-nsp" className="font-normal cursor-pointer">Je ne sais pas</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -325,22 +324,21 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
                   {formData.estOuvrier && (
                     <div className="grid gap-2">
                       <Label htmlFor="commissionActuelle">Commission actuelle</Label>
-                      <Input id="commissionActuelle" value={formData.commissionActuelle} onChange={(e) => setFormData({ ...formData, commissionActuelle: e.target.value })} />
+                      <CommissionCombobox
+                        value={formData.commissionActuelle}
+                        onValueChange={(value) => setFormData({ ...formData, commissionActuelle: value })}
+                        placeholder="Sélectionner ou créer une commission..."
+                      />
                     </div>
                   )}
                   {!formData.estOuvrier && (
                     <div className="grid gap-2">
                       <Label htmlFor="commissionSouhaitee">Commission souhaitée</Label>
-                      <Select value={formData.commissionSouhaitee} onValueChange={(value) => setFormData({ ...formData, commissionSouhaitee: value })}>
-                        <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Louange">Louange</SelectItem>
-                          <SelectItem value="Accueil">Accueil</SelectItem>
-                          <SelectItem value="Technique">Technique</SelectItem>
-                          <SelectItem value="Intercession">Intercession</SelectItem>
-                          <SelectItem value="Enseignement">Enseignement</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <CommissionCombobox
+                        value={formData.commissionSouhaitee}
+                        onValueChange={(value) => setFormData({ ...formData, commissionSouhaitee: value })}
+                        placeholder="Sélectionner ou créer une commission..."
+                      />
                     </div>
                   )}
                 </div>
@@ -436,7 +434,6 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
                     <RadioGroup value={formData.gagneUneAme} onValueChange={(value: any) => setFormData({ ...formData, gagneUneAme: value })}>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="ame-oui" /><Label htmlFor="ame-oui" className="font-normal cursor-pointer">Oui</Label></div>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="ame-non" /><Label htmlFor="ame-non" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="Je ne sais pas" id="ame-nsp" /><Label htmlFor="ame-nsp" className="font-normal cursor-pointer">Je ne sais pas</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="grid gap-2">
@@ -444,7 +441,6 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
                     <RadioGroup value={formData.encadreur} onValueChange={(value: any) => setFormData({ ...formData, encadreur: value })}>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Oui" id="enc-oui" /><Label htmlFor="enc-oui" className="font-normal cursor-pointer">Oui</Label></div>
                       <div className="flex items-center space-x-2"><RadioGroupItem value="Non" id="enc-non" /><Label htmlFor="enc-non" className="font-normal cursor-pointer">Non</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="NSP" id="enc-nsp" /><Label htmlFor="enc-nsp" className="font-normal cursor-pointer">NSP</Label></div>
                     </RadioGroup>
                   </div>
                   <div className="grid gap-2">
