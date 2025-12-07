@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, ChevronsUpDown, Plus } from "lucide-react"
+import { Check, ChevronsUpDown, Plus, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -64,6 +64,11 @@ export function CommissionCombobox({ value, onValueChange, placeholder = "Sélec
         }
     }
 
+    const handleClear = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        onValueChange("")
+    }
+
     const selectedCommission = commissions.find((c) => c.nom === value)
 
     return (
@@ -75,8 +80,16 @@ export function CommissionCombobox({ value, onValueChange, placeholder = "Sélec
                     aria-expanded={open}
                     className="w-full justify-between"
                 >
-                    {selectedCommission ? selectedCommission.nom : placeholder}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <span className="truncate">{selectedCommission ? selectedCommission.nom : placeholder}</span>
+                    <div className="flex items-center gap-1 ml-2 shrink-0">
+                        {selectedCommission && (
+                            <X
+                                className="h-4 w-4 opacity-50 hover:opacity-100 transition-opacity"
+                                onClick={handleClear}
+                            />
+                        )}
+                        <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                    </div>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
