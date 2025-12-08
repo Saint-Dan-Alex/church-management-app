@@ -83,12 +83,13 @@ export function DayActivitiesDialog({
                                                     <Badge
                                                         variant="outline"
                                                         className={
-                                                            activity.type === "gratuite"
+                                                            activity.type === "libre"
                                                                 ? "bg-green-50 text-green-700 border-green-300"
                                                                 : "bg-blue-50 text-blue-700 border-blue-300"
                                                         }
                                                     >
-                                                        {activity.type === "gratuite" ? "🎉 Gratuite" : "💰 Payante"}
+                                                        {activity.type === "libre" ? "Libre" :
+                                                            (activity.price ? `Payante (${activity.price} ${activity.currency || 'CDF'})` : "Payante")}
                                                     </Badge>
                                                 </div>
                                                 <p className="text-sm text-gray-600 mb-3">{activity.description}</p>

@@ -5,11 +5,14 @@ export interface Activity {
   title: string
   description: string
   date: string
+  end_date?: string
   time: string
   duration: string
   location: string
   category: string
   type: string
+  price?: number
+  currency?: string
   participants: number
   maxParticipants: number
   status: string
@@ -22,6 +25,7 @@ export interface CreateActivityData {
   title: string
   description: string
   date: string
+  end_date?: string
   time: string
   duration: string
   location: string
@@ -30,6 +34,8 @@ export interface CreateActivityData {
   maxParticipants: number
   status: string
   organizer: string
+  price?: number
+  currency?: string
 }
 
 export const activitiesService = {

@@ -35,8 +35,9 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    type: "gratuite" as "gratuite" | "payante",
+    type: "libre" as "libre" | "payante",
     date: "",
+    end_date: "",
     startTime: "",
     endTime: "",
     location: "",
@@ -61,15 +62,12 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
 
   const loadData = async () => {
     try {
-      // Charger les catégories
       const cats = await activitiesService.getCategories()
       setCategories(cats)
 
-      // Charger les commissions
       const comms = await commissionsService.getAll()
       setCommissions(Array.isArray(comms) ? comms : comms.data || [])
 
-      // Charger les enfants et moniteurs pour les coordinateurs
       const [children, monitors] = await Promise.all([
         childrenService.getAll(),
         monitorsService.getAll()
@@ -96,16 +94,37 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
 
     const startMinutes = startH * 60 + startM
     const endMinutes = endH * 60 + endM
-    const diffMinutes = endMinutes - startMinutes
+    // Si la date de fin est différente et définie, on pourrait calculer plus précisément,
+    // mais pour l'instant on garde la logique journalière ou on laisse l'utilisateur gérer.
+    // Si endMinutes < startMinutes, on suppose que c'est le lendemain si c'est sur 2 jours ?
+    // Simplifions : on calcule juste la différence d'heures.
 
-    if (diffMinutes <= 0) return ""
+    let diffMinutes = endMinutes - startMinutes
 
-    const hours = Math.floor(diffMinutes / 60)
-    const minutes = diffMinutes % 60
+    // Si on a des jours différents
+    if (formData.date && formData.end_date && formData.date !== formData.end_date) {
+      const start = new Date(`${formData.date}T${formData.startTime}`)
+      const end = new Date(`${formData.end_date}T${formData.endTime}`)
+      const diffMs = end.getTime() - start.getTime()
+      diffMinutes = Math.floor(diffMs / 60000)
+    } else if (diffMinutes < 0) {
+      // Si même jour mais heure fin < heure début, c'est incohérent sauf si jour suivant non spécifié
+      return "Invalide (fin avant début)"
+    }
 
-    if (hours === 0) return `${minutes}min`
-    if (minutes === 0) return `${hours}h`
-    return `${hours}h${minutes}`
+    if (diffMinutes <= 0 && (!formData.end_date || formData.date === formData.end_date)) return ""
+
+    const days = Math.floor(diffMinutes / (24 * 60))
+    const remainingMinutesAfterDays = diffMinutes % (24 * 60)
+    const hours = Math.floor(remainingMinutesAfterDays / 60)
+    const minutes = remainingMinutesAfterDays % 60
+
+    let durationStr = ""
+    if (days > 0) durationStr += `${days}j `
+    if (hours > 0) durationStr += `${hours}h `
+    if (minutes > 0) durationStr += `${minutes}min`
+
+    return durationStr.trim()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,8 +139,8 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
       setIsSaving(true)
 
       const duration = calculateDuration()
-      if (!duration) {
-        toast.error("L'heure de fin doit être après l'heure de début")
+      if (!duration || duration.startsWith("Invalide")) {
+        toast.error("La durée de l'activité est invalide")
         return
       }
 
@@ -129,6 +148,7 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
         title: formData.title,
         description: formData.description,
         date: formData.date,
+        end_date: formData.end_date || undefined,
         time: formData.startTime,
         duration: duration,
         location: formData.location,
@@ -137,6 +157,9 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
         maxParticipants: parseInt(formData.maxParticipants) || 100,
         status: "upcoming",
         organizer: formData.organizers.join(", ") || "Non spécifié",
+        // @ts-ignore
+        price: formData.type === "payante" ? parseFloat(formData.montantRequis) : undefined,
+        currency: formData.type === "payante" ? formData.devise : undefined,
       })
 
       toast.success("Activité créée avec succès")
@@ -147,14 +170,17 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
       setFormData({
         title: "",
         description: "",
-        type: "gratuite",
+        type: "libre",
         date: "",
+        end_date: "",
         startTime: "",
         endTime: "",
         location: "",
         category: "",
         maxParticipants: "",
         organizers: [],
+        montantRequis: "",
+        devise: "CDF",
       })
     } catch (error: any) {
       console.error("Erreur lors de la création:", error)
@@ -188,7 +214,7 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="École du Dimanche"
+                placeholder="Ex: Culte Spécial"
                 required
               />
             </div>
@@ -208,14 +234,14 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
               <Label>Type d'activité *</Label>
               <RadioGroup
                 value={formData.type}
-                onValueChange={(value: "gratuite" | "payante") => setFormData({ ...formData, type: value })}
+                onValueChange={(value: "libre" | "payante") => setFormData({ ...formData, type: value })}
                 className="flex gap-4"
               >
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="gratuite" id="gratuite" />
-                  <Label htmlFor="gratuite" className="font-normal cursor-pointer">
+                  <RadioGroupItem value="libre" id="libre" />
+                  <Label htmlFor="libre" className="font-normal cursor-pointer">
                     <Badge variant="outline" className="bg-green-50 text-green-700">
-                      🎉 Gratuite
+                      Libre
                     </Badge>
                   </Label>
                 </div>
@@ -223,12 +249,44 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
                   <RadioGroupItem value="payante" id="payante" />
                   <Label htmlFor="payante" className="font-normal cursor-pointer">
                     <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                      💰 Payante
+                      Payante
                     </Badge>
                   </Label>
                 </div>
               </RadioGroup>
             </div>
+
+            {formData.type === "payante" && (
+              <div className="grid grid-cols-2 gap-4 border rounded-lg p-4 bg-blue-50/50">
+                <div className="grid gap-2">
+                  <Label htmlFor="montantRequis">Prix *</Label>
+                  <Input
+                    id="montantRequis"
+                    type="number"
+                    min="0"
+                    placeholder="Ex: 5000"
+                    value={formData.montantRequis}
+                    onChange={(e) => setFormData({ ...formData, montantRequis: e.target.value })}
+                    required={formData.type === "payante"}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="devise">Devise</Label>
+                  <Select
+                    value={formData.devise}
+                    onValueChange={(value: "CDF" | "USD") => setFormData({ ...formData, devise: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CDF">CDF</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="category">Catégorie *</Label>
@@ -249,15 +307,28 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
               </Select>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="date">Date *</Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="date">Date de début *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="end_date">Date de fin</Label>
+                <Input
+                  id="end_date"
+                  type="date"
+                  value={formData.end_date}
+                  min={formData.date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  placeholder="Optionnel"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -283,7 +354,7 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
               </div>
             </div>
 
-            {formData.startTime && formData.endTime && (
+            {(formData.startTime && formData.endTime) && (
               <div className="text-sm text-muted-foreground">
                 Durée calculée: <strong>{calculateDuration()}</strong>
               </div>
@@ -301,7 +372,7 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="maxParticipants">Participants maximum</Label>
+              <Label htmlFor="maxParticipants">Participants max</Label>
               <Input
                 id="maxParticipants"
                 type="number"

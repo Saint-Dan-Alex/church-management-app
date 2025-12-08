@@ -40,13 +40,24 @@ export function CalendarView() {
   const loadActivities = async () => {
     try {
       setIsLoading(true)
-      // Charger les activités du mois en cours
-      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+
+      const year = currentDate.getFullYear()
+      const month = currentDate.getMonth()
+
+      // Premier jour du mois (Local)
+      const firstDayDate = new Date(year, month, 1)
+      const date_debut = `${firstDayDate.getFullYear()}-${String(firstDayDate.getMonth() + 1).padStart(2, '0')}-${String(firstDayDate.getDate()).padStart(2, '0')}`
+
+      // Dernier jour du mois (Local)
+      const lastDayDate = new Date(year, month + 1, 0)
+      const date_fin = `${lastDayDate.getFullYear()}-${String(lastDayDate.getMonth() + 1).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`
+
+      console.log("Chargement activités:", { date_debut, date_fin })
 
       const response = await activitiesService.getAll({
-        date_debut: firstDay.toISOString().split('T')[0],
-        date_fin: lastDay.toISOString().split('T')[0],
+        date_debut,
+        date_fin,
+        per_page: 100 // On augmente la limite pour être sûr d'avoir tout le mois
       })
 
       const data = Array.isArray(response) ? response : response.data || []
@@ -76,8 +87,18 @@ export function CalendarView() {
   }
 
   const getActivitiesForDay = (day: number) => {
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-    return activities.filter((activity) => activity.date === dateStr)
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+    return activities.filter((activity) => {
+      // Pour comparer correctement les dates sous forme de chaîne "YYYY-MM-DD"
+      // On prend les 10 premiers caractères pour ignorer l'heure si présent (ex: ISO string)
+      const activityStart = activity.date.substring(0, 10);
+      const activityEnd = activity.end_date ? activity.end_date.substring(0, 10) : activityStart;
+
+      return dateStr >= activityStart && dateStr <= activityEnd;
+    })
   }
 
   // Create a mapping of category names to colors

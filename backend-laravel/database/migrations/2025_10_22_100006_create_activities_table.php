@@ -16,11 +16,14 @@ return new class extends Migration
             $table->string('title');
             $table->text('description');
             $table->date('date');
+            $table->date('end_date')->nullable();
             $table->time('time');
             $table->string('duration');
             $table->string('location');
             $table->string('category');
-            $table->enum('type', ['gratuite', 'payante']);
+            $table->enum('type', ['libre', 'payante']);
+            $table->decimal('price', 10, 2)->nullable();
+            $table->string('currency', 3)->nullable()->default('CDF');
             $table->integer('participants')->default(0);
             $table->integer('maxParticipants')->nullable();
             $table->enum('status', ['upcoming', 'ongoing', 'completed'])->default('upcoming');

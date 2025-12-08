@@ -91,19 +91,20 @@ export function ActivitiesList() {
                       {activity.category}
                     </Badge>
                     <Badge variant="outline" className={
-                      activity.type === "gratuite"
+                      activity.type === "libre"
                         ? "bg-green-50 text-green-700 border-green-300"
                         : "bg-blue-50 text-blue-700 border-blue-300"
                     }>
-                      {activity.type === "gratuite" ? "🎉 Gratuite" : "💰 Payante"}
+                      {activity.type === "libre" ? "Libre" :
+                        (activity.price ? `Payante (${activity.price} ${activity.currency || 'CDF'})` : "Payante")}
                     </Badge>
                     <Badge variant="outline" className={
-                      activity.status === "planned" ? "bg-yellow-50 text-yellow-700" :
+                      activity.status === "planned" || activity.status === "upcoming" ? "bg-yellow-50 text-yellow-700" :
                         activity.status === "ongoing" ? "bg-blue-50 text-blue-700" :
                           activity.status === "completed" ? "bg-green-50 text-green-700" :
                             "bg-gray-50 text-gray-700"
                     }>
-                      {activity.status === "planned" ? "Planifiée" :
+                      {activity.status === "planned" || activity.status === "upcoming" ? "Planifiée" :
                         activity.status === "ongoing" ? "En cours" :
                           activity.status === "completed" ? "Terminée" : activity.status}
                     </Badge>
@@ -157,6 +158,14 @@ export function ActivitiesList() {
                       month: "long",
                       year: "numeric",
                     })}
+                    {activity.end_date && activity.end_date !== activity.date && (
+                      <> - {new Date(activity.end_date).toLocaleDateString("fr-FR", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}</>
+                    )}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">

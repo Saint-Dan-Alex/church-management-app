@@ -15,11 +15,14 @@ class Activity extends Model
         'title',
         'description',
         'date',
+        'end_date',
         'time',
         'duration',
         'location',
         'category',
         'type',
+        'price',
+        'currency',
         'participants',
         'maxParticipants',
         'status',
@@ -27,7 +30,9 @@ class Activity extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
+        'end_date' => 'date:Y-m-d',
+        'price' => 'decimal:2',
         'participants' => 'integer',
         'maxParticipants' => 'integer',
     ];
