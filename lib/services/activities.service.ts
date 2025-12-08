@@ -85,4 +85,13 @@ export const activitiesService = {
   async getCategories() {
     return await api.get('/activities/categories/list')
   },
+
+  async getParticipants(id: string) {
+    const activity = await this.getById(id)
+    return activity.participants || []
+  },
+
+  async addParticipant(id: string, data: any) {
+    return await api.post(`/activities/${id}/participants`, data)
+  },
 }

@@ -16,7 +16,35 @@ import {
 } from "lucide-react"
 import type { ActivityType } from "@/types/activity"
 import { activitiesService } from "@/lib/services"
+import { childrenService } from "@/lib/services/children.service"
+import { monitorsService } from "@/lib/services/monitors.service"
 import { useToast } from "@/hooks/use-toast"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Plus } from "lucide-react"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface UnifiedParticipant {
   id: string
