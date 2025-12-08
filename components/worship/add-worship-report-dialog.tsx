@@ -145,9 +145,10 @@ export function AddWorshipReportDialog({ open, onOpenChange, onSuccess }: AddWor
       const dataToSend = {
         date: formData.date,
         salle: formData.salle,
-        orateurs: JSON.stringify(formData.orateurs),
-        predicateur: formData.orateurs[0] || "", // Premier orateur comme prédicateur principal
-        moniteurs: JSON.stringify([...formData.moderateurs, ...formData.assistants]),
+        orateurs: formData.orateurs,
+        predicateur: formData.orateurs[0] || "",
+        moderateurs: formData.moderateurs,
+        assistants: formData.assistants,
         effectif_freres: parseInt(formData.effectif_freres) || 0,
         effectif_soeurs: parseInt(formData.effectif_soeurs) || 0,
         offrandes: formData.offrandes,

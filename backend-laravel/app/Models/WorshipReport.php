@@ -16,7 +16,8 @@ class WorshipReport extends Model
         'salle',
         'orateurs',
         'predicateur',
-        'moniteurs',
+        'moderateurs',
+        'assistants',
         'effectif_freres',
         'effectif_soeurs',
         'offrandes',
@@ -26,8 +27,6 @@ class WorshipReport extends Model
 
     protected $casts = [
         'date' => 'date',
-        'orateurs' => 'array',
-        'moniteurs' => 'array',
         'effectif_freres' => 'integer',
         'effectif_soeurs' => 'integer',
         'nombre_nouveaux_venus' => 'integer',

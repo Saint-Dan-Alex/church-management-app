@@ -16,9 +16,13 @@ class StoreWorshipReportRequest extends FormRequest
         return [
             'date' => 'required|date',
             'salle' => 'required|string',
-            'orateurs' => 'required|string', // JSON string
+            'orateurs' => 'required|array',
+            'orateurs.*' => 'string',
             'predicateur' => 'required|string|max:255',
-            'moniteurs' => 'required|string', // JSON string
+            'moderateurs' => 'nullable|array',
+            'moderateurs.*' => 'string',
+            'assistants' => 'nullable|array',
+            'assistants.*' => 'string',
             'effectif_freres' => 'required|integer|min:0',
             'effectif_soeurs' => 'required|integer|min:0',
             'offrandes' => 'nullable|string',

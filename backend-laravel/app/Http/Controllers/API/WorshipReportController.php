@@ -35,7 +35,14 @@ class WorshipReportController extends Controller
     {
         DB::beginTransaction();
         try {
-            $report = WorshipReport::create($request->except('nouveaux_venus'));
+            $data = $request->except('nouveaux_venus');
+            
+            // Encoder les arrays en JSON
+            $data['orateurs'] = json_encode($data['orateurs'] ?? []);
+            $data['moderateurs'] = json_encode($data['moderateurs'] ?? []);
+            $data['assistants'] = json_encode($data['assistants'] ?? []);
+            
+            $report = WorshipReport::create($data);
 
             if ($request->has('nouveaux_venus')) {
                 foreach ($request->nouveaux_venus as $nouveauVenu) {
@@ -64,6 +71,46 @@ class WorshipReportController extends Controller
         $worshipReport->load('nouveauxVenus');
         
         return response()->json($worshipReport);
+    }
+
+    /** @OA\Put(path="/worship-reports/{id}", tags={"Worship Reports"}, summary="Modifier un rapport de culte", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreWorshipReportRequest")), @OA\Response(response=200, description="Rapport modifié"), @OA\Response(response=404, description="Non trouvé"), @OA\Response(response=422, description="Erreur de validation")) */
+    public function update(StoreWorshipReportRequest $request, WorshipReport $worshipReport): JsonResponse
+    {
+        DB::beginTransaction();
+        try {
+            $data = $request->except('nouveaux_venus');
+            
+            // Encoder les arrays en JSON
+            $data['orateurs'] = json_encode($data['orateurs'] ?? []);
+            $data['moderateurs'] = json_encode($data['moderateurs'] ?? []);
+            $data['assistants'] = json_encode($data['assistants'] ?? []);
+            
+            $worshipReport->update($data);
+
+            // Gérer les nouveaux venus si présents
+            if ($request->has('nouveaux_venus')) {
+                // Supprimer les anciens
+                $worshipReport->nouveauxVenus()->delete();
+                
+                // Créer les nouveaux
+                foreach ($request->nouveaux_venus as $nouveauVenu) {
+                    $worshipReport->nouveauxVenus()->create($nouveauVenu);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Rapport modifié avec succès',
+                'data' => $worshipReport->load('nouveauxVenus')
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Erreur lors de la modification',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /** @OA\Delete(path="/worship-reports/{id}", tags={"Worship Reports"}, summary="Supprimer un rapport de culte", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Supprimé"), @OA\Response(response=404, description="Non trouvé")) */

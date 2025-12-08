@@ -35,8 +35,10 @@ export function WorshipReportList({ searchQuery }: WorshipReportListProps) {
     try {
       setLoading(true)
       setError(null)
-      const data = await worshipReportsService.getAll()
-      setReports(Array.isArray(data) ? data : [])
+      const response = await worshipReportsService.getAll()
+      // L'API retourne une réponse paginée avec { data: [], current_page, total, etc. }
+      const reportsData = Array.isArray(response) ? response : (response as any).data || []
+      setReports(reportsData)
     } catch (err: any) {
       const errorMessage = err.message || 'Erreur de chargement des rapports de culte'
       setError(errorMessage)
@@ -71,6 +73,7 @@ export function WorshipReportList({ searchQuery }: WorshipReportListProps) {
 
   const filteredReports = reports.filter(
     (report) =>
+      !searchQuery || // Si pas de recherche, afficher tout
       report.salle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       new Date(report.date).toLocaleDateString("fr-FR").includes(searchQuery)
   )
@@ -93,6 +96,17 @@ export function WorshipReportList({ searchQuery }: WorshipReportListProps) {
       month: "long",
       year: "numeric",
     })
+  }
+
+  const parseJsonArray = (jsonString: string | string[] | null | undefined): string[] => {
+    if (!jsonString) return []
+    if (Array.isArray(jsonString)) return jsonString
+    try {
+      const parsed = JSON.parse(jsonString)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
   }
 
   if (loading) {
@@ -166,12 +180,17 @@ export function WorshipReportList({ searchQuery }: WorshipReportListProps) {
                   <div>
                     <strong>Prédicateur:</strong> {report.predicateur}
                   </div>
-                  {report.moniteurs?.length > 0 && (
-                    <div className="mt-1">
-                      <strong>Moniteurs:</strong> {report.moniteurs.slice(0, 2).join(", ")}
-                      {report.moniteurs.length > 2 && ` +${report.moniteurs.length - 2}`}
-                    </div>
-                  )}
+                  {(() => {
+                    const moderateurs = parseJsonArray(report.moderateurs)
+                    const assistants = parseJsonArray(report.assistants)
+                    const allPersonnel = [...moderateurs, ...assistants]
+                    return allPersonnel.length > 0 && (
+                      <div className="mt-1">
+                        <strong>Personnel:</strong> {allPersonnel.slice(0, 2).join(", ")}
+                        {allPersonnel.length > 2 && ` +${allPersonnel.length - 2}`}
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             </div>
