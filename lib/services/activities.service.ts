@@ -94,4 +94,12 @@ export const activitiesService = {
   async addParticipant(id: string, data: any) {
     return await api.post(`/activities/${id}/participants`, data)
   },
+
+  async addPayment(data: any) {
+    return await api.post('/payments', data)
+  },
+
+  async addExpense(data: any) {
+    return await api.post('/expenses', data)
+  },
 }

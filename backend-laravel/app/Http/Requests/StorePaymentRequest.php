@@ -16,7 +16,7 @@ class StorePaymentRequest extends FormRequest
         return [
             'activity_id' => 'required|uuid|exists:activities,id',
             'activity_nom' => 'required|string|max:255',
-            'participant_id' => 'required|uuid',
+            'participant_id' => 'nullable|uuid',
             'participant_nom' => 'required|string|max:255',
             'participant_prenom' => 'required|string|max:255',
             'participant_nom_complet' => 'required|string|max:255',

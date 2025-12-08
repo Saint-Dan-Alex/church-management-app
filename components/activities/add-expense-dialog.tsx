@@ -1,6 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { format } from "date-fns"
+import { CalendarIcon, Loader2 } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -10,9 +16,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -20,199 +32,251 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { EXPENSE_CATEGORIES } from "@/types/expense"
-import type { ExpenseCategory, Currency } from "@/types/expense"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Textarea } from "@/components/ui/textarea"
+import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
+import { activitiesService } from "@/lib/services"
+import { useToast } from "@/hooks/use-toast"
+
+const expenseSchema = z.object({
+  titre: z.string().min(1, "Le titre est requis"),
+  montant: z.coerce.number().min(0, "Le montant doit être positif"),
+  devise: z.enum(["CDF", "USD"]),
+  categorie: z.string().min(1, "La catégorie est requise"),
+  date: z.date(),
+  description: z.string().optional(),
+})
 
 interface AddExpenseDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  activiteId: string
-  activiteNom: string
-  devise: Currency
+  activityId: string
+  activityName: string
+  onSuccess: () => void
 }
 
 export function AddExpenseDialog({
   open,
   onOpenChange,
-  activiteId,
-  activiteNom,
-  devise,
+  activityId,
+  activityName,
+  onSuccess,
 }: AddExpenseDialogProps) {
-  const [formData, setFormData] = useState({
-    categorie: "" as ExpenseCategory | "",
-    description: "",
-    montant: "",
-    date: new Date().toISOString().split("T")[0],
-    beneficiaire: "",
-    referenceFacture: "",
-    remarque: "",
+  const { toast } = useToast()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const form = useForm<z.infer<typeof expenseSchema>>({
+    resolver: zodResolver(expenseSchema),
+    defaultValues: {
+      titre: "",
+      montant: 0,
+      devise: "CDF",
+      categorie: "logistique",
+      date: new Date(),
+      description: "",
+    },
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!formData.categorie || !formData.description || !formData.montant) {
-      alert("Veuillez remplir tous les champs obligatoires")
-      return
-    }
+  // Reset form when opening
+  // (Optional: use useEffect if needed)
 
-    const newExpense = {
-      id: Date.now().toString(),
-      activiteId,
-      activiteNom,
-      categorie: formData.categorie as ExpenseCategory,
-      description: formData.description,
-      montant: parseFloat(formData.montant),
-      devise,
-      date: formData.date,
-      beneficiaire: formData.beneficiaire || undefined,
-      referenceFacture: formData.referenceFacture || undefined,
-      remarque: formData.remarque || undefined,
-      ajoutePar: "user1",
-      ajouteParNom: "Admin",
-      createdAt: new Date(),
-    }
+  const onSubmit = async (values: z.infer<typeof expenseSchema>) => {
+    try {
+      setIsSubmitting(true)
 
-    console.log("Nouvelle dépense:", newExpense)
-    // TODO: Enregistrer dans la base de données
-    
-    // Réinitialiser le formulaire
-    setFormData({
-      categorie: "",
-      description: "",
-      montant: "",
-      date: new Date().toISOString().split("T")[0],
-      beneficiaire: "",
-      referenceFacture: "",
-      remarque: "",
-    })
-    
-    onOpenChange(false)
-    alert("Dépense enregistrée avec succès !")
+      const payload = {
+        activity_id: activityId,
+        titre: values.titre,
+        montant: values.montant,
+        devise: values.devise,
+        date: values.date.toISOString().split('T')[0],
+        categorie: values.categorie,
+        description: values.description,
+        statut: "paid", // Par défaut payé pour une dépense enregistrée
+        responsable_id: "1", // À remplacer par auth id
+        responsable_nom: "Admin", // À remplacer
+      }
+
+      await activitiesService.addExpense(payload)
+
+      toast({
+        title: "Dépense enregistrée",
+        description: "La dépense a été ajoutée avec succès.",
+      })
+      onSuccess()
+      onOpenChange(false)
+      form.reset()
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.response?.data?.message || "Une erreur est survenue lors de l'enregistrement de la dépense.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Ajouter une Dépense</DialogTitle>
+          <DialogTitle>Ajouter une dépense</DialogTitle>
           <DialogDescription>
-            Enregistrer une nouvelle dépense pour {activiteNom}
+            Enregistrez une dépense liée à l'activité "{activityName}".
           </DialogDescription>
         </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            {/* Catégorie */}
-            <div className="grid gap-2">
-              <Label htmlFor="categorie">Catégorie *</Label>
-              <Select
-                value={formData.categorie}
-                onValueChange={(value: ExpenseCategory) =>
-                  setFormData({ ...formData, categorie: value })
-                }
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {EXPENSE_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.icon} {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <FormField
+              control={form.control}
+              name="titre"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Titre</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: Achat boissons" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            {/* Description */}
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description *</Label>
-              <Textarea
-                id="description"
-                placeholder="Ex: Rafraîchissements pour les participants"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={2}
-                required
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="montant"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Montant</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="devise"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Devise</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Devise" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="CDF">CDF</SelectItem>
+                        <SelectItem value="USD">USD</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
 
-            {/* Montant et Date */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="montant">Montant *</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="montant"
-                    type="number"
-                    placeholder="15000"
-                    value={formData.montant}
-                    onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
-                    required
-                    min="0"
-                    step="0.01"
-                  />
-                  <div className="flex items-center px-3 border rounded-md bg-gray-50 text-gray-700 font-medium">
-                    {devise}
-                  </div>
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="date">Date *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
+            <FormField
+              control={form.control}
+              name="categorie"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Catégorie</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="logistique">Logistique</SelectItem>
+                      <SelectItem value="transport">Transport</SelectItem>
+                      <SelectItem value="nourriture">Nourriture</SelectItem>
+                      <SelectItem value="materiel">Matériel</SelectItem>
+                      <SelectItem value="autre">Autre</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            {/* Bénéficiaire */}
-            <div className="grid gap-2">
-              <Label htmlFor="beneficiaire">Bénéficiaire</Label>
-              <Input
-                id="beneficiaire"
-                placeholder="Ex: Restaurant La Paix"
-                value={formData.beneficiaire}
-                onChange={(e) => setFormData({ ...formData, beneficiaire: e.target.value })}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Choisir une date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            {/* Référence facture */}
-            <div className="grid gap-2">
-              <Label htmlFor="referenceFacture">Référence facture</Label>
-              <Input
-                id="referenceFacture"
-                placeholder="Ex: FACT-2025-001"
-                value={formData.referenceFacture}
-                onChange={(e) => setFormData({ ...formData, referenceFacture: e.target.value })}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description (Optionnel)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Détails supplémentaires..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            {/* Remarque */}
-            <div className="grid gap-2">
-              <Label htmlFor="remarque">Remarque</Label>
-              <Textarea
-                id="remarque"
-                placeholder="Notes supplémentaires (optionnel)"
-                value={formData.remarque}
-                onChange={(e) => setFormData({ ...formData, remarque: e.target.value })}
-                rows={2}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Annuler
-            </Button>
-            <Button type="submit">Enregistrer la dépense</Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Enregistrer
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

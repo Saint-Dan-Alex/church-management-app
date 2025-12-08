@@ -29,12 +29,18 @@ import { UnifiedParticipantsView } from "@/components/activities/unified-partici
 import { activitiesService, type Activity } from "@/lib/services/activities.service"
 import { toast } from "sonner"
 
+import { AddPaymentDialog } from "@/components/activities/add-payment-dialog"
+import { AddExpenseDialog } from "@/components/activities/add-expense-dialog"
+import { Plus } from "lucide-react"
+
 export default function ActivityDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { id } = use(params)
   const [activity, setActivity] = useState<Activity | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
+  const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
 
   // Extension de l'interface Activity pour inclure les relations si nécessaire
   // Note: le contrôleur Laravel load(['participants', ...]) donc activity aura ces champs peuplés
@@ -43,6 +49,8 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
   useEffect(() => {
     loadActivity()
   }, [id])
+
+  // ... (loadActivity, handleDelete, formatDate, getTypeBadge, getStatutBadge, getStatusLabel unchanged)
 
   const loadActivity = async () => {
     try {
@@ -316,11 +324,17 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
                 activiteId={activity.id}
                 activiteNom={activity.title}
                 dateActivite={new Date(activity.date)}
-                heureFinActivite={activity.time} // TODO: Calculate real end time
+                heureFinActivite={activity.time}
               />
             </TabsContent>
 
             <TabsContent value="paiements">
+              <div className="flex justify-end mb-4">
+                <Button onClick={() => setIsPaymentDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Encaisser un paiement
+                </Button>
+              </div>
               <PaymentManager
                 activiteId={activity.id}
                 activiteNom={activity.title}
@@ -329,10 +343,16 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
             </TabsContent>
 
             <TabsContent value="finances">
+              <div className="flex justify-end mb-4">
+                <Button onClick={() => setIsExpenseDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Ajouter une dépense
+                </Button>
+              </div>
               <ExpenseManager
                 activiteId={activity.id}
                 activiteNom={activity.title}
-                totalPaiementsCollectes={0} // TODO: calculer depuis les paiements
+                totalPaiementsCollectes={0} // TODO: relier pour de vrai si possible ou laisser le composant gérer
                 devisePaiements={activity.currency || "CDF"}
               />
             </TabsContent>
@@ -362,6 +382,30 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
         onOpenChange={setIsEditDialogOpen}
         activity={activity}
         onSuccess={loadActivity}
+      />
+
+      <AddPaymentDialog
+        open={isPaymentDialogOpen}
+        onOpenChange={setIsPaymentDialogOpen}
+        activityId={activity.id}
+        activityName={activity.title}
+        defaultPrice={Number(activity.price)}
+        defaultCurrency={activity.currency as "CDF" | "USD"}
+        onSuccess={() => {
+          loadActivity()
+          // Une amélioration serait de trigger un refresh du PaymentManager aussi 
+          // (souvent fait par un context ou un key change)
+        }}
+      />
+
+      <AddExpenseDialog
+        open={isExpenseDialogOpen}
+        onOpenChange={setIsExpenseDialogOpen}
+        activityId={activity.id}
+        activityName={activity.title}
+        onSuccess={() => {
+          loadActivity()
+        }}
       />
     </div>
   )

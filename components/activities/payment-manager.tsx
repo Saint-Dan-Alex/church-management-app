@@ -25,8 +25,17 @@ export function PaymentManager({ activiteId }: PaymentManagerProps) {
     try {
       setLoading(true)
       setError(null)
-      const data = await paymentsService.getAll({ activity_id: activiteId })
-      setPayments(Array.isArray(data) ? data : [])
+      const response = await paymentsService.getAll({ activity_id: activiteId })
+      // Gestion robuste de la pagination Laravel
+      let data: any[] = []
+      if (response && typeof response === 'object') {
+        if (Array.isArray(response)) {
+          data = response
+        } else if (Array.isArray((response as any).data)) {
+          data = (response as any).data
+        }
+      }
+      setPayments(data)
     } catch (err: any) {
       const errorMessage = err.message || 'Erreur de chargement des paiements'
       setError(errorMessage)
@@ -40,8 +49,22 @@ export function PaymentManager({ activiteId }: PaymentManagerProps) {
     }
   }
 
-  const totalPaye = payments.reduce((sum, p) => sum + (p.montant_paye || 0), 0)
-  const totalAttendu = payments.reduce((sum, p) => sum + (p.montant || 0), 0)
+  // Calculs avec conversion explicite en float pour éviter la concaténation de strings
+  const totalPaye = payments.reduce((sum, p) => sum + parseFloat(String(p.montant || 0)), 0)
+
+  // Total Attendu (Somme des montants théoriques restants ou totaux ?)
+  // Si montant_paye est 0 dans la DB payments, on suppose que le user voulait dire montant de la transaction.
+  // Pour l'instant, on retire "Total Attendu" qui est confus avec les données actuelles, 
+  // car nous n'avons que la liste des transactions, pas l'état global des dettes ici.
+  // On va plutôt afficher "Nombre de transactions" à la place du milieu.
+
+  // Cependant, pour répondre au screenshot, essayons de réparer l'affichage existant.
+  // Si on veut afficher le total théorique attendu pour CES paiements (ce qui est bizarre):
+  // const totalAttendu = payments.reduce((sum, p) => sum + parseFloat(String(p.montant_attendu || 0)), 0)
+
+  // Remplaçons par une stats plus simple :
+  const nombrePaiements = payments.length
+  const moyennePaiement = nombrePaiements > 0 ? totalPaye / nombrePaiements : 0
 
   if (loading) {
     return (
@@ -72,21 +95,21 @@ export function PaymentManager({ activiteId }: PaymentManagerProps) {
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="p-4 bg-green-50 rounded-lg">
-              <p className="text-sm text-green-700">Total Payé</p>
+              <p className="text-sm text-green-700">Total Encaissé</p>
               <p className="text-2xl font-bold text-green-900">
-                {totalPaye.toLocaleString()} CDF
+                {totalPaye.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CDF
               </p>
             </div>
             <div className="p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700">Total Attendu</p>
+              <p className="text-sm text-blue-700">Nombre de paiements</p>
               <p className="text-2xl font-bold text-blue-900">
-                {totalAttendu.toLocaleString()} CDF
+                {nombrePaiements}
               </p>
             </div>
             <div className="p-4 bg-orange-50 rounded-lg">
-              <p className="text-sm text-orange-700">Reste à Payer</p>
+              <p className="text-sm text-orange-700">Moyenne par paiement</p>
               <p className="text-2xl font-bold text-orange-900">
-                {(totalAttendu - totalPaye).toLocaleString()} CDF
+                {moyennePaiement.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CDF
               </p>
             </div>
           </div>
@@ -100,12 +123,13 @@ export function PaymentManager({ activiteId }: PaymentManagerProps) {
                   <div>
                     <p className="font-medium">{payment.participant_nom_complet}</p>
                     <p className="text-sm text-gray-600">
-                      {payment.montant_paye.toLocaleString()} / {payment.montant.toLocaleString()} {payment.devise}
+                      {/* Affichage du montant de la transaction uniquement */}
+                      {parseFloat(String(payment.montant)).toLocaleString(undefined, { minimumFractionDigits: 2 })} {payment.devise}
                     </p>
                   </div>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${payment.statut === 'paid' ? 'bg-green-100 text-green-800' :
-                      payment.statut === 'partial' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
+                    payment.statut === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
                     }`}>
                     {payment.statut}
                   </span>

@@ -55,6 +55,67 @@ class PaymentController extends Controller
     {
         $payment = Payment::create($request->validated());
 
+        // Logique de synchronisation avec les participants
+        try {
+            // 1. Trouver ou créer le participant dans l'activité
+            $query = \App\Models\ActivityParticipant::where('activity_id', $payment->activity_id);
+            
+            if ($payment->participant_id) {
+                $query->where('participant_id', $payment->participant_id);
+            } else {
+                $query->where('participant_nom', $payment->participant_nom)
+                      ->where('participant_prenom', $payment->participant_prenom);
+            }
+
+            $participant = $query->first();
+
+            if (!$participant) {
+                // Créer le participant s'il n'existe pas (inscription via paiement)
+                $participant = \App\Models\ActivityParticipant::create([
+                    'activity_id' => $payment->activity_id,
+                    'participant_id' => $payment->participant_id,
+                    'participant_nom' => $payment->participant_nom,
+                    'participant_prenom' => $payment->participant_prenom,
+                    'participant_nom_complet' => $payment->participant_nom_complet,
+                    'participant_type' => 'visiteur', // Par défaut si via paiement
+                    'ajoute_via' => 'paiement',
+                    'date_ajout' => now(),
+                    'est_present' => false,
+                    'statut_presence' => 'absent',
+                    'montant_paye' => 0,
+                    'a_paye' => false,
+                    'statut_paiement' => 'pending',
+                ]);
+            }
+
+            // 2. Mettre à jour les montants
+            $participant->montant_paye = ($participant->montant_paye ?? 0) + $payment->montant;
+
+            // 3. Vérifier le statut de paiement par rapport au prix de l'activité
+            $activity = \App\Models\Activity::find($payment->activity_id);
+            if ($activity && $activity->price > 0) {
+                if ($participant->montant_paye >= $activity->price) {
+                    $participant->statut_paiement = 'paid';
+                    $participant->a_paye = true;
+                } elseif ($participant->montant_paye > 0) {
+                    $participant->statut_paiement = 'partial';
+                    $participant->a_paye = false;
+                }
+            } else {
+                // Si activité gratuite ou prix non défini mais payé quand même (?)
+                $participant->statut_paiement = 'paid';
+                $participant->a_paye = true;
+            }
+            
+            $participant->save();
+
+            // Lier le paiement au participant interne si possible (optionnel, activity_participants n'a pas nécessairement d'ID fixe utilisé ailleurs)
+            
+        } catch (\Exception $e) {
+            // Log silentieux, ne doit pas bloquer la création du paiement
+            \Illuminate\Support\Facades\Log::error("Erreur sync participant paiement: " . $e->getMessage());
+        }
+
         // Créer une notification
         NotificationService::notifyPayment(
             auth()->id() ?? 1, // ID de l'utilisateur (ou 1 par défaut pour les tests)
