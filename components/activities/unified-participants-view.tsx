@@ -179,8 +179,27 @@ export function UnifiedParticipantsView({
       setError(null)
 
       // Charger les participants de l'activité
+      // Charger les participants de l'activité
       const data = await activitiesService.getParticipants(activiteId)
-      setParticipants(Array.isArray(data) ? data : [])
+      const rawData = Array.isArray(data) ? data : (data as any).data || [] // Handle both direct array and paginated response just in case
+
+      const mappedData: UnifiedParticipant[] = Array.isArray(rawData) ? rawData.map((p: any) => ({
+        id: p.id,
+        nom: p.participant_nom || p.nom || "",
+        prenom: p.participant_prenom || p.prenom || "",
+        nomComplet: p.participant_nom_complet || `${p.participant_nom || ''} ${p.participant_prenom || ''}`.trim() || "Inconnu",
+        type: p.participant_type as "enfant" | "moniteur", // 'visiteur' will be casted but handled by display logic if needed
+        estPresent: Boolean(p.est_present),
+        statutPresence: p.statut_presence as any,
+        heureArrivee: p.heure_arrivee,
+        aPaye: Boolean(p.a_paye),
+        montantPaye: p.montant_paye ? parseFloat(String(p.montant_paye)) : 0,
+        montantRequis: p.montant_requis ? parseFloat(String(p.montant_requis)) : montantRequis, // Use prop fallback
+        statutPaiement: p.statut_paiement as any,
+        ajouteVia: p.ajoute_via as any
+      })) : []
+
+      setParticipants(mappedData)
     } catch (err: any) {
       const errorMessage = err.message || 'Erreur de chargement des participants'
       setError(errorMessage)

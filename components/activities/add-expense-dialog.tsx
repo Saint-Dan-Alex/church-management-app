@@ -58,6 +58,7 @@ interface AddExpenseDialogProps {
   activityId: string
   activityName: string
   onSuccess: () => void
+  maxAuthorizedAmount?: number
 }
 
 export function AddExpenseDialog({
@@ -66,6 +67,7 @@ export function AddExpenseDialog({
   activityId,
   activityName,
   onSuccess,
+  maxAuthorizedAmount,
 }: AddExpenseDialogProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -76,7 +78,7 @@ export function AddExpenseDialog({
       titre: "",
       montant: 0,
       devise: "CDF",
-      categorie: "logistique",
+      categorie: "transport", // Valeur par défaut valide
       date: new Date(),
       description: "",
     },
@@ -86,20 +88,36 @@ export function AddExpenseDialog({
   // (Optional: use useEffect if needed)
 
   const onSubmit = async (values: z.infer<typeof expenseSchema>) => {
+    // Validation du budget
+    if (maxAuthorizedAmount !== undefined && values.montant > maxAuthorizedAmount) {
+      form.setError("montant", {
+        type: "manual",
+        message: `Montant supérieur au budget disponible (${maxAuthorizedAmount.toLocaleString()} ${values.devise})`
+      })
+      toast({
+        title: "Budget dépassé",
+        description: `Le montant de la dépense dépasse les fonds disponibles (${maxAuthorizedAmount.toLocaleString()})`,
+        variant: "destructive"
+      })
+      return
+    }
+
     try {
       setIsSubmitting(true)
+      // ... suite du code
 
       const payload = {
         activity_id: activityId,
-        titre: values.titre,
+        activity_nom: activityName,
+        // Le backend n'a pas de champ titre, on le met au début de la description
+        description: `[${values.titre}] ${values.description || ''}`.trim(),
         montant: values.montant,
         devise: values.devise,
         date: values.date.toISOString().split('T')[0],
         categorie: values.categorie,
-        description: values.description,
-        statut: "paid", // Par défaut payé pour une dépense enregistrée
-        responsable_id: "1", // À remplacer par auth id
-        responsable_nom: "Admin", // À remplacer
+        // Champs user (devraient venir du contexte auth, on hardcode pour l'instant comme avant)
+        ajoute_par: "019afd76-9372-739c-8911-b9aaf32a0f81", // Un ID UUID valide (ex: user connecté)
+        ajoute_par_nom: "Admin",
       }
 
       await activitiesService.addExpense(payload)
@@ -139,7 +157,7 @@ export function AddExpenseDialog({
               name="titre"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Titre</FormLabel>
+                  <FormLabel>Titre (intitulé court)</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: Achat boissons" {...field} />
                   </FormControl>
@@ -198,10 +216,14 @@ export function AddExpenseDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="logistique">Logistique</SelectItem>
                       <SelectItem value="transport">Transport</SelectItem>
-                      <SelectItem value="nourriture">Nourriture</SelectItem>
+                      <SelectItem value="repas">Repas</SelectItem>
                       <SelectItem value="materiel">Matériel</SelectItem>
+                      <SelectItem value="location">Location</SelectItem>
+                      <SelectItem value="decoration">Décoration</SelectItem>
+                      <SelectItem value="sonorisation">Sonorisation</SelectItem>
+                      <SelectItem value="honoraires">Honoraires</SelectItem>
+                      <SelectItem value="cadeaux">Cadeaux</SelectItem>
                       <SelectItem value="autre">Autre</SelectItem>
                     </SelectContent>
                   </Select>

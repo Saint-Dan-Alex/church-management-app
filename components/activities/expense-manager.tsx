@@ -25,8 +25,17 @@ export function ExpenseManager({ activiteId }: ExpenseManagerProps) {
     try {
       setLoading(true)
       setError(null)
-      const data = await expensesService.getAll({ activity_id: activiteId })
-      setExpenses(Array.isArray(data) ? data : [])
+      const response = await expensesService.getAll({ activity_id: activiteId })
+      // Gestion robuste de la pagination Laravel
+      let data: any[] = []
+      if (response && typeof response === 'object') {
+        if (Array.isArray(response)) {
+          data = response
+        } else if (Array.isArray((response as any).data)) {
+          data = (response as any).data
+        }
+      }
+      setExpenses(data)
     } catch (err: any) {
       const errorMessage = err.message || 'Erreur de chargement des dépenses'
       setError(errorMessage)
@@ -40,8 +49,8 @@ export function ExpenseManager({ activiteId }: ExpenseManagerProps) {
     }
   }
 
-  const totalCDF = expenses.filter(e => e.devise === 'CDF').reduce((sum, e) => sum + (e.montant || 0), 0)
-  const totalUSD = expenses.filter(e => e.devise === 'USD').reduce((sum, e) => sum + (e.montant || 0), 0)
+  const totalCDF = expenses.filter(e => e.devise === 'CDF').reduce((sum, e) => sum + parseFloat(String(e.montant || 0)), 0)
+  const totalUSD = expenses.filter(e => e.devise === 'USD').reduce((sum, e) => sum + parseFloat(String(e.montant || 0)), 0)
 
   if (loading) {
     return (
@@ -103,7 +112,7 @@ export function ExpenseManager({ activiteId }: ExpenseManagerProps) {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-red-600">
-                      {expense.montant.toLocaleString()} {expense.devise}
+                      {parseFloat(String(expense.montant)).toLocaleString(undefined, { minimumFractionDigits: 2 })} {expense.devise}
                     </p>
                     <p className="text-xs text-gray-500">{expense.date}</p>
                   </div>

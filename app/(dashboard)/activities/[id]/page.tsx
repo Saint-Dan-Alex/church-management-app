@@ -27,6 +27,8 @@ import { ActivityReport } from "@/components/activities/activity-report"
 import { ExpenseManager } from "@/components/activities/expense-manager"
 import { UnifiedParticipantsView } from "@/components/activities/unified-participants-view"
 import { activitiesService, type Activity } from "@/lib/services/activities.service"
+import { paymentsService } from "@/lib/services/payments.service"
+import { expensesService } from "@/lib/services"
 import { toast } from "sonner"
 
 import { AddPaymentDialog } from "@/components/activities/add-payment-dialog"
@@ -41,6 +43,8 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
+  const [reportData, setReportData] = useState<{ payments: any[], expenses: any[] }>({ payments: [], expenses: [] })
+  const [financeStats, setFinanceStats] = useState({ totalRecettes: 0, totalDepenses: 0 })
 
   // Extension de l'interface Activity pour inclure les relations si nécessaire
   // Note: le contrôleur Laravel load(['participants', ...]) donc activity aura ces champs peuplés
@@ -57,6 +61,39 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
       setIsLoading(true)
       const data = await activitiesService.getById(id)
       setActivity(data)
+
+      // Charger les données connexes pour le rapport et les règles métiers
+      const [paymentsResp, expensesResp] = await Promise.all([
+        paymentsService.getAll(id),
+        expensesService.getAll({ activity_id: id })
+      ])
+
+      const rawPayments = Array.isArray(paymentsResp) ? paymentsResp : (paymentsResp as any).data || []
+      const rawExpenses = Array.isArray(expensesResp) ? expensesResp : (expensesResp as any).data || []
+
+      // Mapping pour ActivityReport (attend montantPaye, participantNomComplet, etc.)
+      const payments = rawPayments.map((p: any) => ({
+        ...p,
+        id: p.id,
+        montantPaye: parseFloat(String(p.montant || 0)),
+        devise: p.devise,
+        participantNomComplet: p.participant_nom_complet || p.participant_nom || "Inconnu",
+        statut: p.statut
+      }))
+
+      const expenses = rawExpenses.map((e: any) => ({
+        ...e,
+        montant: parseFloat(String(e.montant || 0)),
+        date: e.date
+      }))
+
+      setReportData({ payments, expenses })
+
+      // Calculer les totaux
+      const totalRecettes = payments.reduce((sum: number, p: any) => sum + p.montantPaye, 0)
+      const totalDepenses = expenses.reduce((sum: number, e: any) => sum + e.montant, 0)
+      setFinanceStats({ totalRecettes, totalDepenses })
+
     } catch (error) {
       console.error("Erreur lors du chargement de l'activité:", error)
       toast.error("Impossible de charger les détails de l'activité")
@@ -358,9 +395,42 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
             </TabsContent>
 
             <TabsContent value="rapport">
-              <div className="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
-                Le rapport sera disponible une fois des données collectées.
-              </div>
+              <ActivityReport
+                activite={{
+                  id: activity.id,
+                  titre: activity.title,
+                  description: activity.description || "",
+                  date: activity.date,
+                  heureDebut: activity.time.split(' - ')[0] || activity.time,
+                  heureFin: activity.time.split(' - ')[1] || "",
+                  lieu: activity.location,
+                  type: activity.type,
+                  statut: activity.status,
+                  responsable: activity.organizer
+                }}
+                presences={[]} // TODO: Mapper depuis activity.participants si dispo
+                payments={reportData.payments}
+                expenses={reportData.expenses}
+                paymentStats={{
+                  totalPaye: financeStats.totalRecettes,
+                  totalRestant: Math.max(0, (activity.participants?.length || 0) * (Number(activity.price) || 0) - financeStats.totalRecettes),
+                  nombrePaiesComplet: (activity.participants as any[] || []).filter((p: any) => 
+                    p.statut_paiement === 'paid' || parseFloat(String(p.montant_paye || 0)) >= (Number(activity.price) || 0)
+                  ).length,
+                  nombrePaiesPartiel: (activity.participants as any[] || []).filter((p: any) => 
+                     p.statut_paiement === 'partial' || (parseFloat(String(p.montant_paye || 0)) > 0 && parseFloat(String(p.montant_paye || 0)) < (Number(activity.price) || 0))
+                  ).length,
+                  nombreEnAttente: (activity.participants as any[] || []).filter((p: any) => 
+                    !p.montant_paye || parseFloat(String(p.montant_paye || 0)) === 0
+                  ).length,
+                  nombreEnRetard: 0,
+                  tauxPaiement: activity.participants?.length ? Math.round(((activity.participants as any[]).filter((p: any) => parseFloat(String(p.montant_paye || 0)) > 0).length / activity.participants.length) * 100) : 0
+                }}
+                paymentConfig={{
+                  montantRequis: Number(activity.price) || 0,
+                  devise: activity.currency || "CDF"
+                }}
+              />
             </TabsContent>
 
             <TabsContent value="details">
@@ -403,6 +473,7 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
         onOpenChange={setIsExpenseDialogOpen}
         activityId={activity.id}
         activityName={activity.title}
+        maxAuthorizedAmount={financeStats.totalRecettes - financeStats.totalDepenses}
         onSuccess={() => {
           loadActivity()
         }}
