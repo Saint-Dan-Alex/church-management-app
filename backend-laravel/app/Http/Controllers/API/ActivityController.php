@@ -291,4 +291,79 @@ class ActivityController extends Controller
         $categories = \App\Models\ActivityCategory::orderBy('order')->get();
         return response()->json($categories);
     }
+
+    /**
+     * @OA\Post(
+     *     path="/activities/{id}/participants",
+     *     tags={"Activities"},
+     *     summary="Ajouter un participant",
+     *     description="Ajoute un participant à l'activité",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID de l'activité",
+     *         required=true,
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="participant_id", type="string", nullable=true),
+     *             @OA\Property(property="participant_type", type="string", enum={"enfant", "moniteur", "visiteur"}),
+     *             @OA\Property(property="participant_nom", type="string"),
+     *             @OA\Property(property="participant_prenom", type="string", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Participant ajouté"),
+     *     @OA\Response(response=422, description="Erreur de validation")
+     * )
+     */
+    public function addParticipant(\Illuminate\Http\Request $request, Activity $activity)
+    {
+        $validated = $request->validate([
+            'participant_id' => 'nullable|string',
+            'participant_type' => 'required|string|in:enfant,moniteur,visiteur',
+            'participant_nom' => 'required_without:participant_id|string',
+            'participant_prenom' => 'nullable|string',
+        ]);
+
+        // Vérifier si déjà inscrit
+        $exists = $activity->participants()
+            ->where(function($q) use ($validated) {
+                if (!empty($validated['participant_id'])) {
+                    $q->where('participant_id', $validated['participant_id']);
+                } else {
+                     $q->where('participant_nom', $validated['participant_nom'])
+                       ->where('participant_prenom', $validated['participant_prenom'] ?? null); 
+                }
+            })->exists();
+            
+        if ($exists) {
+            return response()->json(['message' => 'Ce participant est déjà inscrit à cette activité'], 422);
+        }
+
+        // Si ID fourni, récupérer nom complet si manquant (Optionnel, ici on suppose que le front envoie tout ou que c'est géré)
+        $nomComplet = trim(($validated['participant_prenom'] ?? '') . ' ' . ($validated['participant_nom'] ?? ''));
+        
+        // Création
+        $participant = $activity->participants()->create([
+            'participant_id' => $validated['participant_id'] ?? null,
+            'participant_type' => $validated['participant_type'],
+            'participant_nom' => $validated['participant_nom'] ?? 'Inconnu',
+            'participant_prenom' => $validated['participant_prenom'] ?? '',
+            'participant_nom_complet' => $nomComplet,
+            'ajoute_via' => 'manuel',
+            'date_ajout' => now(),
+            'est_present' => false,
+            'statut_presence' => 'absent',
+            'a_paye' => false,
+            'statut_paiement' => 'pending',
+        ]);
+        
+        if (is_numeric($activity->participants)) {
+             $activity->increment('participants');
+        }
+
+        return response()->json($participant, 201);
+    }
 }

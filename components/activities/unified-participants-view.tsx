@@ -84,10 +84,90 @@ export function UnifiedParticipantsView({
   devise = "CDF",
 }: UnifiedParticipantsViewProps) {
   const { toast } = useToast()
+
+  // -- State Hooks (must be at top level) --
   const [participants, setParticipants] = useState<UnifiedParticipant[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+
+  // New hooks for Add Participant
+  const [isAddOpen, setIsAddOpen] = useState(false)
+  const [people, setPeople] = useState<Array<{ id: string, nom: string, type: 'enfant' | 'moniteur' | 'visiteur' }>>([])
+  const [selectedPersonName, setSelectedPersonName] = useState("")
+  const [comboboxOpen, setComboboxOpen] = useState(false)
+  const [isAdding, setIsAdding] = useState(false)
+
+  // Load people for combo box
+  useEffect(() => {
+    loadPeople()
+  }, [])
+
+  const loadPeople = async () => {
+    try {
+      const [children, monitors] = await Promise.all([
+        childrenService.getAll(),
+        monitorsService.getAll()
+      ])
+
+      const childrenData = Array.isArray(children) ? children : (children as any).data || []
+      const monitorsData = Array.isArray(monitors) ? monitors : (monitors as any).data || []
+
+      const allPeople = [
+        ...childrenData.map((c: any) => ({ id: c.id, nom: `${c.prenom} ${c.nom}`, type: 'enfant' as const })),
+        ...monitorsData.map((m: any) => ({ id: m.id, nom: m.nom, type: 'moniteur' as const }))
+      ]
+      setPeople(allPeople)
+    } catch (e) {
+      console.error("Erreur chargement personnes", e)
+    }
+  }
+
+  // Handle Add Participant Logic
+  const handleAddParticipant = async () => {
+    if (!selectedPersonName) return
+
+    try {
+      setIsAdding(true)
+      const existingPerson = people.find(p => p.nom === selectedPersonName)
+
+      const payload: any = {
+        participant_type: existingPerson ? existingPerson.type : 'visiteur',
+        participant_nom: "",
+        participant_prenom: "",
+        participant_id: existingPerson ? existingPerson.id : null,
+      }
+
+      if (!existingPerson) {
+        const parts = selectedPersonName.split(' ')
+        payload.participant_prenom = parts[0] || ""
+        payload.participant_nom = parts.slice(1).join(' ') || parts[0] || ""
+        if (parts.length === 1) payload.participant_prenom = ""
+      } else {
+        const parts = existingPerson.nom.split(' ')
+        payload.participant_prenom = parts[0] || ""
+        payload.participant_nom = parts.slice(1).join(' ') || parts[0] || ""
+      }
+
+      await activitiesService.addParticipant(activiteId, payload)
+
+      toast({
+        title: "Succès",
+        description: "Participant ajouté avec succès"
+      })
+      setIsAddOpen(false)
+      setSelectedPersonName("")
+      loadParticipants()
+    } catch (err: any) {
+      toast({
+        title: "Erreur",
+        description: err.response?.data?.message || "Impossible d'ajouter le participant",
+        variant: "destructive"
+      })
+    } finally {
+      setIsAdding(false)
+    }
+  }
 
   useEffect(() => {
     loadParticipants()
@@ -213,6 +293,8 @@ export function UnifiedParticipantsView({
     )
   }
 
+
+
   return (
     <div className="space-y-6">
       {/* Statistiques */}
@@ -271,10 +353,95 @@ export function UnifiedParticipantsView({
               <Users className="h-5 w-5" />
               Liste des Participants ({filteredParticipants.length})
             </CardTitle>
-            <Button size="sm" variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Exporter
-            </Button>
+            <div className="flex gap-2">
+              <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Ajouter
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Ajouter un participant</DialogTitle>
+                    <DialogDescription>
+                      Sélectionnez un enfant, un moniteur ou saisissez un nom pour un visiteur.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label>Personne</Label>
+                      <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={comboboxOpen}
+                            className="w-full justify-between"
+                          >
+                            {selectedPersonName || "Rechercher ou saisir un nom..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[300px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Rechercher..." onValueChange={(val) => {
+                              if (!people.find(p => p.nom.toLowerCase() === val.toLowerCase()) && val) {
+                                // Logic override if needed
+                              }
+                            }} />
+                            <CommandEmpty>
+                              <div className="p-2 text-sm text-center">
+                                Personne non trouvée.
+                                <Button variant="link" size="sm" onClick={() => {
+                                  setSelectedPersonName("Nouveau Visiteur") // Placeholder logic fix
+                                }}>
+                                  Utiliser comme visiteur
+                                </Button>
+                              </div>
+                            </CommandEmpty>
+                            <CommandGroup className="max-h-[200px] overflow-auto">
+                              {people.map((person) => (
+                                <CommandItem
+                                  key={person.id + person.type}
+                                  value={person.nom}
+                                  onSelect={(currentValue) => {
+                                    setSelectedPersonName(currentValue === selectedPersonName ? "" : currentValue)
+                                    setComboboxOpen(false)
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedPersonName === person.nom ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {person.nom}
+                                  <span className="ml-auto text-xs text-muted-foreground capitalize">{person.type}</span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <p className="text-xs text-muted-foreground">
+                        Recherchez un membre ou saisissez un nom.
+                      </p>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleAddParticipant} disabled={isAdding || !selectedPersonName}>
+                      {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Ajouter
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              <Button size="sm" variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Exporter
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
