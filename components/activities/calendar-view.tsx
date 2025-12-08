@@ -1,22 +1,63 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-
-const events = [
-  { id: "1", title: "École du Dimanche", date: "2024-10-20", category: "Enfants", color: "bg-blue-500" },
-  { id: "2", title: "Réunion de Prière", date: "2024-10-18", category: "Prière", color: "bg-purple-500" },
-  { id: "3", title: "Groupe de Jeunesse", date: "2024-10-19", category: "Jeunesse", color: "bg-green-500" },
-  { id: "4", title: "Atelier Louange", date: "2024-10-21", category: "Louange", color: "bg-orange-500" },
-  { id: "5", title: "Culte Dominical", date: "2024-10-20", category: "Culte", color: "bg-primary" },
-  { id: "6", title: "Réunion Moniteurs", date: "2024-10-23", category: "Réunion", color: "bg-accent" },
-]
+import { activitiesService, type Activity } from "@/lib/services/activities.service"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import { DayActivitiesDialog } from "./day-activities-dialog"
 
 export function CalendarView() {
-  const [currentDate, setCurrentDate] = useState(new Date(2024, 9, 1))
+  const router = useRouter()
+  const [currentDate, setCurrentDate] = useState(new Date())
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [categories, setCategories] = useState<Array<{ id: number, name: string, color: string }>>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedDayActivities, setSelectedDayActivities] = useState<Activity[]>([])
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  useEffect(() => {
+    loadCategories()
+  }, [])
+
+  useEffect(() => {
+    loadActivities()
+  }, [currentDate])
+
+  const loadCategories = async () => {
+    try {
+      const data = await activitiesService.getCategories()
+      setCategories(data)
+    } catch (error) {
+      console.error("Erreur lors du chargement des catégories:", error)
+    }
+  }
+
+  const loadActivities = async () => {
+    try {
+      setIsLoading(true)
+      // Charger les activités du mois en cours
+      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+
+      const response = await activitiesService.getAll({
+        date_debut: firstDay.toISOString().split('T')[0],
+        date_fin: lastDay.toISOString().split('T')[0],
+      })
+
+      const data = Array.isArray(response) ? response : response.data || []
+      setActivities(data)
+    } catch (error) {
+      console.error("Erreur lors du chargement des activités:", error)
+      toast.error("Impossible de charger les activités")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay()
@@ -30,10 +71,20 @@ export function CalendarView() {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
   }
 
-  const getEventsForDay = (day: number) => {
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-    return events.filter((event) => event.date === dateStr)
+  const goToToday = () => {
+    setCurrentDate(new Date())
   }
+
+  const getActivitiesForDay = (day: number) => {
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+    return activities.filter((activity) => activity.date === dateStr)
+  }
+
+  // Create a mapping of category names to colors
+  const categoryColorsMap = categories.reduce((acc, cat) => {
+    acc[cat.name] = cat.color
+    return acc
+  }, {} as Record<string, string>)
 
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
   const emptyDays = Array.from({ length: adjustedFirstDay }, (_, i) => i)
@@ -42,10 +93,13 @@ export function CalendarView() {
     <Card className="p-6">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-2xl font-bold capitalize">
             {currentDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
           </h2>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={goToToday}>
+              Aujourd'hui
+            </Button>
             <Button variant="outline" size="icon" onClick={previousMonth}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -55,54 +109,93 @@ export function CalendarView() {
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
-          {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((day) => (
-            <div key={day} className="text-center text-sm font-semibold text-muted-foreground p-2">
-              {day}
-            </div>
-          ))}
-
-          {emptyDays.map((_, index) => (
-            <div key={`empty-${index}`} className="aspect-square" />
-          ))}
-
-          {days.map((day) => {
-            const dayEvents = getEventsForDay(day)
-            const isToday =
-              day === new Date().getDate() &&
-              currentDate.getMonth() === new Date().getMonth() &&
-              currentDate.getFullYear() === new Date().getFullYear()
-
-            return (
-              <div
-                key={day}
-                className={`aspect-square border rounded-lg p-2 ${isToday ? "border-primary bg-primary/5" : "border-border"}`}
-              >
-                <div className="text-sm font-medium mb-1">{day}</div>
-                <div className="space-y-1">
-                  {dayEvents.slice(0, 2).map((event) => (
-                    <div key={event.id} className={`text-xs p-1 rounded ${event.color} text-white truncate`}>
-                      {event.title}
-                    </div>
-                  ))}
-                  {dayEvents.length > 2 && (
-                    <div className="text-xs text-muted-foreground">+{dayEvents.length - 2} plus</div>
-                  )}
+        {isLoading ? (
+          <div className="flex h-[400px] items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-7 gap-2">
+              {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((day) => (
+                <div key={day} className="text-center text-sm font-semibold text-muted-foreground p-2">
+                  {day}
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              ))}
 
-        <div className="flex flex-wrap gap-2 pt-4 border-t">
-          <Badge className="bg-blue-500">Enfants</Badge>
-          <Badge className="bg-purple-500">Prière</Badge>
-          <Badge className="bg-green-500">Jeunesse</Badge>
-          <Badge className="bg-orange-500">Louange</Badge>
-          <Badge className="bg-primary">Culte</Badge>
-          <Badge className="bg-accent text-accent-foreground">Réunion</Badge>
-        </div>
+              {emptyDays.map((_, index) => (
+                <div key={`empty-${index}`} className="aspect-square" />
+              ))}
+
+              {days.map((day) => {
+                const dayActivities = getActivitiesForDay(day)
+                const isToday =
+                  day === new Date().getDate() &&
+                  currentDate.getMonth() === new Date().getMonth() &&
+                  currentDate.getFullYear() === new Date().getFullYear()
+
+                return (
+                  <div
+                    key={day}
+                    className={`aspect-square border rounded-lg p-2 hover:bg-accent/50 transition-colors cursor-pointer ${isToday ? "border-primary bg-primary/5 ring-2 ring-primary" : "border-border"
+                      }`}
+                    onClick={() => {
+                      const clickedDate = new Date(
+                        currentDate.getFullYear(),
+                        currentDate.getMonth(),
+                        day
+                      )
+                      setSelectedDate(clickedDate)
+                      setSelectedDayActivities(dayActivities)
+                      setIsDialogOpen(true)
+                    }}
+                  >
+                    <div className={`text-sm font-medium mb-1 ${isToday ? "text-primary font-bold" : ""}`}>
+                      {day}
+                    </div>
+                    <div className="space-y-1">
+                      {dayActivities.slice(0, 2).map((activity) => (
+                        <div
+                          key={activity.id}
+                          className="text-xs p-1 rounded text-white truncate"
+                          style={{ backgroundColor: categoryColorsMap[activity.category] || '#6B7280' }}
+                          title={activity.title}
+                        >
+                          {activity.title}
+                        </div>
+                      ))}
+                      {dayActivities.length > 2 && (
+                        <div className="text-xs text-muted-foreground font-medium">
+                          +{dayActivities.length - 2} plus
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="flex flex-wrap gap-2 pt-4 border-t">
+              <div className="text-sm font-semibold text-muted-foreground mr-2">Catégories:</div>
+              {categories.map((category) => (
+                <Badge
+                  key={category.id}
+                  style={{ backgroundColor: category.color, color: 'white' }}
+                >
+                  {category.name}
+                </Badge>
+              ))}
+            </div>
+          </>
+        )}
       </div>
+
+      <DayActivitiesDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        date={selectedDate}
+        activities={selectedDayActivities}
+        categoryColors={categoryColorsMap}
+      />
     </Card>
   )
 }

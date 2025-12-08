@@ -10,6 +10,11 @@ import { AddActivityDialog } from "@/components/activities/add-activity-dialog"
 
 export default function ActivitiesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const handleActivityAdded = () => {
+    setRefreshKey(prev => prev + 1)
+  }
 
   return (
     <div className="space-y-6">
@@ -37,15 +42,19 @@ export default function ActivitiesPage() {
         </TabsList>
 
         <TabsContent value="calendar">
-          <CalendarView />
+          <CalendarView key={refreshKey} />
         </TabsContent>
 
         <TabsContent value="list">
-          <ActivitiesList />
+          <ActivitiesList key={refreshKey} />
         </TabsContent>
       </Tabs>
 
-      <AddActivityDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      <AddActivityDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={handleActivityAdded}
+      />
     </div>
   )
 }

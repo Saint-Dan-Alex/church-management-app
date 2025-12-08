@@ -5,46 +5,79 @@ import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, MapPin, Users, MoreVertical, Edit, Trash, UserPlus, QrCode, Eye, DollarSign } from "lucide-react"
+import { Calendar, Clock, MapPin, Users, MoreVertical, Edit, Trash, Eye, Loader2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
-import { EditActivityDialog } from "./edit-activity-dialog"
 import { activitiesService, type Activity } from "@/lib/services/activities.service"
 import { toast } from "sonner"
 
-interface ActivitiesListProps {
-  searchQuery?: string
-  type?: string
-  status?: string
+const categoryColors: Record<string, string> = {
   Enfants: "bg-blue-500",
   Prière: "bg-purple-500",
   Jeunesse: "bg-green-500",
   Louange: "bg-orange-500",
+  Formation: "bg-pink-500",
+  Sortie: "bg-cyan-500",
 }
 
 export function ActivitiesList() {
   const router = useRouter()
-  const [editingActivity, setEditingActivity] = useState<any>(null)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const handleEdit = (activity: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setEditingActivity(activity)
-    setIsEditDialogOpen(true)
+  useEffect(() => {
+    loadActivities()
+  }, [])
+
+  const loadActivities = async () => {
+    try {
+      setIsLoading(true)
+      const response = await activitiesService.getAll()
+      const data = Array.isArray(response) ? response : response.data || []
+      setActivities(data)
+    } catch (error) {
+      console.error("Erreur lors du chargement des activités:", error)
+      toast.error("Impossible de charger les activités")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleDelete = (activityId: string, e: React.MouseEvent) => {
+  const handleDelete = async (activityId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (confirm("Êtes-vous sûr de vouloir supprimer cette activité ?")) {
-      console.log("Suppression de l'activité:", activityId)
-      // TODO: Implémenter la suppression
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette activité ?")) return
+
+    try {
+      await activitiesService.delete(activityId)
+      toast.success("Activité supprimée avec succès")
+      loadActivities()
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error)
+      toast.error("Impossible de supprimer l'activité")
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-gray-600">Chargement...</span>
+      </div>
+    )
+  }
+
+  if (activities.length === 0) {
+    return (
+      <Card className="p-12 text-center">
+        <p className="text-muted-foreground">Aucune activité trouvée</p>
+      </Card>
+    )
   }
 
   return (
     <div className="space-y-4">
       {activities.map((activity) => (
-        <Card 
-          key={activity.id} 
+        <Card
+          key={activity.id}
           className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
           onClick={() => router.push(`/activities/${activity.id}`)}
         >
@@ -54,23 +87,33 @@ export function ActivitiesList() {
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-lg font-semibold">{activity.title}</h3>
-                    <Badge className={categoryColors[activity.category]}>{activity.category}</Badge>
-                    {activity.type === "gratuite" ? (
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
-                        🎉 Gratuite
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
-                        💰 {activity.montantRequis?.toLocaleString("fr-FR")} {activity.devise}
-                      </Badge>
-                    )}
+                    <Badge className={categoryColors[activity.category] || "bg-gray-500"}>
+                      {activity.category}
+                    </Badge>
+                    <Badge variant="outline" className={
+                      activity.type === "gratuite"
+                        ? "bg-green-50 text-green-700 border-green-300"
+                        : "bg-blue-50 text-blue-700 border-blue-300"
+                    }>
+                      {activity.type === "gratuite" ? "🎉 Gratuite" : "💰 Payante"}
+                    </Badge>
+                    <Badge variant="outline" className={
+                      activity.status === "planned" ? "bg-yellow-50 text-yellow-700" :
+                        activity.status === "ongoing" ? "bg-blue-50 text-blue-700" :
+                          activity.status === "completed" ? "bg-green-50 text-green-700" :
+                            "bg-gray-50 text-gray-700"
+                    }>
+                      {activity.status === "planned" ? "Planifiée" :
+                        activity.status === "ongoing" ? "En cours" :
+                          activity.status === "completed" ? "Terminée" : activity.status}
+                    </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -85,34 +128,15 @@ export function ActivitiesList() {
                       <Eye className="mr-2 h-4 w-4" />
                       Voir Détails
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation()
-                      router.push(`/activities/${activity.id}?tab=presence`)
-                    }}>
-                      <QrCode className="mr-2 h-4 w-4" />
-                      Gérer Présence
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={(e) => {
                       e.stopPropagation()
-                      router.push(`/activities/${activity.id}?tab=participants`)
+                      router.push(`/activities/${activity.id}/edit`)
                     }}>
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Gérer Participants
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation()
-                      router.push(`/activities/${activity.id}?tab=paiements`)
-                    }}>
-                      <DollarSign className="mr-2 h-4 w-4" />
-                      Gérer Paiements
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={(e) => handleEdit(activity, e)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Modifier
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       className="text-destructive"
                       onClick={(e) => handleDelete(activity.id, e)}
                     >
@@ -131,6 +155,7 @@ export function ActivitiesList() {
                       weekday: "long",
                       day: "numeric",
                       month: "long",
+                      year: "numeric",
                     })}
                   </span>
                 </div>
@@ -153,7 +178,9 @@ export function ActivitiesList() {
                     {activity.participants}/{activity.maxParticipants} participants
                   </span>
                 </div>
-                <div className="text-sm text-muted-foreground">Organisateur: {activity.organizer}</div>
+                <div className="text-sm text-muted-foreground">
+                  Organisateur: {activity.organizer}
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
@@ -168,25 +195,6 @@ export function ActivitiesList() {
           </div>
         </Card>
       ))}
-
-      {editingActivity && (
-        <EditActivityDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          activity={{
-            id: editingActivity.id,
-            titre: editingActivity.title,
-            description: editingActivity.description,
-            date: new Date(editingActivity.date),
-            heureDebut: editingActivity.time,
-            heureFin: "",
-            lieu: editingActivity.location,
-            type: editingActivity.category.toLowerCase(),
-            statut: editingActivity.status,
-            responsable: editingActivity.organizer,
-          }}
-        />
-      )}
     </div>
   )
 }

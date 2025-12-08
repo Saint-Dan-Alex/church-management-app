@@ -1,51 +1,82 @@
-import { api } from '@/lib/utils/api';
-import type { Activity, Statistics } from '@/lib/types/api';
+import { api } from '../utils/api'
+
+export interface Activity {
+  id: string
+  title: string
+  description: string
+  date: string
+  time: string
+  duration: string
+  location: string
+  category: string
+  type: string
+  participants: number
+  maxParticipants: number
+  status: string
+  organizer: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface CreateActivityData {
+  title: string
+  description: string
+  date: string
+  time: string
+  duration: string
+  location: string
+  category: string
+  type: string
+  maxParticipants: number
+  status: string
+  organizer: string
+}
 
 export const activitiesService = {
-  /**
-   * Récupérer toutes les activités
-   */
-  async getAll(params?: { type?: string; statut?: string }): Promise<Activity[]> {
-    const queryParams = new URLSearchParams();
-    if (params?.type) queryParams.append('type', params.type);
-    if (params?.statut) queryParams.append('statut', params.statut);
-    
-    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    return api.get<Activity[]>(`/activities${query}`);
+  async getAll(params?: {
+    type?: string
+    statut?: string
+    date_debut?: string
+    date_fin?: string
+    per_page?: number
+  }) {
+    let url = '/activities'
+    if (params) {
+      const queryParams = new URLSearchParams()
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value))
+        }
+      })
+      const queryString = queryParams.toString()
+      if (queryString) {
+        url += `?${queryString}`
+      }
+    }
+    return await api.get(url)
   },
 
-  /**
-   * Récupérer une activité par ID
-   */
-  async getById(id: string): Promise<Activity> {
-    return api.get<Activity>(`/activities/${id}`);
+  async getById(id: string) {
+    return await api.get(`/activities/${id}`)
   },
 
-  /**
-   * Créer une nouvelle activité
-   */
-  async create(data: Partial<Activity>): Promise<Activity> {
-    return api.post<Activity>('/activities', data);
+  async create(data: CreateActivityData) {
+    return await api.post('/activities', data)
   },
 
-  /**
-   * Mettre à jour une activité
-   */
-  async update(id: string, data: Partial<Activity>): Promise<Activity> {
-    return api.put<Activity>(`/activities/${id}`, data);
+  async update(id: string, data: Partial<CreateActivityData>) {
+    return await api.put(`/activities/${id}`, data)
   },
 
-  /**
-   * Supprimer une activité
-   */
-  async delete(id: string): Promise<void> {
-    return api.delete(`/activities/${id}`);
+  async delete(id: string) {
+    return await api.delete(`/activities/${id}`)
   },
 
-  /**
-   * Récupérer les statistiques d'une activité
-   */
-  async getStatistics(id: string): Promise<Statistics> {
-    return api.get<Statistics>(`/activities/${id}/statistics`);
+  async getStatistics(id: string) {
+    return await api.get(`/activities/${id}/statistics`)
   },
-};
+
+  async getCategories() {
+    return await api.get('/activities/categories/list')
+  },
+}

@@ -265,4 +265,30 @@ class ActivityController extends Controller
 
         return response()->json($stats);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/activities/categories",
+     *     tags={"Activities"},
+     *     summary="Liste des catégories d'activités",
+     *     description="Retourne la liste des catégories avec leurs couleurs",
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des catégories",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="name", type="string"),
+     *                 @OA\Property(property="color", type="string")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function categories(): JsonResponse
+    {
+        $categories = \App\Models\ActivityCategory::orderBy('order')->get();
+        return response()->json($categories);
+    }
 }
