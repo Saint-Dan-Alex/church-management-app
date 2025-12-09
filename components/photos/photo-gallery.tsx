@@ -35,13 +35,13 @@ export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
     const fetchPhotos = async () => {
       try {
         setLoading(true)
-        const data = await photosService.getAll({ album })
-        // S'assurer que data est un tableau
+        const response: any = await photosService.getAll({ album })
+        const data = response.data || response // Support pagination or array
         setPhotos(Array.isArray(data) ? data : [])
       } catch (err) {
         setError("Erreur lors du chargement des photos")
         console.error("Erreur:", err)
-        setPhotos([]) // Initialiser avec un tableau vide en cas d'erreur
+        setPhotos([])
       } finally {
         setLoading(false)
       }
@@ -52,29 +52,36 @@ export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
 
   const filteredPhotos = Array.isArray(photos) ? photos.filter((photo) => {
     const matchesSearch =
-      photo.titre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      photo.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      (photo.titre || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (photo.description || "").toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesAlbum = !album || photo.album === album
-
-    return matchesSearch && matchesAlbum
+    // Le filtrage album est fait par le backend si 'album' prop est passé
+    // Mais on peut double check si besoin
+    return matchesSearch
   }) : []
 
   const handleView = (photo: Photo) => {
-    alert(`👁️ Affichage de: "${photo.titre}"\n\n(Ouvrir dans une modal ou nouvelle page)`)
+    window.open(photo.url, "_blank")
   }
 
   const handleDownload = (photo: Photo) => {
-    alert(`📥 Téléchargement de: "${photo.titre}"\n\n✅ Image téléchargée !`)
-    console.log("Téléchargement:", photo.url)
+    // Create a fake link to force download if possible, usually requires backend headers.
+    // Here just open in new tab.
+    const link = document.createElement('a')
+    link.href = photo.url
+    link.download = photo.titre || 'photo' // Doesn't work for cross-origin often
+    link.target = '_blank'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   const handleDelete = async (photo: Photo) => {
     if (confirm(`Êtes-vous sûr de vouloir supprimer "${photo.titre}" ?`)) {
       try {
         await photosService.delete(photo.id)
-        setPhotos(Array.isArray(photos) ? photos.filter(p => p.id !== photo.id) : [])
-        toast.success(`Photo "${photo.titre}" supprimée avec succès`)
+        setPhotos(prev => prev.filter(p => p.id !== photo.id))
+        toast.success(`Photo supprimée avec succès`)
       } catch (err) {
         toast.error("Erreur lors de la suppression")
         console.error("Erreur:", err)
@@ -109,7 +116,7 @@ export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
         </div>
       ) : (
         filteredPhotos.map((photo: Photo) => (
-          <Card key={photo.id} className="overflow-hidden group">
+          <Card key={photo.id} className="overflow-hidden group flex flex-col">
             <div className="relative aspect-square bg-gray-100">
               <img
                 src={photo.url}
@@ -161,23 +168,26 @@ export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            <CardContent className="p-3">
-              <h3 className="font-semibold text-sm truncate">{photo.titre}</h3>
-              {photo.description && (
-                <p className="text-xs text-gray-600 truncate mt-1">
-                  {photo.description}
-                </p>
-              )}
-              <div className="flex items-center justify-between mt-2">
-                {photo.album && (
-                  <Badge variant="outline" className="text-xs">
-                    {photo.album}
-                  </Badge>
+            <CardContent className="p-3 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 className="font-semibold text-sm truncate">{photo.titre || 'Sans titre'}</h3>
+                {photo.description && (
+                  <p className="text-xs text-gray-600 truncate mt-1">
+                    {photo.description}
+                  </p>
                 )}
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <Calendar className="h-3 w-3" />
-                  {new Date(photo.date).toLocaleDateString("fr-FR")}
-                </div>
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <Badge variant="outline" className="text-xs">
+                  {photo.album?.name || 'Aucun'}
+                </Badge>
+
+                {photo.date && (
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(photo.date).toLocaleDateString("fr-FR")}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

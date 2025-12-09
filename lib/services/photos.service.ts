@@ -1,35 +1,44 @@
 import { api } from '@/lib/utils/api';
 
+export interface PhotoAlbum {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+}
+
 export interface Photo {
   id: string;
   titre: string;
   description?: string | null;
   url: string;
-  album: string;
-  date_prise?: string | null;
+  photo_album_id?: string | null;
+  album?: PhotoAlbum | null;
+  date?: string | null;
+  auteur?: string | null;
   created_at: string;
   updated_at: string;
 }
 
 export const photosService = {
-  async getAll(params?: { album?: string }): Promise<Photo[]> {
+  async getAll(params?: { album?: string }): Promise<any> {
     const query = params?.album ? `?album=${params.album}` : '';
-    return api.get<Photo[]>(`/photos${query}`);
+    return api.get<any>(`/photos${query}`);
   },
 
-  async getAlbums(): Promise<string[]> {
-    return api.get<string[]>('/photos-albums');
+  async getAlbums(): Promise<PhotoAlbum[]> {
+    return api.get<PhotoAlbum[]>('/photo-albums');
   },
 
   async getById(id: string): Promise<Photo> {
     return api.get<Photo>(`/photos/${id}`);
   },
 
-  async create(data: Partial<Photo>): Promise<Photo> {
+  async create(data: Partial<Photo> & { album?: string }): Promise<Photo> {
     return api.post<Photo>('/photos', data);
   },
 
-  async update(id: string, data: Partial<Photo>): Promise<Photo> {
+  async update(id: string, data: Partial<Photo> & { album?: string }): Promise<Photo> {
     return api.put<Photo>(`/photos/${id}`, data);
   },
 

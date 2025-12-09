@@ -15,7 +15,7 @@ class Photo extends Model
         'titre',
         'description',
         'url',
-        'album',
+        'photo_album_id',
         'date',
         'auteur',
     ];
@@ -24,10 +24,17 @@ class Photo extends Model
         'date' => 'date',
     ];
 
+    public function album()
+    {
+        return $this->belongsTo(PhotoAlbum::class, 'photo_album_id');
+    }
+
     // Scopes
     public function scopeByAlbum($query, $album)
     {
-        return $query->where('album', $album);
+        return $query->whereHas('album', function($q) use ($album) {
+             $q->where('name', $album)->orWhere('id', $album);
+        });
     }
 
     public function scopeRecent($query)

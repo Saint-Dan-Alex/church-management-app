@@ -12,6 +12,7 @@ use App\Http\Controllers\API\BlogController;
 use App\Http\Controllers\API\BlogCategoryController;
 use App\Http\Controllers\API\VideoController;
 use App\Http\Controllers\API\PhotoController;
+use App\Http\Controllers\API\PhotoAlbumController;
 use App\Http\Controllers\API\UploadController;
 use App\Http\Controllers\API\VideoCategoryController;
 use App\Http\Controllers\API\ExpenseController;
@@ -76,7 +77,7 @@ Route::prefix('v1')->group(function () {
 
     // Photos Routes
     Route::apiResource('photos', PhotoController::class);
-    Route::get('photos-albums', [PhotoController::class, 'albums']);
+    Route::apiResource('photo-albums', PhotoAlbumController::class)->only(['index', 'store']);
 
     // Expenses Routes
     Route::apiResource('expenses', ExpenseController::class);

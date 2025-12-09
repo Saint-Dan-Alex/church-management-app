@@ -31,9 +31,6 @@ interface UploadVideoDialogProps {
 export function UploadVideoDialog({ open, onOpenChange }: UploadVideoDialogProps) {
   const { toast } = useToast()
 
-  // Debug log pour vérifier l'état et le rechargement
-  console.log("Render UploadVideoDialog", { open })
-
   const [uploadType, setUploadType] = useState<"upload" | "youtube">("youtube")
   const [formData, setFormData] = useState({
     titre: "",
