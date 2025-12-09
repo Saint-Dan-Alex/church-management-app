@@ -226,6 +226,14 @@ export interface Blog {
   updated_at: string;
 }
 
+// Video Category
+export interface VideoCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+}
+
 // Video
 export interface Video {
   id: string;
@@ -233,8 +241,11 @@ export interface Video {
   titre: string;
   description?: string | null;
   url: string;
-  type: string;
-  categorie: string;
+  type?: string | null;
+  video_category_id?: string | null;
+  category?: VideoCategory | null;
+  categorie?: string | any; // Legacy ou pour l'envoi
+
   duree?: string | null;
   date?: string | null;
   auteur?: string | null;

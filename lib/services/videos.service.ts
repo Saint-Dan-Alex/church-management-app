@@ -1,14 +1,18 @@
 import { api } from '@/lib/utils/api';
-import type { Video } from '@/lib/types/api';
+import type { Video, VideoCategory } from '@/lib/types/api';
 
 export const videosService = {
-  async getAll(params?: { categorie?: string }): Promise<Video[]> {
-    const query = params?.categorie ? `?categorie=${params.categorie}` : '';
-    return api.get<Video[]>(`/videos${query}`);
+  async getAll(params?: { category?: string }): Promise<any> {
+    const query = params?.category ? `?category=${params.category}` : '';
+    return api.get(`/videos${query}`);
   },
 
-  async getFeatured(): Promise<Video[]> {
-    return api.get<Video[]>('/videos-featured');
+  async getCategories(): Promise<VideoCategory[]> {
+    return api.get<VideoCategory[]>('/video-categories');
+  },
+
+  async getFeatured(): Promise<any> {
+    return api.get('/videos-featured');
   },
 
   async getById(id: string): Promise<Video> {

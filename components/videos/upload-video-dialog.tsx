@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -13,9 +13,15 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Upload, Link as LinkIcon } from "lucide-react"
+import { Check, ChevronsUpDown, Plus } from "lucide-react"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { videosService } from "@/lib/services/videos.service"
+import { blogsService } from "@/lib/services/blogs.service"
+import type { VideoCategory } from "@/lib/types/api"
+import { useToast } from "@/hooks/use-toast"
 
 interface UploadVideoDialogProps {
   open: boolean
@@ -23,14 +29,44 @@ interface UploadVideoDialogProps {
 }
 
 export function UploadVideoDialog({ open, onOpenChange }: UploadVideoDialogProps) {
+  const { toast } = useToast()
+
+  // Debug log pour vérifier l'état et le rechargement
+  console.log("Render UploadVideoDialog", { open })
+
   const [uploadType, setUploadType] = useState<"upload" | "youtube">("youtube")
   const [formData, setFormData] = useState({
     titre: "",
     description: "",
     categorie: "",
     url: "",
+    miniature: "",
+    auteur: "",
+    date: new Date().toISOString().split('T')[0],
+    duree: "",
   })
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null)
+  const [categories, setCategories] = useState<VideoCategory[]>([])
+  const [openCategory, setOpenCategory] = useState(false)
+  const [categorySearch, setCategorySearch] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (open) {
+      loadCategories()
+    }
+  }, [open])
+
+  const loadCategories = async () => {
+    try {
+      const data = await videosService.getCategories()
+      setCategories(data)
+    } catch (error) {
+      console.error("Erreur chargement catégories:", error)
+    }
+  }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -38,47 +74,73 @@ export function UploadVideoDialog({ open, onOpenChange }: UploadVideoDialogProps
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedThumbnail(e.target.files[0])
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!formData.titre || !formData.categorie) {
-      alert("⚠️ Veuillez remplir tous les champs obligatoires")
+      toast({ title: "Erreur", description: "Titre et catégorie requis", variant: "destructive" })
       return
     }
 
     if (uploadType === "youtube" && !formData.url) {
-      alert("⚠️ Veuillez entrer une URL YouTube ou Vimeo")
+      toast({ title: "Erreur", description: "URL requise", variant: "destructive" })
       return
     }
 
     if (uploadType === "upload" && !selectedFile) {
-      alert("⚠️ Veuillez sélectionner un fichier vidéo")
+      toast({ title: "Erreur", description: "Fichier requis", variant: "destructive" })
       return
     }
 
-    const newVideo = {
-      id: Date.now().toString(),
-      ...formData,
-      type: uploadType,
-      file: selectedFile,
-      date: new Date().toISOString(),
-      auteur: "Admin",
-      vues: 0,
+    setLoading(true)
+    try {
+      let finalUrl = formData.url
+
+      if (uploadType === "upload" && selectedFile) {
+        const uploadData = new FormData()
+        uploadData.append("file", selectedFile)
+        const res = await blogsService.uploadImage(uploadData)
+        finalUrl = res.url
+      }
+
+      let miniatureUrl = formData.miniature
+      if (selectedThumbnail) {
+        const thumbData = new FormData()
+        thumbData.append("file", selectedThumbnail)
+        const thumbRes = await blogsService.uploadImage(thumbData)
+        miniatureUrl = thumbRes.url
+      }
+
+      await videosService.create({
+        ...formData,
+        url: finalUrl,
+        miniature: miniatureUrl,
+        type: uploadType,
+        date: formData.date || null,
+        auteur: formData.auteur || "Admin",
+      })
+
+      toast({ title: "Succès", description: "Vidéo ajoutée avec succès !" })
+      onOpenChange(false)
+      window.location.reload()
+
+    } catch (error) {
+      console.error("Erreur création vidéo:", error)
+      toast({ title: "Erreur", description: "Échec de la création", variant: "destructive" })
+    } finally {
+      setLoading(false)
     }
-
-    console.log("Vidéo ajoutée:", newVideo)
-    alert(`✅ Vidéo "${formData.titre}" ajoutée avec succès !`)
-
-    // Reset
-    setFormData({ titre: "", description: "", categorie: "", url: "" })
-    setSelectedFile(null)
-    setUploadType("youtube")
-    onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Ajouter une Vidéo</DialogTitle>
           <DialogDescription>
@@ -87,128 +149,186 @@ export function UploadVideoDialog({ open, onOpenChange }: UploadVideoDialogProps
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-            {/* Type d'upload */}
+          <div className="grid gap-4 py-4 pr-2">
+
             <div className="grid gap-2">
               <Label>Type d'ajout *</Label>
               <RadioGroup
                 value={uploadType}
-                onValueChange={(value: "upload" | "youtube") => setUploadType(value)}
+                onValueChange={(value: "upload" | "youtube") => {
+                  setUploadType(value);
+                  setFormData({ ...formData, url: "" })
+                  setSelectedFile(null)
+                }}
                 className="flex gap-4"
               >
-                <div className="flex items-center space-x-2 flex-1">
+                <div className="flex items-center space-x-2">
                   <RadioGroupItem value="youtube" id="youtube" />
-                  <Label htmlFor="youtube" className="font-normal cursor-pointer flex items-center gap-2">
-                    <LinkIcon className="h-4 w-4" />
-                    <span>Lien YouTube/Vimeo</span>
-                  </Label>
+                  <Label htmlFor="youtube">Lien YouTube/Vimeo</Label>
                 </div>
-                <div className="flex items-center space-x-2 flex-1">
+                <div className="flex items-center space-x-2">
                   <RadioGroupItem value="upload" id="upload" />
-                  <Label htmlFor="upload" className="font-normal cursor-pointer flex items-center gap-2">
-                    <Upload className="h-4 w-4" />
-                    <span>Uploader fichier</span>
-                  </Label>
+                  <Label htmlFor="upload">Uploader fichier</Label>
                 </div>
               </RadioGroup>
             </div>
 
-            {/* URL YouTube ou Upload fichier */}
             {uploadType === "youtube" ? (
               <div className="grid gap-2">
-                <Label htmlFor="url">URL YouTube ou Vimeo *</Label>
+                <Label htmlFor="url">URL *</Label>
                 <Input
+                  key="youtube-url"
                   id="url"
                   type="url"
-                  value={formData.url}
+                  value={formData.url || ""}
                   onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                  placeholder="https://www.youtube.com/watch?v=..."
+                  placeholder="https://youtube.com/..."
                   required
                 />
               </div>
             ) : (
               <div className="grid gap-2">
                 <Label>Fichier vidéo *</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                  <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600 mb-2">
-                    Cliquez pour sélectionner une vidéo
-                  </p>
-                  <Input
-                    type="file"
-                    accept="video/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    id="video-upload"
-                  />
-                  <Label
-                    htmlFor="video-upload"
-                    className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    Parcourir
-                  </Label>
-                  {selectedFile && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      📹 {selectedFile.name}
-                    </p>
-                  )}
-                </div>
+                <Input
+                  key="video-file"
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileSelect}
+                />
+                {selectedFile && <p className="text-sm text-green-600">{selectedFile.name}</p>}
               </div>
             )}
 
-            {/* Titre */}
+            <div className="grid gap-2">
+              <Label>Miniature (Image) {uploadType === 'youtube' ? '(Optionnel)' : '*'}</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleThumbnailSelect}
+              />
+              {selectedThumbnail && <p className="text-sm text-green-600">{selectedThumbnail.name}</p>}
+            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="titre">Titre *</Label>
               <Input
                 id="titre"
-                value={formData.titre}
+                value={formData.titre || ""}
                 onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
-                placeholder="Titre de la vidéo"
                 required
               />
             </div>
 
-            {/* Description */}
+            <div className="grid gap-2">
+              <Label>Catégorie *</Label>
+              <Popover open={openCategory} onOpenChange={setOpenCategory}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openCategory}
+                    className="w-full justify-between"
+                  >
+                    {formData.categorie
+                      ? categories.find((cat) => cat.id === formData.categorie)?.name || formData.categorie
+                      : "Sélectionner..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Rechercher..." onValueChange={setCategorySearch} />
+                    <CommandList>
+                      <CommandEmpty>
+                        <div className="p-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full justify-start text-sm"
+                            onClick={() => {
+                              setFormData({ ...formData, categorie: categorySearch });
+                              setOpenCategory(false);
+                            }}
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Ajouter "{categorySearch}"
+                          </Button>
+                        </div>
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {categories.map((category) => (
+                          <CommandItem
+                            key={category.id}
+                            value={category.name}
+                            onSelect={() => {
+                              setFormData({ ...formData, categorie: category.id })
+                              setOpenCategory(false)
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.categorie === category.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {category.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                value={formData.description}
+                value={formData.description || ""}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Description de la vidéo..."
-                rows={3}
               />
             </div>
 
-            {/* Catégorie */}
-            <div className="grid gap-2">
-              <Label htmlFor="categorie">Catégorie *</Label>
-              <Select
-                value={formData.categorie}
-                onValueChange={(value) => setFormData({ ...formData, categorie: value })}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Cultes">Cultes</SelectItem>
-                  <SelectItem value="Témoignages">Témoignages</SelectItem>
-                  <SelectItem value="Formations">Formations</SelectItem>
-                  <SelectItem value="Enseignements">Enseignements</SelectItem>
-                  <SelectItem value="Événements">Événements</SelectItem>
-                  <SelectItem value="Louange">Louange</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={formData.date || ""}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="auteur">Auteur</Label>
+                <Input
+                  id="auteur"
+                  value={formData.auteur || ""}
+                  onChange={(e) => setFormData({ ...formData, auteur: e.target.value })}
+                  placeholder="Admin"
+                />
+              </div>
             </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="duree">Durée</Label>
+              <Input
+                id="duree"
+                value={formData.duree || ""}
+                onChange={(e) => setFormData({ ...formData, duree: e.target.value })}
+                placeholder="ex: 10:30"
+              />
+            </div>
+
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               Annuler
             </Button>
-            <Button type="submit">
-              Ajouter la Vidéo
+            <Button type="submit" disabled={loading}>
+              {loading ? "Ajout..." : "Ajouter la Vidéo"}
             </Button>
           </DialogFooter>
         </form>

@@ -17,7 +17,7 @@ class Video extends Model
         'miniature',
         'url',
         'type',
-        'categorie',
+        'video_category_id',
         'duree',
         'date',
         'auteur',
@@ -29,10 +29,17 @@ class Video extends Model
         'date' => 'date',
     ];
 
+    public function category()
+    {
+        return $this->belongsTo(VideoCategory::class, 'video_category_id');
+    }
+
     // Scopes
     public function scopeByCategory($query, $categorie)
     {
-        return $query->where('categorie', $categorie);
+        return $query->whereHas('category', function ($q) use ($categorie) {
+            $q->where('name', $categorie)->orWhere('id', $categorie);
+        });
     }
 
     public function scopeRecent($query)

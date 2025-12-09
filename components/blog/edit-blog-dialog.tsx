@@ -191,7 +191,7 @@ export function EditBlogDialog({ open, onOpenChange, blog }: EditBlogDialogProps
                 <Label htmlFor="title">Titre *</Label>
                 <Input
                   id="title"
-                  value={formData.title}
+                  value={formData.title || ""}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
                 />
@@ -229,7 +229,7 @@ export function EditBlogDialog({ open, onOpenChange, blog }: EditBlogDialogProps
                 <Label htmlFor="excerpt">Extrait</Label>
                 <Textarea
                   id="excerpt"
-                  value={formData.excerpt}
+                  value={formData.excerpt || ""}
                   onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
                   rows={2}
                 />
@@ -239,7 +239,7 @@ export function EditBlogDialog({ open, onOpenChange, blog }: EditBlogDialogProps
                 <Label htmlFor="content">Contenu *</Label>
                 <Textarea
                   id="content"
-                  value={formData.content}
+                  value={formData.content || ""}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   rows={10}
                   required
@@ -313,7 +313,7 @@ export function EditBlogDialog({ open, onOpenChange, blog }: EditBlogDialogProps
                   <Label htmlFor="author">Auteur</Label>
                   <Input
                     id="author"
-                    value={formData.author}
+                    value={formData.author || ""}
                     onChange={(e) => setFormData({ ...formData, author: e.target.value })}
                     required
                   />
@@ -325,7 +325,7 @@ export function EditBlogDialog({ open, onOpenChange, blog }: EditBlogDialogProps
                   <Label htmlFor="tags">Tags</Label>
                   <Input
                     id="tags"
-                    value={formData.tags}
+                    value={formData.tags || ""}
                     onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                     placeholder="Séparés par virgules"
                   />
@@ -350,7 +350,7 @@ export function EditBlogDialog({ open, onOpenChange, blog }: EditBlogDialogProps
                 <Input
                   id="published_at"
                   type="datetime-local"
-                  value={formData.published_at}
+                  value={formData.published_at || ""}
                   onChange={(e) => setFormData({ ...formData, published_at: e.target.value })}
                 />
               </div>

@@ -9,20 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Eye, Clock, Play, ExternalLink } from "lucide-react"
-
-interface Video {
-  id: string
-  titre: string
-  description: string
-  miniature: string
-  url: string
-  type: string
-  categorie: string
-  duree: string
-  date: string
-  auteur: string
-  vues: number
-}
+import type { Video } from "@/lib/types/api"
 
 interface VideoDetailsDialogProps {
   open: boolean
@@ -33,12 +20,10 @@ interface VideoDetailsDialogProps {
 export function VideoDetailsDialog({ open, onOpenChange, video }: VideoDetailsDialogProps) {
   if (!video) return null
 
+  const categoryName = video.category?.name || (typeof video.categorie === 'string' ? video.categorie : 'Aucune')
+
   const handlePlay = () => {
-    if (video.type === "youtube") {
-      window.open(video.url, "_blank")
-    } else {
-      alert(`▶️ Lecture de la vidéo: "${video.titre}"`)
-    }
+    window.open(video.url, "_blank")
   }
 
   return (
@@ -46,19 +31,26 @@ export function VideoDetailsDialog({ open, onOpenChange, video }: VideoDetailsDi
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <div className="space-y-3">
-            <Badge variant="outline" className="w-fit">{video.categorie}</Badge>
-            <DialogTitle className="text-2xl">{video.titre}</DialogTitle>
+            <Badge variant="outline" className="w-fit">{categoryName}</Badge>
+            <DialogTitle className="text-2xl">{video.titre || video.title}</DialogTitle>
           </div>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Miniature avec bouton play */}
           <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden group">
-            <img
-              src={video.miniature}
-              alt={video.titre}
-              className="w-full h-full object-cover"
-            />
+            {video.miniature ? (
+              <img
+                src={video.miniature}
+                alt={video.titre || video.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                <Play className="h-12 w-12 text-gray-400" />
+              </div>
+            )}
+
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
               <Button
                 size="icon"
@@ -68,9 +60,11 @@ export function VideoDetailsDialog({ open, onOpenChange, video }: VideoDetailsDi
                 <Play className="h-8 w-8 fill-current" />
               </Button>
             </div>
-            <div className="absolute bottom-3 right-3 bg-black/80 text-white text-sm px-2 py-1 rounded">
-              {video.duree}
-            </div>
+            {video.duree && (
+              <div className="absolute bottom-3 right-3 bg-black/80 text-white text-sm px-2 py-1 rounded">
+                {video.duree}
+              </div>
+            )}
           </div>
 
           {/* Métadonnées */}
@@ -79,14 +73,14 @@ export function VideoDetailsDialog({ open, onOpenChange, video }: VideoDetailsDi
               <Clock className="h-4 w-4 text-gray-500" />
               <div>
                 <p className="text-xs text-gray-500">Durée</p>
-                <p className="font-medium">{video.duree}</p>
+                <p className="font-medium">{video.duree || '-'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Eye className="h-4 w-4 text-gray-500" />
               <div>
                 <p className="text-xs text-gray-500">Vues</p>
-                <p className="font-medium">{video.vues}</p>
+                <p className="font-medium">{video.vues || 0}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -94,11 +88,11 @@ export function VideoDetailsDialog({ open, onOpenChange, video }: VideoDetailsDi
               <div>
                 <p className="text-xs text-gray-500">Date</p>
                 <p className="font-medium">
-                  {new Date(video.date).toLocaleDateString("fr-FR", {
+                  {video.date ? new Date(video.date).toLocaleDateString("fr-FR", {
                     day: "numeric",
                     month: "short",
                     year: "numeric"
-                  })}
+                  }) : '-'}
                 </p>
               </div>
             </div>
@@ -116,7 +110,7 @@ export function VideoDetailsDialog({ open, onOpenChange, video }: VideoDetailsDi
           <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600">Auteur</span>
-              <span className="font-medium">{video.auteur}</span>
+              <span className="font-medium">{video.auteur || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Type</span>
@@ -126,7 +120,7 @@ export function VideoDetailsDialog({ open, onOpenChange, video }: VideoDetailsDi
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Catégorie</span>
-              <span className="font-medium">{video.categorie}</span>
+              <span className="font-medium">{categoryName}</span>
             </div>
           </div>
 
@@ -136,10 +130,10 @@ export function VideoDetailsDialog({ open, onOpenChange, video }: VideoDetailsDi
               <Play className="mr-2 h-4 w-4" />
               Lire la vidéo
             </Button>
-            {video.type === "youtube" && (
+            {(video.type === "youtube" || (video.url && video.url.includes('http'))) && (
               <Button variant="outline" onClick={() => window.open(video.url, "_blank")}>
                 <ExternalLink className="mr-2 h-4 w-4" />
-                Ouvrir sur YouTube
+                Ouvrir le lien
               </Button>
             )}
           </div>

@@ -13,6 +13,7 @@ use App\Http\Controllers\API\BlogCategoryController;
 use App\Http\Controllers\API\VideoController;
 use App\Http\Controllers\API\PhotoController;
 use App\Http\Controllers\API\UploadController;
+use App\Http\Controllers\API\VideoCategoryController;
 use App\Http\Controllers\API\ExpenseController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\PresenceController;
@@ -71,6 +72,7 @@ Route::prefix('v1')->group(function () {
     // Videos Routes
     Route::apiResource('videos', VideoController::class);
     Route::get('videos-featured', [VideoController::class, 'featured']);
+    Route::apiResource('video-categories', VideoCategoryController::class)->only(['index', 'store']);
 
     // Photos Routes
     Route::apiResource('photos', PhotoController::class);
