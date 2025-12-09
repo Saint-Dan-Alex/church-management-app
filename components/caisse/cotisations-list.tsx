@@ -10,17 +10,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Edit, Trash, Calendar, User, DollarSign, Check, X } from "lucide-react"
+import { MoreVertical, Edit, Trash, Calendar, User, DollarSign, Tag } from "lucide-react"
 import { EditCotisationDialog } from "./edit-cotisation-dialog"
 import { cotisationsService, type Cotisation } from "@/lib/services/cotisations.service"
 import { toast } from "sonner"
 
 interface CotisationsListProps {
   searchQuery?: string
-  statut?: string
+  typeFilter?: string
 }
 
-export function CotisationsList({ searchQuery = "", statut }: CotisationsListProps) {
+export function CotisationsList({ searchQuery = "", typeFilter }: CotisationsListProps) {
   const [cotisations, setCotisations] = useState<Cotisation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -31,30 +31,28 @@ export function CotisationsList({ searchQuery = "", statut }: CotisationsListPro
     const fetchCotisations = async () => {
       try {
         setLoading(true)
-        const data = await cotisationsService.getAll()
-        // S'assurer que data est un tableau
+        const response: any = await cotisationsService.getAll({ type_cotisation: typeFilter })
+        const data = response.data || response
         setCotisations(Array.isArray(data) ? data : [])
       } catch (err) {
         setError("Erreur lors du chargement des cotisations")
         console.error("Erreur:", err)
-        setCotisations([]) // Initialiser avec un tableau vide en cas d'erreur
+        setCotisations([])
       } finally {
         setLoading(false)
       }
     }
 
     fetchCotisations()
-  }, [])
+  }, [typeFilter])
 
   const filteredCotisations = Array.isArray(cotisations) ? cotisations.filter((cotisation) => {
     const matchesSearch =
-      cotisation.moniteur.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cotisation.periode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cotisation.modePaiement.toLowerCase().includes(searchQuery.toLowerCase())
+      (cotisation.membre_nom || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (cotisation.mois || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (cotisation.type?.name || "").toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesStatut = !statut || cotisation.statut === statut
-
-    return matchesSearch && matchesStatut
+    return matchesSearch
   }) : []
 
   const handleEdit = (cotisation: Cotisation) => {
@@ -63,10 +61,10 @@ export function CotisationsList({ searchQuery = "", statut }: CotisationsListPro
   }
 
   const handleDelete = async (cotisation: Cotisation) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer la cotisation de "${cotisation.moniteur}" pour ${cotisation.periode} ?`)) {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer la cotisation de "${cotisation.membre_nom}" ?`)) {
       try {
         await cotisationsService.delete(cotisation.id)
-        setCotisations(Array.isArray(cotisations) ? cotisations.filter(c => c.id !== cotisation.id) : [])
+        setCotisations(prev => prev.filter(c => c.id !== cotisation.id))
         toast.success(`Cotisation supprimée avec succès`)
       } catch (err) {
         toast.error("Erreur lors de la suppression")
@@ -93,27 +91,14 @@ export function CotisationsList({ searchQuery = "", statut }: CotisationsListPro
     )
   }
 
-  const getStatutBadge = (statut: string) => {
-    switch (statut) {
-      case "Payé":
-        return <Badge className="bg-green-500">Payé</Badge>
-      case "En attente":
-        return <Badge variant="secondary">En attente</Badge>
-      case "Retard":
-        return <Badge variant="destructive">En retard</Badge>
-      default:
-        return <Badge variant="outline">{statut}</Badge>
-    }
-  }
+  // Calcul des totaux par devise
+  const totalCDF = filteredCotisations
+    .filter((c) => c.devise === "CDF")
+    .reduce((sum, c) => sum + Number(c.montant), 0)
 
-  // Calcul du total
-  const totalPaye = filteredCotisations
-    .filter((c) => c.statut === "Payé")
-    .reduce((sum, c) => sum + c.montant, 0)
-
-  const totalEnAttente = filteredCotisations
-    .filter((c) => c.statut === "En attente")
-    .reduce((sum, c) => sum + c.montant, 0)
+  const totalUSD = filteredCotisations
+    .filter((c) => c.devise === "USD")
+    .reduce((sum, c) => sum + Number(c.montant), 0)
 
   return (
     <div className="space-y-4">
@@ -123,25 +108,11 @@ export function CotisationsList({ searchQuery = "", statut }: CotisationsListPro
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-green-100 rounded-lg">
-                <Check className="h-5 w-5 text-green-600" />
+                <DollarSign className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Cotisations payées</p>
-                <p className="text-2xl font-bold text-green-600">{totalPaye.toLocaleString()} CDF</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <X className="h-5 w-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">En attente</p>
-                <p className="text-2xl font-bold text-orange-600">{totalEnAttente.toLocaleString()} CDF</p>
+                <p className="text-sm text-gray-600">Total CDF</p>
+                <p className="text-2xl font-bold text-green-600">{totalCDF.toLocaleString()} CDF</p>
               </div>
             </div>
           </CardContent>
@@ -154,8 +125,22 @@ export function CotisationsList({ searchQuery = "", statut }: CotisationsListPro
                 <DollarSign className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total</p>
-                <p className="text-2xl font-bold">{(totalPaye + totalEnAttente).toLocaleString()} CDF</p>
+                <p className="text-sm text-gray-600">Total USD</p>
+                <p className="text-2xl font-bold text-blue-600">{totalUSD.toLocaleString()} USD</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <User className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Nombre de cotisations</p>
+                <p className="text-2xl font-bold">{filteredCotisations.length}</p>
               </div>
             </div>
           </CardContent>
@@ -179,29 +164,30 @@ export function CotisationsList({ searchQuery = "", statut }: CotisationsListPro
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-3">
                       <User className="h-4 w-4 text-gray-500" />
-                      <span className="font-semibold">{cotisation.moniteur}</span>
-                      {getStatutBadge(cotisation.statut)}
+                      <span className="font-semibold">{cotisation.membre_nom}</span>
+                      <Badge variant="outline">
+                        {cotisation.type?.name || 'Non défini'}
+                      </Badge>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        <span>Période: {cotisation.periode}</span>
+                        <span>{cotisation.mois} {cotisation.annee}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <DollarSign className="h-3 w-3" />
                         <span className="font-semibold">
-                          {cotisation.montant.toLocaleString()} {cotisation.devise}
+                          {Number(cotisation.montant).toLocaleString()} {cotisation.devise}
                         </span>
                       </div>
-                      {cotisation.datePaiement && (
+                      {cotisation.date_cotisation && (
                         <div>
-                          Payé le:{" "}
-                          {new Date(cotisation.datePaiement).toLocaleDateString("fr-FR")}
+                          Date: {new Date(cotisation.date_cotisation).toLocaleDateString("fr-FR")}
                         </div>
                       )}
-                      {cotisation.modePaiement && (
-                        <div>Mode: {cotisation.modePaiement}</div>
+                      {cotisation.mode_paiement && (
+                        <div>Mode: {cotisation.mode_paiement}</div>
                       )}
                     </div>
 

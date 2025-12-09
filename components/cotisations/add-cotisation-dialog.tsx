@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -20,7 +20,19 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { monitorsService } from "@/lib/services/monitors.service"
 import { useToast } from "@/hooks/use-toast"
+
+interface Monitor {
+    id: string
+    nom: string
+    prenom: string
+    postNom?: string
+}
 
 interface AddCotisationDialogProps {
     open: boolean
@@ -38,6 +50,7 @@ export function AddCotisationDialog({ open, onOpenChange }: AddCotisationDialogP
     const currentMonth = MOIS[new Date().getMonth()]
 
     const [formData, setFormData] = useState({
+        membre_id: "",
         membre_nom: "",
         type_cotisation: "Mensuelle",
         montant: "",
@@ -48,6 +61,30 @@ export function AddCotisationDialog({ open, onOpenChange }: AddCotisationDialogP
         methode_paiement: "Espèces",
         remarque: "",
     })
+
+    const [monitors, setMonitors] = useState<Monitor[]>([])
+    const [openMonitor, setOpenMonitor] = useState(false)
+    const [monitorSearch, setMonitorSearch] = useState("")
+
+    useEffect(() => {
+        if (open) {
+            loadMonitors()
+        }
+    }, [open])
+
+    const loadMonitors = async () => {
+        try {
+            const response = await monitorsService.getAll({ per_page: 1000 })
+            const monitorsData = response.data || response
+            setMonitors(Array.isArray(monitorsData) ? monitorsData : [])
+        } catch (error) {
+            console.error("Erreur chargement moniteurs:", error)
+        }
+    }
+
+    const getMonitorFullName = (monitor: Monitor): string => {
+        return [monitor.nom, monitor.postNom, monitor.prenom].filter(Boolean).join(" ")
+    }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -69,6 +106,7 @@ export function AddCotisationDialog({ open, onOpenChange }: AddCotisationDialogP
         console.log("Nouvelle cotisation:", formData)
 
         setFormData({
+            membre_id: "",
             membre_nom: "",
             type_cotisation: "Mensuelle",
             montant: "",
@@ -94,19 +132,66 @@ export function AddCotisationDialog({ open, onOpenChange }: AddCotisationDialogP
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Sélection du moniteur */}
                     <div className="space-y-2">
-                        <Label htmlFor="membre_nom">
+                        <Label>
                             Membre <span className="text-red-500">*</span>
                         </Label>
-                        <Input
-                            id="membre_nom"
-                            placeholder="Nom du membre"
-                            value={formData.membre_nom}
-                            onChange={(e) =>
-                                setFormData({ ...formData, membre_nom: e.target.value })
-                            }
-                            required
-                        />
+                        <Popover open={openMonitor} onOpenChange={setOpenMonitor}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openMonitor}
+                                    className="w-full justify-between"
+                                >
+                                    {formData.membre_nom || "Sélectionner un moniteur..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[400px] p-0">
+                                <Command>
+                                    <CommandInput
+                                        placeholder="Rechercher un moniteur..."
+                                        onValueChange={setMonitorSearch}
+                                    />
+                                    <CommandList>
+                                        <CommandEmpty>
+                                            <div className="p-2 text-sm text-muted-foreground">
+                                                Aucun moniteur trouvé
+                                            </div>
+                                        </CommandEmpty>
+                                        <CommandGroup heading="Moniteurs">
+                                            {monitors.map((monitor) => {
+                                                const fullName = getMonitorFullName(monitor)
+                                                return (
+                                                    <CommandItem
+                                                        key={monitor.id}
+                                                        value={fullName}
+                                                        onSelect={() => {
+                                                            setFormData({
+                                                                ...formData,
+                                                                membre_id: monitor.id,
+                                                                membre_nom: fullName
+                                                            })
+                                                            setOpenMonitor(false)
+                                                        }}
+                                                    >
+                                                        <Check
+                                                            className={cn(
+                                                                "mr-2 h-4 w-4",
+                                                                formData.membre_id === monitor.id ? "opacity-100" : "opacity-0"
+                                                            )}
+                                                        />
+                                                        {fullName}
+                                                    </CommandItem>
+                                                )
+                                            })}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">

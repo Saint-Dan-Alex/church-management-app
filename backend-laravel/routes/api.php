@@ -19,7 +19,9 @@ use App\Http\Controllers\API\ExpenseController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\PresenceController;
 use App\Http\Controllers\API\CotisationController;
+use App\Http\Controllers\API\CotisationTypeController;
 use App\Http\Controllers\API\SortieController;
+use App\Http\Controllers\API\SortieCategoryController;
 use App\Http\Controllers\API\RoleController;
 use App\Http\Controllers\API\DashboardController;
 use App\Http\Controllers\API\NotificationController;
@@ -94,10 +96,12 @@ Route::prefix('v1')->group(function () {
     // Cotisations Routes
     Route::apiResource('cotisations', CotisationController::class);
     Route::get('cotisations-statistics', [CotisationController::class, 'statistics']);
+    Route::apiResource('cotisation-types', CotisationTypeController::class)->only(['index', 'store']);
 
     // Sorties Routes
     Route::apiResource('sorties', SortieController::class);
     Route::get('sorties-statistics', [SortieController::class, 'statistics']);
+    Route::apiResource('sortie-categories', SortieCategoryController::class)->only(['index', 'store']);
 
     // Dashboard global statistics
     Route::get('dashboard-statistics', [DashboardController::class, 'statistics']);

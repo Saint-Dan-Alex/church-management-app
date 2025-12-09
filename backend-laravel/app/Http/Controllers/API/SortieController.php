@@ -5,23 +5,20 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSortieRequest;
 use App\Models\Sortie;
+use App\Models\SortieCategory;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class SortieController extends Controller
 {
     /**
-     * @OA\Get(path="/sorties", tags={"Sorties"}, summary="Liste toutes les sorties financières",
-     *     @OA\Parameter(name="categorie", in="query", required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="date_debut", in="query", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="date_fin", in="query", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", default=15)),
-     *     @OA\Response(response=200, description="Liste récupérée"))
+     * Liste toutes les sorties financières
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Sortie::query();
+        $query = Sortie::with('category');
 
         if ($request->has('categorie')) {
             $query->byCategory($request->categorie);
@@ -37,12 +34,23 @@ class SortieController extends Controller
         return response()->json($sorties);
     }
 
-    /** @OA\Post(path="/sorties", tags={"Sorties"}, summary="Enregistrer une sortie", @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreSortieRequest")), @OA\Response(response=201, description="Sortie enregistrée"), @OA\Response(response=422, description="Erreur de validation")) */
+    /**
+     * Enregistrer une sortie
+     */
     public function store(StoreSortieRequest $request): JsonResponse
     {
-        $sortie = Sortie::create($request->validated());
+        $data = $request->validated();
 
-        // Créer une notification d'avertissement pour les sorties
+        // Gérer la catégorie dynamiquement
+        if (isset($data['categorie'])) {
+            $data['sortie_category_id'] = $this->handleCategory($data['categorie']);
+            unset($data['categorie']);
+        }
+
+        $sortie = Sortie::create($data);
+        $sortie->load('category');
+
+        // Créer une notification
         NotificationService::notifyInfo(
             auth()->id() ?? 1,
             'Nouvelle sortie enregistrée',
@@ -56,16 +64,29 @@ class SortieController extends Controller
         ], 201);
     }
 
-    /** @OA\Get(path="/sorties/{id}", tags={"Sorties"}, summary="Détails d'une sortie", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Détails"), @OA\Response(response=404, description="Non trouvée")) */
+    /**
+     * Détails d'une sortie
+     */
     public function show(Sortie $sortie): JsonResponse
     {
+        $sortie->load('category');
         return response()->json($sortie);
     }
 
-    /** @OA\Put(path="/sorties/{id}", tags={"Sorties"}, summary="Modifier une sortie", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreSortieRequest")), @OA\Response(response=200, description="Mise à jour"), @OA\Response(response=404, description="Non trouvée")) */
+    /**
+     * Modifier une sortie
+     */
     public function update(StoreSortieRequest $request, Sortie $sortie): JsonResponse
     {
-        $sortie->update($request->validated());
+        $data = $request->validated();
+
+        if (isset($data['categorie'])) {
+            $data['sortie_category_id'] = $this->handleCategory($data['categorie']);
+            unset($data['categorie']);
+        }
+
+        $sortie->update($data);
+        $sortie->load('category');
 
         return response()->json([
             'message' => 'Sortie mise à jour avec succès',
@@ -73,7 +94,9 @@ class SortieController extends Controller
         ]);
     }
 
-    /** @OA\Delete(path="/sorties/{id}", tags={"Sorties"}, summary="Supprimer une sortie", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Supprimée"), @OA\Response(response=404, description="Non trouvée")) */
+    /**
+     * Supprimer une sortie
+     */
     public function destroy(Sortie $sortie): JsonResponse
     {
         $sortie->delete();
@@ -83,7 +106,9 @@ class SortieController extends Controller
         ]);
     }
 
-    /** @OA\Get(path="/sorties-statistics", tags={"Sorties"}, summary="Statistiques des sorties", @OA\Parameter(name="date_debut", in="query", required=false, @OA\Schema(type="string", format="date")), @OA\Parameter(name="date_fin", in="query", required=false, @OA\Schema(type="string", format="date")), @OA\Response(response=200, description="Statistiques", @OA\JsonContent(@OA\Property(property="total_sorties", type="integer"), @OA\Property(property="total_cdf", type="number"), @OA\Property(property="total_usd", type="number")))) */
+    /**
+     * Statistiques des sorties
+     */
     public function statistics(Request $request): JsonResponse
     {
         $query = Sortie::query();
@@ -93,11 +118,43 @@ class SortieController extends Controller
         }
 
         $stats = [
-            'total_sorties' => $query->count(),
-            'total_cdf' => $query->where('devise', 'CDF')->sum('montant'),
-            'total_usd' => $query->where('devise', 'USD')->sum('montant'),
+            'total_sorties' => (clone $query)->count(),
+            'total_cdf' => (clone $query)->where('devise', 'CDF')->sum('montant'),
+            'total_usd' => (clone $query)->where('devise', 'USD')->sum('montant'),
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * Gérer la création ou récupération de la catégorie
+     */
+    private function handleCategory($categoryInput)
+    {
+        if (!$categoryInput) {
+            return null;
+        }
+
+        // Si c'est un UUID valide et qu'il existe
+        if (Str::isUuid($categoryInput)) {
+            if (SortieCategory::where('id', $categoryInput)->exists()) {
+                return $categoryInput;
+            }
+        }
+
+        // Sinon chercher par slug ou nom, ou créer
+        $slug = Str::slug($categoryInput);
+        $category = SortieCategory::where('slug', $slug)
+                                  ->orWhere('name', $categoryInput)
+                                  ->first();
+
+        if (!$category) {
+            $category = SortieCategory::create([
+                'name' => $categoryInput,
+                'slug' => $slug,
+            ]);
+        }
+
+        return $category->id;
     }
 }

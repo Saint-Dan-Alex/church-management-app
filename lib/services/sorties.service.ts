@@ -1,11 +1,20 @@
 import { api } from '@/lib/utils/api';
 import type { Statistics } from '@/lib/types/api';
 
+export interface SortieCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+}
+
 export interface Sortie {
   id: string;
   libelle: string;
   description?: string | null;
-  categorie: 'salaires' | 'fournitures' | 'equipements' | 'loyer' | 'electricite' | 'eau' | 'internet' | 'transport' | 'reparations' | 'dons' | 'autre';
+  sortie_category_id?: string | null;
+  category?: SortieCategory | null;
+  categorie?: string; // Legacy/input
   montant: number;
   devise: 'CDF' | 'USD';
   date_sortie: string;
@@ -19,20 +28,24 @@ export interface Sortie {
 }
 
 export const sortiesService = {
-  async getAll(params?: { categorie?: string }): Promise<Sortie[]> {
+  async getAll(params?: { categorie?: string }): Promise<any> {
     const query = params?.categorie ? `?categorie=${params.categorie}` : '';
-    return api.get<Sortie[]>(`/sorties${query}`);
+    return api.get<any>(`/sorties${query}`);
+  },
+
+  async getCategories(): Promise<SortieCategory[]> {
+    return api.get<SortieCategory[]>('/sortie-categories');
   },
 
   async getById(id: string): Promise<Sortie> {
     return api.get<Sortie>(`/sorties/${id}`);
   },
 
-  async create(data: Partial<Sortie>): Promise<Sortie> {
+  async create(data: Partial<Sortie> & { categorie?: string }): Promise<Sortie> {
     return api.post<Sortie>('/sorties', data);
   },
 
-  async update(id: string, data: Partial<Sortie>): Promise<Sortie> {
+  async update(id: string, data: Partial<Sortie> & { categorie?: string }): Promise<Sortie> {
     return api.put<Sortie>(`/sorties/${id}`, data);
   },
 

@@ -5,25 +5,20 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCotisationRequest;
 use App\Models\Cotisation;
+use App\Models\CotisationType;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class CotisationController extends Controller
 {
     /**
-     * @OA\Get(path="/cotisations", tags={"Cotisations"}, summary="Liste toutes les cotisations",
-     *     @OA\Parameter(name="type_cotisation", in="query", required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="mois", in="query", required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="annee", in="query", required=false, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="date_debut", in="query", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="date_fin", in="query", required=false, @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="per_page", in="query", required=false, @OA\Schema(type="integer", default=15)),
-     *     @OA\Response(response=200, description="Liste récupérée"))
+     * Liste toutes les cotisations
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Cotisation::query();
+        $query = Cotisation::with('type');
 
         if ($request->has('type_cotisation')) {
             $query->byType($request->type_cotisation);
@@ -43,10 +38,21 @@ class CotisationController extends Controller
         return response()->json($cotisations);
     }
 
-    /** @OA\Post(path="/cotisations", tags={"Cotisations"}, summary="Enregistrer une cotisation", @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreCotisationRequest")), @OA\Response(response=201, description="Cotisation enregistrée"), @OA\Response(response=422, description="Erreur de validation")) */
+    /**
+     * Enregistrer une cotisation
+     */
     public function store(StoreCotisationRequest $request): JsonResponse
     {
-        $cotisation = Cotisation::create($request->validated());
+        $data = $request->validated();
+
+        // Gérer le type dynamiquement
+        if (isset($data['type_cotisation'])) {
+            $data['cotisation_type_id'] = $this->handleType($data['type_cotisation']);
+            unset($data['type_cotisation']);
+        }
+
+        $cotisation = Cotisation::create($data);
+        $cotisation->load('type');
 
         // Créer une notification
         NotificationService::notifyCotisation(
@@ -67,16 +73,29 @@ class CotisationController extends Controller
         ], 201);
     }
 
-    /** @OA\Get(path="/cotisations/{id}", tags={"Cotisations"}, summary="Détails d'une cotisation", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Détails"), @OA\Response(response=404, description="Non trouvée")) */
+    /**
+     * Détails d'une cotisation
+     */
     public function show(Cotisation $cotisation): JsonResponse
     {
+        $cotisation->load('type');
         return response()->json($cotisation);
     }
 
-    /** @OA\Put(path="/cotisations/{id}", tags={"Cotisations"}, summary="Modifier une cotisation", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreCotisationRequest")), @OA\Response(response=200, description="Mise à jour"), @OA\Response(response=404, description="Non trouvée")) */
+    /**
+     * Modifier une cotisation
+     */
     public function update(StoreCotisationRequest $request, Cotisation $cotisation): JsonResponse
     {
-        $cotisation->update($request->validated());
+        $data = $request->validated();
+
+        if (isset($data['type_cotisation'])) {
+            $data['cotisation_type_id'] = $this->handleType($data['type_cotisation']);
+            unset($data['type_cotisation']);
+        }
+
+        $cotisation->update($data);
+        $cotisation->load('type');
 
         return response()->json([
             'message' => 'Cotisation mise à jour avec succès',
@@ -84,7 +103,9 @@ class CotisationController extends Controller
         ]);
     }
 
-    /** @OA\Delete(path="/cotisations/{id}", tags={"Cotisations"}, summary="Supprimer une cotisation", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\Response(response=200, description="Supprimée"), @OA\Response(response=404, description="Non trouvée")) */
+    /**
+     * Supprimer une cotisation
+     */
     public function destroy(Cotisation $cotisation): JsonResponse
     {
         $cotisation->delete();
@@ -94,7 +115,9 @@ class CotisationController extends Controller
         ]);
     }
 
-    /** @OA\Get(path="/cotisations-statistics", tags={"Cotisations"}, summary="Statistiques des cotisations", @OA\Parameter(name="mois", in="query", required=false, @OA\Schema(type="string")), @OA\Parameter(name="annee", in="query", required=false, @OA\Schema(type="string")), @OA\Response(response=200, description="Statistiques", @OA\JsonContent(@OA\Property(property="total_cotisations", type="integer"), @OA\Property(property="total_cdf", type="number"), @OA\Property(property="total_usd", type="number")))) */
+    /**
+     * Statistiques des cotisations
+     */
     public function statistics(Request $request): JsonResponse
     {
         $query = Cotisation::query();
@@ -104,11 +127,43 @@ class CotisationController extends Controller
         }
 
         $stats = [
-            'total_cotisations' => $query->count(),
-            'total_cdf' => $query->where('devise', 'CDF')->sum('montant'),
-            'total_usd' => $query->where('devise', 'USD')->sum('montant'),
+            'total_cotisations' => (clone $query)->count(),
+            'total_cdf' => (clone $query)->where('devise', 'CDF')->sum('montant'),
+            'total_usd' => (clone $query)->where('devise', 'USD')->sum('montant'),
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * Gérer la création ou récupération du type
+     */
+    private function handleType($typeInput)
+    {
+        if (!$typeInput) {
+            return null;
+        }
+
+        // Si c'est un UUID valide et qu'il existe
+        if (Str::isUuid($typeInput)) {
+            if (CotisationType::where('id', $typeInput)->exists()) {
+                return $typeInput;
+            }
+        }
+
+        // Sinon chercher par slug ou nom, ou créer
+        $slug = Str::slug($typeInput);
+        $type = CotisationType::where('slug', $slug)
+                              ->orWhere('name', $typeInput)
+                              ->first();
+
+        if (!$type) {
+            $type = CotisationType::create([
+                'name' => $typeInput,
+                'slug' => $slug,
+            ]);
+        }
+
+        return $type->id;
     }
 }

@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical, Edit, Trash, Calendar, TrendingDown, DollarSign, FileText, Loader2 } from "lucide-react"
-import { sortiesService } from "@/lib/services"
+import { sortiesService, type Sortie } from "@/lib/services/sorties.service"
 import { useToast } from "@/hooks/use-toast"
 
 interface SortiesListProps {
@@ -21,20 +21,22 @@ interface SortiesListProps {
 
 export function SortiesList({ searchQuery, categorieFilter }: SortiesListProps) {
   const { toast } = useToast()
-  const [sorties, setSorties] = useState<any[]>([])
+  const [sorties, setSorties] = useState<Sortie[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedSortie, setSelectedSortie] = useState<any | null>(null)
 
   useEffect(() => {
     loadSorties()
-  }, [])
+  }, [categorieFilter])
 
   const loadSorties = async () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await sortiesService.getAll()
+      const response: any = await sortiesService.getAll({ 
+        categorie: categorieFilter !== "all" ? categorieFilter : undefined 
+      })
+      const data = response.data || response
       setSorties(Array.isArray(data) ? data : [])
     } catch (err: any) {
       const errorMessage = err.message || 'Erreur de chargement des sorties'
@@ -51,24 +53,21 @@ export function SortiesList({ searchQuery, categorieFilter }: SortiesListProps) 
 
   const filteredSorties = sorties.filter((sortie) => {
     const matchesSearch =
-      sortie.libelle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sortie.beneficiaire?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sortie.categorie?.toLowerCase().includes(searchQuery.toLowerCase())
+      (sortie.libelle || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (sortie.beneficiaire || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (sortie.category?.name || "").toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesCategorie = categorieFilter === "all" || sortie.categorie === categorieFilter
-
-    return matchesSearch && matchesCategorie
+    return matchesSearch
   })
 
-  const handleEdit = (sortie: any) => {
-    setSelectedSortie(sortie)
+  const handleEdit = (sortie: Sortie) => {
     toast({
       title: "Modifier la sortie",
       description: `${sortie.libelle} - ${sortie.montant} ${sortie.devise}`,
     })
   }
 
-  const handleDelete = async (sortie: any) => {
+  const handleDelete = async (sortie: Sortie) => {
     if (confirm(`Êtes-vous sûr de vouloir supprimer cette sortie "${sortie.libelle}" ?`)) {
       try {
         await sortiesService.delete(sortie.id)
@@ -87,27 +86,23 @@ export function SortiesList({ searchQuery, categorieFilter }: SortiesListProps) 
     }
   }
 
-  const getCategorieBadge = (categorie: string) => {
-    const colors: Record<string, string> = {
-      "Matériel": "bg-blue-500",
-      "Transport": "bg-green-500",
-      "Événement": "bg-purple-500",
-      "Maintenance": "bg-orange-500",
-      "Autre": "bg-gray-500",
-    }
-    return <Badge className={colors[categorie] || "bg-gray-500"}>{categorie}</Badge>
-  }
+  // Calcul des totaux par devise
+  const totalCDF = filteredSorties
+    .filter((s) => s.devise === "CDF")
+    .reduce((sum, s) => sum + Number(s.montant), 0)
 
-  // Calcul du total
-  const totalSorties = filteredSorties.reduce((sum, s) => sum + (s.montant || 0), 0)
+  const totalUSD = filteredSorties
+    .filter((s) => s.devise === "USD")
+    .reduce((sum, s) => sum + Number(s.montant), 0)
 
   // Statistiques par catégorie
   const statsParCategorie = filteredSorties.reduce((acc, s) => {
-    if (!acc[s.categorie]) {
-      acc[s.categorie] = { montant: 0, nombre: 0 }
+    const catName = s.category?.name || 'Non catégorisé'
+    if (!acc[catName]) {
+      acc[catName] = { montant: 0, nombre: 0 }
     }
-    acc[s.categorie].montant += s.montant || 0
-    acc[s.categorie].nombre++
+    acc[catName].montant += Number(s.montant) || 0
+    acc[catName].nombre++
     return acc
   }, {} as Record<string, { montant: number; nombre: number }>)
 
@@ -134,7 +129,7 @@ export function SortiesList({ searchQuery, categorieFilter }: SortiesListProps) 
   return (
     <div className="space-y-4">
       {/* Statistiques */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
@@ -142,8 +137,22 @@ export function SortiesList({ searchQuery, categorieFilter }: SortiesListProps) 
                 <TrendingDown className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total des sorties</p>
-                <p className="text-2xl font-bold text-red-600">{totalSorties.toLocaleString()} CDF</p>
+                <p className="text-sm text-gray-600">Total CDF</p>
+                <p className="text-2xl font-bold text-red-600">{totalCDF.toLocaleString()} CDF</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <DollarSign className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total USD</p>
+                <p className="text-2xl font-bold text-blue-600">{totalUSD.toLocaleString()} USD</p>
               </div>
             </div>
           </CardContent>
@@ -173,7 +182,7 @@ export function SortiesList({ searchQuery, categorieFilter }: SortiesListProps) 
               {Object.entries(statsParCategorie).map(([categorie, stats]) => (
                 <div key={categorie} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div className="flex items-center gap-2">
-                    {getCategorieBadge(categorie)}
+                    <Badge variant="outline">{categorie}</Badge>
                     <span className="text-sm text-gray-600">({stats.nombre})</span>
                   </div>
                   <span className="font-semibold">{stats.montant.toLocaleString()} CDF</span>
@@ -202,26 +211,32 @@ export function SortiesList({ searchQuery, categorieFilter }: SortiesListProps) 
                     <div className="flex items-center gap-3">
                       <TrendingDown className="h-4 w-4 text-red-500" />
                       <span className="font-semibold">{sortie.libelle}</span>
-                      {getCategorieBadge(sortie.categorie)}
+                      <Badge variant="outline">
+                        {sortie.category?.name || 'Non catégorisé'}
+                      </Badge>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        <span>{new Date(sortie.dateSortie).toLocaleDateString("fr-FR")}</span>
+                        <span>
+                          {sortie.date_sortie 
+                            ? new Date(sortie.date_sortie).toLocaleDateString("fr-FR")
+                            : '-'}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
                         <DollarSign className="h-3 w-3" />
                         <span className="font-semibold text-red-600">
-                          {sortie.montant.toLocaleString()} {sortie.devise}
+                          {Number(sortie.montant).toLocaleString()} {sortie.devise}
                         </span>
                       </div>
-                      <div>
-                        Bénéficiaire: {sortie.beneficiaire}
-                      </div>
-                      <div>
-                        Mode: {sortie.modePaiement}
-                      </div>
+                      {sortie.beneficiaire && (
+                        <div>Bénéficiaire: {sortie.beneficiaire}</div>
+                      )}
+                      {sortie.reference && (
+                        <div>Réf: {sortie.reference}</div>
+                      )}
                     </div>
 
                     {sortie.remarque && (

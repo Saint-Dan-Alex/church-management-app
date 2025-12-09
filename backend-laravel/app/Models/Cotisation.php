@@ -12,22 +12,31 @@ class Cotisation extends Model
     use HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [
-        'moniteur',
+        'membre_nom',
+        'cotisation_type_id',
         'montant',
         'devise',
-        'periode',
-        'datePaiement',
-        'statut',
-        'modePaiement',
+        'date_cotisation',
+        'mois',
+        'annee',
+        'mode_paiement',
+        'numero_recu',
         'remarque',
+        'enregistre_par',
+        'enregistre_par_nom',
     ];
 
     protected $casts = [
         'montant' => 'decimal:2',
-        'datePaiement' => 'date',
+        'date_cotisation' => 'date',
     ];
 
     // Relations
+    public function type()
+    {
+        return $this->belongsTo(CotisationType::class, 'cotisation_type_id');
+    }
+
     public function enregistrePar()
     {
         return $this->belongsTo(User::class, 'enregistre_par');
@@ -36,7 +45,9 @@ class Cotisation extends Model
     // Scopes
     public function scopeByType($query, $type)
     {
-        return $query->where('type_cotisation', $type);
+        return $query->whereHas('type', function($q) use ($type) {
+             $q->where('name', $type)->orWhere('id', $type);
+        });
     }
 
     public function scopeByMonth($query, $mois, $annee)

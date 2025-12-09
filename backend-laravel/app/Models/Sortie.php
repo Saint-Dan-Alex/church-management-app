@@ -14,7 +14,7 @@ class Sortie extends Model
     protected $fillable = [
         'libelle',
         'description',
-        'categorie',
+        'sortie_category_id',
         'montant',
         'devise',
         'date_sortie',
@@ -31,6 +31,11 @@ class Sortie extends Model
     ];
 
     // Relations
+    public function category()
+    {
+        return $this->belongsTo(SortieCategory::class, 'sortie_category_id');
+    }
+
     public function enregistrePar()
     {
         return $this->belongsTo(User::class, 'enregistre_par');
@@ -39,7 +44,9 @@ class Sortie extends Model
     // Scopes
     public function scopeByCategory($query, $categorie)
     {
-        return $query->where('categorie', $categorie);
+        return $query->whereHas('category', function($q) use ($categorie) {
+             $q->where('name', $categorie)->orWhere('id', $categorie);
+        });
     }
 
     public function scopeByPeriod($query, $dateDebut, $dateFin)
