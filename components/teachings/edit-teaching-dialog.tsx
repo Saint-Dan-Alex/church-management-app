@@ -24,10 +24,12 @@ interface EditTeachingDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   teaching: Teaching | null
+  onSave: (teaching: Teaching) => Promise<void>
 }
 
-export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachingDialogProps) {
+export function EditTeachingDialog({ open, onOpenChange, teaching, onSave }: EditTeachingDialogProps) {
   const [formData, setFormData] = useState<Partial<Teaching>>({})
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (teaching) {
@@ -69,18 +71,18 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
     const newPoint: PointDeveloppement = {
       id: Date.now().toString(),
       titre: "",
-      sousPoints: [],
+      sous_points: [],
     }
     setFormData({
       ...formData,
-      pointsDevelopper: [...(formData.pointsDevelopper || []), newPoint],
+      points: [...(formData.points || []), newPoint],
     })
   }
 
   const updatePoint = (id: string, titre: string) => {
     setFormData({
       ...formData,
-      pointsDevelopper: formData.pointsDevelopper?.map(point =>
+      points: formData.points?.map(point =>
         point.id === id ? { ...point, titre } : point
       ),
     })
@@ -89,7 +91,7 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
   const removePoint = (id: string) => {
     setFormData({
       ...formData,
-      pointsDevelopper: formData.pointsDevelopper?.filter(point => point.id !== id),
+      points: formData.points?.filter(point => point.id !== id),
     })
   }
 
@@ -101,9 +103,9 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
     }
     setFormData({
       ...formData,
-      pointsDevelopper: formData.pointsDevelopper?.map(point =>
+      points: formData.points?.map(point =>
         point.id === pointId
-          ? { ...point, sousPoints: [...point.sousPoints, newSousPoint] }
+          ? { ...point, sous_points: [...point.sous_points, newSousPoint] }
           : point
       ),
     })
@@ -112,14 +114,14 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
   const updateSousPoint = (pointId: string, sousPointId: string, contenu: string) => {
     setFormData({
       ...formData,
-      pointsDevelopper: formData.pointsDevelopper?.map(point =>
+      points: formData.points?.map(point =>
         point.id === pointId
           ? {
-              ...point,
-              sousPoints: point.sousPoints.map(sp =>
-                sp.id === sousPointId ? { ...sp, contenu } : sp
-              ),
-            }
+            ...point,
+            sous_points: point.sous_points.map(sp =>
+              sp.id === sousPointId ? { ...sp, contenu } : sp
+            ),
+          }
           : point
       ),
     })
@@ -128,9 +130,9 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
   const removeSousPoint = (pointId: string, sousPointId: string) => {
     setFormData({
       ...formData,
-      pointsDevelopper: formData.pointsDevelopper?.map(point =>
+      points: formData.points?.map(point =>
         point.id === pointId
-          ? { ...point, sousPoints: point.sousPoints.filter(sp => sp.id !== sousPointId) }
+          ? { ...point, sous_points: point.sous_points.filter(sp => sp.id !== sousPointId) }
           : point
       ),
     })
@@ -187,11 +189,11 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
       evenements: formData.evenements?.map(evt =>
         evt.id === evenementId
           ? {
-              ...evt,
-              enseignements: evt.enseignements.map(ens =>
-                ens.id === enseignementId ? { ...ens, contenu } : ens
-              ),
-            }
+            ...evt,
+            enseignements: evt.enseignements.map(ens =>
+              ens.id === enseignementId ? { ...ens, contenu } : ens
+            ),
+          }
           : evt
       ),
     })
@@ -208,10 +210,19 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Enseignement modifié:", formData)
-    onOpenChange(false)
+    if (!formData.id) return
+
+    try {
+      setSaving(true)
+      await onSave(formData as Teaching)
+      onOpenChange(false)
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde", error)
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (!teaching) return null
@@ -237,8 +248,14 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                     <Input
                       id="dateSeance-edit"
                       type="date"
-                      value={formData.dateSeance as string}
-                      onChange={(e) => setFormData({ ...formData, dateSeance: e.target.value })}
+                      value={
+                        typeof formData.date_seance === "string"
+                          ? formData.date_seance.substring(0, 10)
+                          : formData.date_seance instanceof Date
+                            ? formData.date_seance.toISOString().split("T")[0]
+                            : ""
+                      }
+                      onChange={(e) => setFormData({ ...formData, date_seance: e.target.value })}
                       required
                     />
                   </div>
@@ -246,7 +263,7 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                     <Label htmlFor="theme-edit">Thème *</Label>
                     <Input
                       id="theme-edit"
-                      value={formData.theme}
+                      value={formData.theme || ""}
                       onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
                       required
                     />
@@ -255,15 +272,15 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                     <Label htmlFor="sousTheme-edit">Sous-thème</Label>
                     <Input
                       id="sousTheme-edit"
-                      value={formData.sousTheme}
-                      onChange={(e) => setFormData({ ...formData, sousTheme: e.target.value })}
+                      value={formData.sous_theme || ""}
+                      onChange={(e) => setFormData({ ...formData, sous_theme: e.target.value })}
                     />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="sujet-edit">Sujet *</Label>
                     <Input
                       id="sujet-edit"
-                      value={formData.sujet}
+                      value={formData.sujet || ""}
                       onChange={(e) => setFormData({ ...formData, sujet: e.target.value })}
                       required
                     />
@@ -273,8 +290,8 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                   <Label htmlFor="textesBibliques-edit">Textes bibliques *</Label>
                   <Textarea
                     id="textesBibliques-edit"
-                    value={formData.textesBibliques}
-                    onChange={(e) => setFormData({ ...formData, textesBibliques: e.target.value })}
+                    value={formData.textes_bibliques || ""}
+                    onChange={(e) => setFormData({ ...formData, textes_bibliques: e.target.value })}
                     rows={2}
                     required
                   />
@@ -283,8 +300,8 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                   <Label htmlFor="butPedagogique-edit">But pédagogique *</Label>
                   <Textarea
                     id="butPedagogique-edit"
-                    value={formData.butPedagogique}
-                    onChange={(e) => setFormData({ ...formData, butPedagogique: e.target.value })}
+                    value={formData.but_pedagogique || ""}
+                    onChange={(e) => setFormData({ ...formData, but_pedagogique: e.target.value })}
                     rows={2}
                     required
                   />
@@ -293,8 +310,8 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                   <Label htmlFor="versetRetenir-edit">Verset à retenir (V.A.R) *</Label>
                   <Input
                     id="versetRetenir-edit"
-                    value={formData.versetRetenir}
-                    onChange={(e) => setFormData({ ...formData, versetRetenir: e.target.value })}
+                    value={formData.verset_retenir || ""}
+                    onChange={(e) => setFormData({ ...formData, verset_retenir: e.target.value })}
                     required
                   />
                 </div>
@@ -318,12 +335,12 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                         <div className="flex-1 grid gap-2 md:grid-cols-2">
                           <Input
                             placeholder={`Titre du chant ${index + 1}`}
-                            value={chant.titre}
+                            value={chant.titre || ""}
                             onChange={(e) => updateChant(chant.id, "titre", e.target.value)}
                           />
                           <Input
                             placeholder="N° (optionnel)"
-                            value={chant.numero}
+                            value={chant.numero || ""}
                             onChange={(e) => updateChant(chant.id, "numero", e.target.value)}
                           />
                         </div>
@@ -348,8 +365,8 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                     <Label htmlFor="materielDidactique-edit">Matériel didactique (M/D)</Label>
                     <Textarea
                       id="materielDidactique-edit"
-                      value={formData.materielDidactique}
-                      onChange={(e) => setFormData({ ...formData, materielDidactique: e.target.value })}
+                      value={formData.materiel_didactique || ""}
+                      onChange={(e) => setFormData({ ...formData, materiel_didactique: e.target.value })}
                       rows={2}
                     />
                   </div>
@@ -357,8 +374,8 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                     <Label htmlFor="sujetRevision-edit">Sujet de révision (S/R)</Label>
                     <Textarea
                       id="sujetRevision-edit"
-                      value={formData.sujetRevision}
-                      onChange={(e) => setFormData({ ...formData, sujetRevision: e.target.value })}
+                      value={formData.sujet_revision || ""}
+                      onChange={(e) => setFormData({ ...formData, sujet_revision: e.target.value })}
                       rows={2}
                     />
                   </div>
@@ -375,7 +392,7 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                     <Label htmlFor="sensibilisation-edit">Sensibilisation (chants)</Label>
                     <Textarea
                       id="sensibilisation-edit"
-                      value={formData.sensibilisation}
+                      value={formData.sensibilisation || ""}
                       onChange={(e) => setFormData({ ...formData, sensibilisation: e.target.value })}
                       rows={2}
                     />
@@ -384,8 +401,8 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                     <Label htmlFor="questionsReponses-edit">Questions/Réponses (Q.R)</Label>
                     <Textarea
                       id="questionsReponses-edit"
-                      value={formData.questionsReponses}
-                      onChange={(e) => setFormData({ ...formData, questionsReponses: e.target.value })}
+                      value={formData.questions_reponses || ""}
+                      onChange={(e) => setFormData({ ...formData, questions_reponses: e.target.value })}
                       rows={2}
                     />
                   </div>
@@ -393,8 +410,8 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                     <Label htmlFor="questionDecouverte-edit">Question de découverte (Q.D)</Label>
                     <Textarea
                       id="questionDecouverte-edit"
-                      value={formData.questionDecouverte}
-                      onChange={(e) => setFormData({ ...formData, questionDecouverte: e.target.value })}
+                      value={formData.question_decouverte || ""}
+                      onChange={(e) => setFormData({ ...formData, question_decouverte: e.target.value })}
                       rows={2}
                     />
                   </div>
@@ -402,8 +419,8 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                     <Label htmlFor="reponseDecouverte-edit">Réponse de découverte (R)</Label>
                     <Textarea
                       id="reponseDecouverte-edit"
-                      value={formData.reponseDecouverte}
-                      onChange={(e) => setFormData({ ...formData, reponseDecouverte: e.target.value })}
+                      value={formData.reponse_decouverte || ""}
+                      onChange={(e) => setFormData({ ...formData, reponse_decouverte: e.target.value })}
                       rows={2}
                     />
                   </div>
@@ -414,8 +431,8 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
               <div className="space-y-4 border-t pt-4">
                 <h3 className="font-semibold text-gray-900">Type de contenu *</h3>
                 <RadioGroup
-                  value={formData.typeContenu}
-                  onValueChange={(value: any) => setFormData({ ...formData, typeContenu: value })}
+                  value={formData.type_contenu}
+                  onValueChange={(value: any) => setFormData({ ...formData, type_contenu: value })}
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="points_developper" id="points-edit" />
@@ -433,7 +450,7 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
               </div>
 
               {/* POINTS À DÉVELOPPER */}
-              {formData.typeContenu === "points_developper" && (
+              {formData.type_contenu === "points_developper" && (
                 <div className="space-y-4 border-t pt-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900 flex items-center gap-2">
@@ -445,13 +462,13 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                     </Button>
                   </div>
                   <div className="space-y-4">
-                    {formData.pointsDevelopper?.map((point, pointIndex) => (
+                    {formData.points?.map((point, pointIndex) => (
                       <Card key={point.id} className="p-4">
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
                             <Input
                               placeholder={`Point ${pointIndex + 1}`}
-                              value={point.titre}
+                              value={point.titre || ""}
                               onChange={(e) => updatePoint(point.id, e.target.value)}
                               className="flex-1"
                             />
@@ -467,11 +484,11 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
 
                           {/* Sous-points */}
                           <div className="ml-6 space-y-2">
-                            {point.sousPoints.map((sousPoint, spIndex) => (
+                            {point.sous_points.map((sousPoint, spIndex) => (
                               <div key={sousPoint.id} className="flex items-center gap-2">
                                 <Input
                                   placeholder={`Sous-point ${spIndex + 1}`}
-                                  value={sousPoint.contenu}
+                                  value={sousPoint.contenu || ""}
                                   onChange={(e) =>
                                     updateSousPoint(point.id, sousPoint.id, e.target.value)
                                   }
@@ -506,7 +523,7 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
               )}
 
               {/* DÉVELOPPEMENT */}
-              {formData.typeContenu === "developpement" && (
+              {formData.type_contenu === "developpement" && (
                 <div className="space-y-4 border-t pt-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900 flex items-center gap-2">
@@ -517,65 +534,65 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                       Ajouter un événement
                     </Button>
                   </div>
-                    <div className="space-y-4">
-                      {formData.evenements?.map((evenement, evtIndex) => (
-                        <Card key={evenement.id} className="p-4">
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                              <Input
-                                placeholder={`Événement ${evtIndex + 1}`}
-                                value={evenement.titre}
-                                onChange={(e) => updateEvenement(evenement.id, e.target.value)}
-                                className="flex-1"
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeEvenement(evenement.id)}
-                              >
-                                <X className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </div>
-
-                            {/* Enseignements de l'événement */}
-                            <div className="ml-6 space-y-2">
-                              {evenement.enseignements.map((ens, ensIndex) => (
-                                <div key={ens.id} className="flex items-center gap-2">
-                                  <Textarea
-                                    placeholder={`Enseignement ${ensIndex + 1}`}
-                                    value={ens.contenu}
-                                    onChange={(e) =>
-                                      updateEnseignementEvenement(evenement.id, ens.id, e.target.value)
-                                    }
-                                    rows={2}
-                                    className="flex-1"
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeEnseignementEvenement(evenement.id, ens.id)}
-                                  >
-                                    <X className="h-4 w-4 text-red-600" />
-                                  </Button>
-                                </div>
-                              ))}
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addEnseignementEvenement(evenement.id)}
-                                className="mt-2"
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Ajouter un enseignement
-                              </Button>
-                            </div>
+                  <div className="space-y-4">
+                    {formData.evenements?.map((evenement, evtIndex) => (
+                      <Card key={evenement.id} className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              placeholder={`Événement ${evtIndex + 1}`}
+                              value={evenement.titre || ""}
+                              onChange={(e) => updateEvenement(evenement.id, e.target.value)}
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeEvenement(evenement.id)}
+                            >
+                              <X className="h-4 w-4 text-red-600" />
+                            </Button>
                           </div>
-                        </Card>
-                      ))}
-                    </div>
+
+                          {/* Enseignements de l'événement */}
+                          <div className="ml-6 space-y-2">
+                            {evenement.enseignements.map((ens, ensIndex) => (
+                              <div key={ens.id} className="flex items-center gap-2">
+                                <Textarea
+                                  placeholder={`Enseignement ${ensIndex + 1}`}
+                                  value={ens.contenu || ""}
+                                  onChange={(e) =>
+                                    updateEnseignementEvenement(evenement.id, ens.id, e.target.value)
+                                  }
+                                  rows={2}
+                                  className="flex-1"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeEnseignementEvenement(evenement.id, ens.id)}
+                                >
+                                  <X className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </div>
+                            ))}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addEnseignementEvenement(evenement.id)}
+                              className="mt-2"
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Ajouter un enseignement
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -586,7 +603,7 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
                   <Label htmlFor="conclusion-edit">Conclusion de la leçon</Label>
                   <Textarea
                     id="conclusion-edit"
-                    value={formData.conclusion}
+                    value={formData.conclusion || ""}
                     onChange={(e) => setFormData({ ...formData, conclusion: e.target.value })}
                     rows={4}
                   />
@@ -595,10 +612,12 @@ export function EditTeachingDialog({ open, onOpenChange, teaching }: EditTeachin
             </div>
 
             <DialogFooter className="pr-4 border-t pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
                 Annuler
               </Button>
-              <Button type="submit">Enregistrer les modifications</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Enregistrement..." : "Enregistrer les modifications"}
+              </Button>
             </DialogFooter>
           </form>
         </ScrollArea>

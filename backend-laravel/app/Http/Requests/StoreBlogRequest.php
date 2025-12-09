@@ -18,11 +18,12 @@ class StoreBlogRequest extends FormRequest
             'excerpt' => 'nullable|string',
             'content' => 'required|string',
             'author' => 'required|string|max:255',
-            'date' => 'nullable|date',
-            'category' => 'required|string|max:255',
+            'category' => 'required', // Accepte UUID ou string (nom de nouvelle catégorie)
             'status' => 'required|in:draft,published',
             'views' => 'nullable|integer',
             'image' => 'nullable|string',
+            'tags' => 'nullable|array',
+            'published_at' => 'nullable|date',
         ];
     }
 }

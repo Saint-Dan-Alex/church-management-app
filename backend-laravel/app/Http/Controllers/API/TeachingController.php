@@ -36,54 +36,7 @@ class TeachingController extends Controller
         DB::beginTransaction();
         try {
             $teaching = Teaching::create($request->except(['chants', 'points', 'evenements']));
-
-            // Sauvegarder les chants
-            if ($request->has('chants')) {
-                foreach ($request->chants as $index => $chantData) {
-                    $teaching->chants()->create([
-                        ...$chantData,
-                        'ordre' => $index
-                    ]);
-                }
-            }
-
-            // Sauvegarder les points et sous-points
-            if ($request->has('points')) {
-                foreach ($request->points as $pointIndex => $pointData) {
-                    $point = $teaching->points()->create([
-                        'titre' => $pointData['titre'],
-                        'ordre' => $pointIndex
-                    ]);
-
-                    if (isset($pointData['sous_points'])) {
-                        foreach ($pointData['sous_points'] as $spIndex => $sousPoint) {
-                            $point->sousPoints()->create([
-                                'contenu' => $sousPoint['contenu'],
-                                'ordre' => $spIndex
-                            ]);
-                        }
-                    }
-                }
-            }
-
-            // Sauvegarder les événements et enseignements
-            if ($request->has('evenements')) {
-                foreach ($request->evenements as $evtIndex => $eventData) {
-                    $evenement = $teaching->evenements()->create([
-                        'titre' => $eventData['titre'],
-                        'ordre' => $evtIndex
-                    ]);
-
-                    if (isset($eventData['enseignements'])) {
-                        foreach ($eventData['enseignements'] as $ensIndex => $ensData) {
-                            $evenement->enseignements()->create([
-                                'contenu' => $ensData['contenu'],
-                                'ordre' => $ensIndex
-                            ]);
-                        }
-                    }
-                }
-            }
+            $this->saveRelations($teaching, $request->all());
 
             DB::commit();
 
@@ -97,6 +50,98 @@ class TeachingController extends Controller
                 'message' => 'Erreur lors de la création',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /** @OA\Put(path="/teachings/{id}", tags={"Teachings"}, summary="Mettre à jour un enseignement", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreTeachingRequest")), @OA\Response(response=200, description="Enseignement mis à jour"), @OA\Response(response=404, description="Non trouvé"), @OA\Response(response=500, description="Erreur serveur")) */
+    public function update(StoreTeachingRequest $request, Teaching $teaching): JsonResponse
+    {
+        DB::beginTransaction();
+        try {
+            $teaching->update($request->except(['chants', 'points', 'evenements']));
+
+            // Supprimer les anciennes relations pour les recréer
+            $teaching->chants()->delete();
+            // Pour les points et événements, on doit s'assurer que la suppression en cascade fonctionne
+            // Si la base de données a 'ON DELETE CASCADE', delete() sur le parent suffit.
+            // Sinon, il faudrait charger et supprimer les enfants manuellement.
+            // Supposons que la migration est correcte (cascade).
+            $teaching->points()->each(function($point) {
+                $point->sousPoints()->delete();
+                $point->delete();
+            });
+            
+            $teaching->evenements()->each(function($evt) {
+                $evt->enseignements()->delete();
+                $evt->delete();
+            });
+
+            $this->saveRelations($teaching, $request->all());
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Enseignement mis à jour avec succès',
+                'data' => $teaching->load(['chants', 'points.sousPoints', 'evenements.enseignements'])
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Erreur lors de la mise à jour',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function saveRelations(Teaching $teaching, array $data): void
+    {
+        // Sauvegarder les chants
+        if (isset($data['chants'])) {
+            foreach ($data['chants'] as $index => $chantData) {
+                $teaching->chants()->create([
+                    'titre' => $chantData['titre'] ?? '',
+                    'numero' => $chantData['numero'] ?? null,
+                    'ordre' => $index
+                ]);
+            }
+        }
+
+        // Sauvegarder les points et sous-points
+        if (isset($data['points'])) {
+            foreach ($data['points'] as $pointIndex => $pointData) {
+                $point = $teaching->points()->create([
+                    'titre' => $pointData['titre'] ?? '',
+                    'ordre' => $pointIndex
+                ]);
+
+                if (isset($pointData['sous_points'])) {
+                    foreach ($pointData['sous_points'] as $spIndex => $sousPoint) {
+                        $point->sousPoints()->create([
+                            'contenu' => $sousPoint['contenu'] ?? '',
+                            'ordre' => $spIndex
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Sauvegarder les événements et enseignements
+        if (isset($data['evenements'])) {
+            foreach ($data['evenements'] as $evtIndex => $eventData) {
+                $evenement = $teaching->evenements()->create([
+                    'titre' => $eventData['titre'] ?? '',
+                    'ordre' => $evtIndex
+                ]);
+
+                if (isset($eventData['enseignements'])) {
+                    foreach ($eventData['enseignements'] as $ensIndex => $ensData) {
+                        $evenement->enseignements()->create([
+                            'contenu' => $ensData['contenu'] ?? '',
+                            'ordre' => $ensIndex
+                        ]);
+                    }
+                }
+            }
         }
     }
 

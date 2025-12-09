@@ -9,6 +9,7 @@ use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\TeachingController;
 use App\Http\Controllers\API\WorshipReportController;
 use App\Http\Controllers\API\BlogController;
+use App\Http\Controllers\API\BlogCategoryController;
 use App\Http\Controllers\API\VideoController;
 use App\Http\Controllers\API\PhotoController;
 use App\Http\Controllers\API\ExpenseController;
@@ -61,6 +62,7 @@ Route::prefix('v1')->group(function () {
     // Blog Routes
     Route::apiResource('blogs', BlogController::class);
     Route::get('blogs-published', [BlogController::class, 'published']);
+    Route::apiResource('blog-categories', BlogCategoryController::class)->only(['index', 'store']);
 
     // Videos Routes
     Route::apiResource('videos', VideoController::class);

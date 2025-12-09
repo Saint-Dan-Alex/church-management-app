@@ -19,13 +19,18 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, X } from "lucide-react"
 import type { TeachingFormData, Chant, PointDeveloppement, SousPoint, Evenement, EnseignementEvenement } from "@/types/teaching"
+import { teachingsService } from "@/lib/services/teachings.service"
+import { useToast } from "@/hooks/use-toast"
 
 interface AddTeachingDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
-export function AddTeachingDialog({ open, onOpenChange }: AddTeachingDialogProps) {
+export function AddTeachingDialog({ open, onOpenChange, onSuccess }: AddTeachingDialogProps) {
+  const { toast } = useToast()
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<Partial<TeachingFormData>>({
     dateSeance: "",
     theme: "",
@@ -127,11 +132,11 @@ export function AddTeachingDialog({ open, onOpenChange }: AddTeachingDialogProps
       pointsDevelopper: formData.pointsDevelopper?.map(point =>
         point.id === pointId
           ? {
-              ...point,
-              sousPoints: point.sousPoints.map(sp =>
-                sp.id === sousPointId ? { ...sp, contenu } : sp
-              ),
-            }
+            ...point,
+            sousPoints: point.sousPoints.map(sp =>
+              sp.id === sousPointId ? { ...sp, contenu } : sp
+            ),
+          }
           : point
       ),
     })
@@ -199,11 +204,11 @@ export function AddTeachingDialog({ open, onOpenChange }: AddTeachingDialogProps
       evenements: formData.evenements?.map(evt =>
         evt.id === evenementId
           ? {
-              ...evt,
-              enseignements: evt.enseignements.map(ens =>
-                ens.id === enseignementId ? { ...ens, contenu } : ens
-              ),
-            }
+            ...evt,
+            enseignements: evt.enseignements.map(ens =>
+              ens.id === enseignementId ? { ...ens, contenu } : ens
+            ),
+          }
           : evt
       ),
     })
@@ -220,11 +225,90 @@ export function AddTeachingDialog({ open, onOpenChange }: AddTeachingDialogProps
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Enseignement ajouté:", formData)
-    // Ici vous enregistrerez dans la base de données
-    onOpenChange(false)
+    try {
+      setIsSubmitting(true)
+
+      // Mapping frontend (camelCase) -> backend (snake_case)
+      const payload: any = {
+        date_seance: formData.dateSeance,
+        theme: formData.theme,
+        sous_theme: formData.sousTheme || null,
+        sujet: formData.sujet,
+        textes_bibliques: formData.textesBibliques,
+        but_pedagogique: formData.butPedagogique,
+        verset_retenir: formData.versetRetenir,
+        materiel_didactique: formData.materielDidactique || null,
+        sujet_revision: formData.sujetRevision || null,
+        sensibilisation: formData.sensibilisation || null,
+        questions_reponses: formData.questionsReponses || null,
+        question_decouverte: formData.questionDecouverte || null,
+        reponse_decouverte: formData.reponseDecouverte || null,
+        type_contenu: formData.typeContenu,
+        conclusion: formData.conclusion || null,
+
+        // Relations
+        chants: formData.chants?.map(c => ({
+          titre: c.titre,
+          numero: c.numero || null
+        })),
+        points: formData.typeContenu === 'points_developper' ? formData.pointsDevelopper?.map(p => ({
+          titre: p.titre,
+          sous_points: p.sousPoints.map(sp => ({
+            contenu: sp.contenu
+          }))
+        })) : [],
+        evenements: formData.typeContenu === 'developpement' ? formData.evenements?.map(evt => ({
+          titre: evt.titre,
+          enseignements: evt.enseignements.map(ens => ({
+            contenu: ens.contenu
+          }))
+        })) : []
+      }
+
+      await teachingsService.create(payload)
+
+      toast({
+        title: "Enseignement créé",
+        description: "L'enseignement a été enregistré avec succès.",
+      })
+
+      if (onSuccess) onSuccess()
+      onOpenChange(false)
+
+      // Reset form
+      setFormData({
+        dateSeance: "",
+        theme: "",
+        sousTheme: "",
+        sujet: "",
+        textesBibliques: "",
+        butPedagogique: "",
+        versetRetenir: "",
+        chants: [],
+        materielDidactique: "",
+        sujetRevision: "",
+        sensibilisation: "",
+        questionsReponses: "",
+        questionDecouverte: "",
+        reponseDecouverte: "",
+        typeContenu: "points_developper",
+        pointsDevelopper: [],
+        evenements: [],
+        conclusion: "",
+      })
+
+    } catch (error) {
+      console.error("Erreur lors de la création:", error)
+      toast({
+        title: "Erreur",
+        description: "Impossible d'enregistrer l'enseignement. Vérifiez les champs obligatoires.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -536,65 +620,65 @@ export function AddTeachingDialog({ open, onOpenChange }: AddTeachingDialogProps
                       Ajouter un événement
                     </Button>
                   </div>
-                    <div className="space-y-4">
-                      {formData.evenements?.map((evenement, evtIndex) => (
-                        <Card key={evenement.id} className="p-4">
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                              <Input
-                                placeholder={`Événement ${evtIndex + 1}`}
-                                value={evenement.titre}
-                                onChange={(e) => updateEvenement(evenement.id, e.target.value)}
-                                className="flex-1"
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeEvenement(evenement.id)}
-                              >
-                                <X className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </div>
-
-                            {/* Enseignements de l'événement */}
-                            <div className="ml-6 space-y-2">
-                              {evenement.enseignements.map((ens, ensIndex) => (
-                                <div key={ens.id} className="flex items-center gap-2">
-                                  <Textarea
-                                    placeholder={`Enseignement ${ensIndex + 1}`}
-                                    value={ens.contenu}
-                                    onChange={(e) =>
-                                      updateEnseignementEvenement(evenement.id, ens.id, e.target.value)
-                                    }
-                                    rows={2}
-                                    className="flex-1"
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeEnseignementEvenement(evenement.id, ens.id)}
-                                  >
-                                    <X className="h-4 w-4 text-red-600" />
-                                  </Button>
-                                </div>
-                              ))}
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addEnseignementEvenement(evenement.id)}
-                                className="mt-2"
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Ajouter un enseignement
-                              </Button>
-                            </div>
+                  <div className="space-y-4">
+                    {formData.evenements?.map((evenement, evtIndex) => (
+                      <Card key={evenement.id} className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              placeholder={`Événement ${evtIndex + 1}`}
+                              value={evenement.titre}
+                              onChange={(e) => updateEvenement(evenement.id, e.target.value)}
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeEvenement(evenement.id)}
+                            >
+                              <X className="h-4 w-4 text-red-600" />
+                            </Button>
                           </div>
-                        </Card>
-                      ))}
-                    </div>
+
+                          {/* Enseignements de l'événement */}
+                          <div className="ml-6 space-y-2">
+                            {evenement.enseignements.map((ens, ensIndex) => (
+                              <div key={ens.id} className="flex items-center gap-2">
+                                <Textarea
+                                  placeholder={`Enseignement ${ensIndex + 1}`}
+                                  value={ens.contenu}
+                                  onChange={(e) =>
+                                    updateEnseignementEvenement(evenement.id, ens.id, e.target.value)
+                                  }
+                                  rows={2}
+                                  className="flex-1"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeEnseignementEvenement(evenement.id, ens.id)}
+                                >
+                                  <X className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </div>
+                            ))}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addEnseignementEvenement(evenement.id)}
+                              className="mt-2"
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Ajouter un enseignement
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               )}
 

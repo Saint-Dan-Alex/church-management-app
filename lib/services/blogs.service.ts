@@ -26,4 +26,8 @@ export const blogsService = {
   async delete(id: string): Promise<void> {
     return api.delete(`/blogs/${id}`);
   },
+
+  async getCategories(): Promise<import('@/lib/types/api').BlogCategory[]> {
+    return api.get<import('@/lib/types/api').BlogCategory[]>('/blog-categories');
+  },
 };

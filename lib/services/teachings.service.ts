@@ -1,30 +1,18 @@
 import { api } from '@/lib/utils/api';
-
-export interface Teaching {
-  id: string;
-  date_seance: string;
-  theme: string;
-  sous_theme?: string | null;
-  sujet: string;
-  textes_bibliques: string;
-  but_pedagogique: string;
-  verset_retenir: string;
-  materiel_didactique?: string | null;
-  sujet_revision?: string | null;
-  sensibilisation?: string | null;
-  questions_reponses?: string | null;
-  question_decouverte?: string | null;
-  reponse_decouverte?: string | null;
-  type_contenu: 'points_developper' | 'developpement';
-  conclusion?: string | null;
-  created_by?: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import { Teaching } from '@/types/teaching';
 
 export const teachingsService = {
   async getAll(): Promise<Teaching[]> {
-    return api.get<Teaching[]>('/teachings');
+    const response = await api.get<any>('/teachings');
+    // Gérer la pagination Laravel (si response.data existe et est un tableau)
+    if (response && response.data && Array.isArray(response.data)) {
+      return response.data;
+    }
+    // Si c'est déjà un tableau
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return [];
   },
 
   async getById(id: string): Promise<Teaching> {

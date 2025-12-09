@@ -200,29 +200,28 @@ export interface Activity {
   updated_at: string;
 }
 
+// Blog Category
+export interface BlogCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+}
+
 // Blog
 export interface Blog {
   id: string;
-  // Champs originaux de la base de données
-  titre: string;
-  contenu: string;
-  extrait?: string | null;
-  auteur: string;
-  categorie: string;
-  statut: 'brouillon' | 'publie';
-  vues: number;
+  title: string;
+  excerpt?: string | null;
+  content: string;
+  author: string;
+  status: 'draft' | 'published';
+  views: number;
   image?: string | null;
   tags?: string[] | null;
   published_at?: string | null;
-  // Champs ajoutés pour compatibilité frontend
-  title?: string;
-  excerpt?: string | null;
-  content?: string;
-  author?: string;
-  date?: string;
-  category?: string;
-  status?: 'draft' | 'published';
-  views?: number;
+  blog_category_id?: string | null;
+  category?: BlogCategory | null;
   created_at: string;
   updated_at: string;
 }

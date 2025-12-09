@@ -5,8 +5,10 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBlogRequest;
 use App\Models\Blog;
+use App\Models\BlogCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class BlogController extends Controller
 {
@@ -20,14 +22,23 @@ class BlogController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Blog::query();
+        $query = Blog::with('category');
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
 
         if ($request->has('category')) {
-            $query->where('category', $request->category);
+            $cat = $request->category;
+            // Si c'est un UUID
+            if (Str::isUuid($cat)) {
+                $query->where('blog_category_id', $cat);
+            } else {
+                // Sinon recherche par nom de catégorie
+                $query->whereHas('category', function($q) use ($cat) {
+                    $q->where('name', $cat)->orWhere('slug', $cat);
+                });
+            }
         }
 
         if ($request->has('search')) {
@@ -47,11 +58,16 @@ class BlogController extends Controller
     /** @OA\Post(path="/blogs", tags={"Blog"}, summary="Créer un article", @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreBlogRequest")), @OA\Response(response=201, description="Article créé"), @OA\Response(response=422, description="Erreur de validation")) */
     public function store(StoreBlogRequest $request): JsonResponse
     {
-        $blog = Blog::create($request->validated());
+        $data = $request->validated();
+        
+        $data['blog_category_id'] = $this->handleCategory($request->category);
+        unset($data['category']); // Ne pas passer ce champ brut au create
+
+        $blog = Blog::create($data);
 
         return response()->json([
             'message' => 'Article créé avec succès',
-            'data' => $blog
+            'data' => $blog->load('category')
         ], 201);
     }
 
@@ -59,6 +75,7 @@ class BlogController extends Controller
     public function show(Blog $blog): JsonResponse
     {
         $blog->increment('views');
+        $blog->load('category');
         
         return response()->json($blog);
     }
@@ -66,11 +83,18 @@ class BlogController extends Controller
     /** @OA\Put(path="/blogs/{id}", tags={"Blog"}, summary="Modifier un article", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")), @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/StoreBlogRequest")), @OA\Response(response=200, description="Mis à jour"), @OA\Response(response=404, description="Non trouvé")) */
     public function update(StoreBlogRequest $request, Blog $blog): JsonResponse
     {
-        $blog->update($request->validated());
+        $data = $request->validated();
+        
+        if (isset($data['category'])) {
+            $data['blog_category_id'] = $this->handleCategory($data['category']);
+            unset($data['category']);
+        }
+
+        $blog->update($data);
 
         return response()->json([
             'message' => 'Article mis à jour avec succès',
-            'data' => $blog
+            'data' => $blog->load('category')
         ]);
     }
 
@@ -88,8 +112,26 @@ class BlogController extends Controller
     public function published(Request $request): JsonResponse
     {
         $perPage = $request->get('per_page', 15);
-        $blogs = Blog::published()->orderBy('published_at', 'desc')->paginate($perPage);
+        $blogs = Blog::with('category')->published()->orderBy('published_at', 'desc')->paginate($perPage);
 
         return response()->json($blogs);
+    }
+
+    private function handleCategory($input)
+    {
+        // Si c'est un UUID valide et qu'il existe, on l'utilise
+        if (Str::isUuid($input)) {
+            if (BlogCategory::where('id', $input)->exists()) {
+                return $input;
+            }
+        }
+        
+        // Sinon on cherche par nom ou on crée
+        $category = BlogCategory::firstOrCreate(
+            ['name' => $input],
+            ['slug' => Str::slug($input)]
+        );
+        
+        return $category->id;
     }
 }

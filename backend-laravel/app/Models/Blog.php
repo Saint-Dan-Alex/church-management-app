@@ -15,18 +15,25 @@ class Blog extends Model
         'title',
         'excerpt',
         'content',
+        'blog_category_id',
         'author',
-        'date',
-        'category',
-        'status',
+        'status', // draft, published
         'views',
         'image',
+        'tags',
+        'published_at',
     ];
 
     protected $casts = [
         'views' => 'integer',
-        'date' => 'date',
+        'tags' => 'array',
+        'published_at' => 'datetime',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(BlogCategory::class, 'blog_category_id');
+    }
 
     // Scopes
     public function scopePublished($query)
@@ -41,6 +48,6 @@ class Blog extends Model
 
     public function scopeRecent($query)
     {
-        return $query->orderBy('date', 'desc');
+        return $query->orderBy('published_at', 'desc');
     }
 }
