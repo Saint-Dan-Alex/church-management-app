@@ -27,6 +27,7 @@ use App\Http\Controllers\API\DashboardController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\UserManagementController;
 use App\Http\Controllers\API\CommissionController;
+use App\Http\Controllers\API\SettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -118,7 +119,20 @@ Route::prefix('v1')->group(function () {
     // Roles (Spatie Permission)
     Route::get('roles', [RoleController::class, 'index']);
     // Users Management
+    // Users Management
     Route::apiResource('users', UserManagementController::class);
+
+    // Settings Routes
+    Route::get('settings', [SettingController::class, 'index']);
+    Route::post('settings/update', [SettingController::class, 'update']);
+    Route::post('settings/upload', [SettingController::class, 'upload']);
+});
+
+// Public Settings Route
+Route::prefix('v1')->group(function () {
+    Route::get('public-settings', [SettingController::class, 'index'])
+        ->defaults('public_only', true)
+        ->defaults('key_value', true);
 });
 
 // Health check route

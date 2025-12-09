@@ -96,6 +96,11 @@ const menuItems = [
     url: "/users",
     icon: Shield,
   },
+  {
+    title: "Paramètres",
+    url: "/settings",
+    icon: Settings,
+  },
 ]
 
 export function AppSidebar() {
@@ -153,11 +158,14 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Paramètres
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="cursor-pointer w-full flex items-center">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Paramètres
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
+
                   <LogOut className="mr-2 h-4 w-4" />
                   Déconnexion
                 </DropdownMenuItem>

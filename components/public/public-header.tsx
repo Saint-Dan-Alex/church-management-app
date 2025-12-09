@@ -5,9 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Church, Menu, X, ChevronDown } from "lucide-react"
 import { useState } from "react"
 
-export function PublicHeader() {
+interface PublicHeaderProps {
+  settings?: Record<string, any>
+}
+
+export function PublicHeader({ settings = {} }: PublicHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null)
+
+  const appName = settings?.app_name || "Centre Evangelique Arche de l'Alliance"
+  const logo = settings?.app_logo
 
   const navigation = [
     { name: "Accueil", href: "/" },
@@ -41,6 +48,7 @@ export function PublicHeader() {
     { name: "Services", href: "#services" },
     { name: "Contact", href: "#contact" },
   ]
+  /* Navigation End */
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-lg border-b border-amber-600/30">
@@ -48,11 +56,15 @@ export function PublicHeader() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <Church className="h-8 w-8 text-amber-500" />
+            {logo ? (
+              <img src={logo} alt="Logo" className="h-8 w-8 object-contain" />
+            ) : (
+              <Church className="h-8 w-8 text-amber-500" />
+            )}
             <span className="text-sm md:text-base font-bold text-white hidden sm:inline">
-              Centre Evangelique Arche de l'Alliance
+              {appName}
             </span>
-            <span className="text-xs md:hidden text-white">CEAA</span>
+            <span className="text-xs md:hidden text-white">{appName.substring(0, 4).toUpperCase()}...</span>
           </Link>
 
           {/* Desktop Navigation */}
