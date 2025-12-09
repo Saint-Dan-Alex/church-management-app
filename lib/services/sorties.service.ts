@@ -28,8 +28,18 @@ export interface Sortie {
 }
 
 export const sortiesService = {
-  async getAll(params?: { categorie?: string }): Promise<any> {
-    const query = params?.categorie ? `?categorie=${params.categorie}` : '';
+  async getAll(params?: Record<string, any>): Promise<any> {
+    const queryParams = new URLSearchParams();
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     return api.get<any>(`/sorties${query}`);
   },
 

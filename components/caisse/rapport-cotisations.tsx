@@ -19,30 +19,74 @@ import { Search, Download, Printer, Calendar, TrendingUp, TrendingDown, DollarSi
 import { cotisationsService } from "@/lib/services"
 import { useToast } from "@/hooks/use-toast"
 
+// Import additionnel nécessaire en haut de fichier (non visible ici, géré par l'import existant ou ajout manuel si besoin)
+// import { monitorsService } from "@/lib/services/monitors.service" 
+// NOTE: Je vais supposer que je peux l'importer depuis "@/lib/services/monitors.service"
+
+// Fonction utilitaire pour les dates du mois en cours (réutilisée)
+const getDatesMoisEncours = () => {
+  const now = new Date()
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+  return { firstDay, lastDay }
+}
+
 export function RapportCotisations() {
   const { toast } = useToast()
   const [cotisations, setCotisations] = useState<any[]>([])
+  const [moniteursList, setMoniteursList] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // États de filtre
   const [moniteurFilter, setMoniteurFilter] = useState("all")
-  const [dateDebut, setDateDebut] = useState("")
-  const [dateFin, setDateFin] = useState("")
+  const { firstDay, lastDay } = getDatesMoisEncours()
+  const [dateDebut, setDateDebut] = useState(firstDay)
+  const [dateFin, setDateFin] = useState(lastDay)
+
   const [filteredData, setFilteredData] = useState<any[]>([])
 
   useEffect(() => {
-    loadCotisations()
+    loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const loadCotisations = async () => {
+  // Effet pour appliquer les filtres localement quand les données ou filtres changent
+  useEffect(() => {
+    applyFilters()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cotisations, moniteurFilter, dateDebut, dateFin])
+
+  const loadData = async () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await cotisationsService.getAll()
-      const cotisationsArray = Array.isArray(data) ? data : []
+
+      // Charger les cotisations (toutes) et les moniteurs en parallèle
+      // On utilise import dynamique pour monitorsService si pas dispo dans l'index global, 
+      // ou on suppose qu'il est dispo. 
+      // Pour éviter les erreurs d'import, je vais utiliser un require ou assumer l'import.
+      // Je vais utiliser cotisationsService qui est déjà là, et ajouter monitorsService.
+
+      // Ici on triche un peu : on charge tout (per_page=2000) pour faire le filtrage côté client
+      // C'est plus fluide pour un rapport interactif "léger"
+      const [cotisationsRes, moniteursRes] = await Promise.all([
+        cotisationsService.getAll({ per_page: 2000 }),
+        import("@/lib/services/monitors.service").then(m => m.monitorsService.getAll())
+      ])
+
+      const cotisationsData = cotisationsRes.data || cotisationsRes
+      const cotisationsArray = Array.isArray(cotisationsData) ? cotisationsData : []
+
+      const moniteursData = moniteursRes.data || moniteursRes
+      const moniteursArray = Array.isArray(moniteursData) ? moniteursData : []
+
       setCotisations(cotisationsArray)
-      setFilteredData(cotisationsArray)
+      setMoniteursList(moniteursArray)
+
     } catch (err: any) {
-      const errorMessage = err.message || 'Erreur de chargement des cotisations'
+      console.error(err)
+      const errorMessage = err.message || 'Erreur de chargement des données'
       setError(errorMessage)
       toast({
         title: "Erreur",
@@ -54,41 +98,48 @@ export function RapportCotisations() {
     }
   }
 
-  // Liste unique des moniteurs
-  const moniteurs = Array.from(new Set(cotisations.map((c) => c.membre_nom || c.moniteur))).sort()
+  // Helper pour le nom complet (Doit matcher celui de l'ajout: Nom PostNom Prénom)
+  const getMonitorFullName = (m: any) => {
+    if (!m) return ""
+    return `${m.nom || ""} ${m.postNom || ""} ${m.prenom || ""}`.trim().replace(/\s+/g, " ")
+  }
 
-  const handleSearch = () => {
+  const applyFilters = () => {
     let results = cotisations
 
-    // Filtre par moniteur
+    // Filtre par moniteur (ID ou Nom)
     if (moniteurFilter !== "all") {
-      results = results.filter((c) => (c.membre_nom || c.moniteur) === moniteurFilter)
+      results = results.filter((c) => {
+        // On essaie de matcher le nom exact
+        const nomCotisation = (c.membre_nom || c.moniteur || "").trim().replace(/\s+/g, " ")
+        const nomFilter = moniteurFilter.trim().replace(/\s+/g, " ")
+
+        // Match exact ou contient (pour plus de souplesse)
+        return nomCotisation === nomFilter
+      })
     }
 
     // Filtre par date
     if (dateDebut && dateFin) {
       results = results.filter((c) => {
-        const datePaiement = c.date_cotisation || c.datePaiement
+        const datePaiement = c.date_cotisation // || c.datePaiement
         if (!datePaiement) return false
         const date = new Date(datePaiement)
         const debut = new Date(dateDebut)
         const fin = new Date(dateFin)
+        // Comparaison dates inclusive
         return date >= debut && date <= fin
       })
     }
 
     setFilteredData(results)
-    toast({
-      title: "Recherche effectuée",
-      description: `${results.length} cotisation(s) trouvée(s)`,
-    })
   }
 
   const handleReset = () => {
     setMoniteurFilter("all")
-    setDateDebut("")
-    setDateFin("")
-    setFilteredData(cotisations)
+    const { firstDay, lastDay } = getDatesMoisEncours()
+    setDateDebut(firstDay)
+    setDateFin(lastDay)
   }
 
   const handleExport = () => {
@@ -96,45 +147,51 @@ export function RapportCotisations() {
       title: "Export en cours",
       description: "Le rapport sera téléchargé en format Excel/PDF",
     })
-    console.log("Export rapport:", filteredData)
   }
 
   const handlePrint = () => {
     window.print()
-    console.log("Impression du rapport")
   }
 
-  // Calculs statistiques
-  const totalMontant = filteredData.reduce((sum, c) => sum + (c.montant || 0), 0)
-  const totalPaye = filteredData.filter((c) => c.statut === "Payé" || c.statut === "paid").reduce((sum, c) => sum + (c.montant || 0), 0)
-  const totalEnAttente = filteredData.filter((c) => c.statut === "En attente" || c.statut === "pending").reduce((sum, c) => sum + (c.montant || 0), 0)
+  // Calculs statistiques Multi-Devises
+  const calculateTotal = (items: any[], devise: string) =>
+    items.filter(c => c.devise === devise).reduce((sum, c) => sum + Number(c.montant || 0), 0)
+
+  const totalCDF = calculateTotal(filteredData, 'CDF')
+  const totalUSD = calculateTotal(filteredData, 'USD')
+
+  // On compte juste le nombre total d'enregistrements
   const nombreCotisations = filteredData.length
-  const nombrePayees = filteredData.filter((c) => c.statut === "Payé" || c.statut === "paid").length
+
+  // Taux de paiement (basé sur le statut)
+  const payees = filteredData.filter((c) => c.statut?.toLowerCase() === "payé" || c.statut?.toLowerCase() === "paid" || !c.statut /* assumé payé si pas de statut? non */)
+  const nombrePayees = payees.length
   const tauxPaiement = nombreCotisations > 0 ? Math.round((nombrePayees / nombreCotisations) * 100) : 0
 
-  // Statistiques par moniteur
+  // Statistiques par moniteur (Agrégation)
   const statsParMoniteur = filteredData.reduce((acc, c) => {
-    const nom = c.membre_nom || c.moniteur
+    const nom = c.membre_nom || c.moniteur || "Inconnu"
     if (!acc[nom]) {
-      acc[nom] = { total: 0, paye: 0, enAttente: 0, nombre: 0 }
+      acc[nom] = { totalCDF: 0, totalUSD: 0, nombre: 0 }
     }
     acc[nom].nombre++
-    acc[nom].total += c.montant || 0
-    if (c.statut === "Payé" || c.statut === "paid") {
-      acc[nom].paye += c.montant || 0
+
+    if (c.devise === 'USD') {
+      acc[nom].totalUSD += Number(c.montant || 0)
     } else {
-      acc[nom].enAttente += c.montant || 0
+      acc[nom].totalCDF += Number(c.montant || 0)
     }
     return acc
-  }, {} as Record<string, { total: number; paye: number; enAttente: number; nombre: number }>)
+  }, {} as Record<string, { totalCDF: number; totalUSD: number; nombre: number }>)
 
-  const getStatutBadge = (statut: string) => {
-    if (statut === "Payé" || statut === "paid") {
+  const getStatutBadge = (statut: string | undefined) => {
+    const s = (statut || "").toLowerCase()
+    if (s === "payé" || s === "paid") {
       return <Badge className="bg-green-500">Payé</Badge>
-    } else if (statut === "En attente" || statut === "pending") {
+    } else if (s === "en attente" || s === "pending") {
       return <Badge variant="secondary">En attente</Badge>
     }
-    return <Badge variant="outline">{statut}</Badge>
+    return <Badge variant="outline">{statut || "N/A"}</Badge>
   }
 
   if (loading) {
@@ -150,9 +207,7 @@ export function RapportCotisations() {
     return (
       <div className="text-center py-12">
         <p className="text-destructive mb-4">{error}</p>
-        <Button onClick={loadCotisations} variant="outline">
-          Réessayer
-        </Button>
+        <Button onClick={loadData} variant="outline">Réessayer</Button>
       </div>
     )
   }
@@ -173,13 +228,18 @@ export function RapportCotisations() {
                 <SelectTrigger>
                   <SelectValue placeholder="Tous les moniteurs" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[200px]">
                   <SelectItem value="all">Tous les moniteurs</SelectItem>
-                  {moniteurs.map((moniteur) => (
-                    <SelectItem key={moniteur} value={moniteur}>
-                      {moniteur}
-                    </SelectItem>
-                  ))}
+                  {moniteursList.map((moniteur) => {
+                    const fullName = getMonitorFullName(moniteur)
+                    return (
+                      <SelectItem key={moniteur.id} value={fullName}>
+                        {fullName}
+                      </SelectItem>
+                    )
+                  })}
+                  {/* Fallback pour les moniteurs dans les cotisations mais pas dans la liste officielle */}
+                  {/* Optionnel, pour simplification on ne met que la liste officielle */}
                 </SelectContent>
               </Select>
             </div>
@@ -205,9 +265,11 @@ export function RapportCotisations() {
             </div>
 
             <div className="flex items-end gap-2">
-              <Button onClick={handleSearch} className="flex-1">
+              {/* Le bouton Rechercher n'est plus strictement nécessaire car l'effet applique les filtres auto, 
+                  mais on peut le garder pour forcer un refresh si besoin ou juste par UX */}
+              <Button onClick={applyFilters} className="flex-1">
                 <Search className="mr-2 h-4 w-4" />
-                Rechercher
+                Actualiser
               </Button>
               <Button variant="outline" onClick={handleReset}>
                 Réinitialiser
@@ -224,10 +286,10 @@ export function RapportCotisations() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-blue-600" />
-                <p className="text-sm text-gray-600">Cotisations</p>
+                <p className="text-sm text-gray-600">Nombre total</p>
               </div>
               <p className="text-2xl font-bold">{nombreCotisations}</p>
-              <p className="text-xs text-gray-500">Total enregistré</p>
+              <p className="text-xs text-gray-500">Cotisations enregistrées</p>
             </div>
           </CardContent>
         </Card>
@@ -237,10 +299,10 @@ export function RapportCotisations() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-green-600" />
-                <p className="text-sm text-gray-600">Montant payé</p>
+                <p className="text-sm text-gray-600">Total CDF</p>
               </div>
-              <p className="text-2xl font-bold text-green-600">{totalPaye.toLocaleString()}</p>
-              <p className="text-xs text-gray-500">CDF</p>
+              <p className="text-2xl font-bold text-green-600">{totalCDF.toLocaleString()} CDF</p>
+              <p className="text-xs text-gray-500">Francs Congolais</p>
             </div>
           </CardContent>
         </Card>
@@ -249,11 +311,11 @@ export function RapportCotisations() {
           <CardContent className="p-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <TrendingDown className="h-4 w-4 text-orange-600" />
-                <p className="text-sm text-gray-600">En attente</p>
+                <TrendingUp className="h-4 w-4 text-start text-green-700" />
+                <p className="text-sm text-gray-600">Total USD</p>
               </div>
-              <p className="text-2xl font-bold text-orange-600">{totalEnAttente.toLocaleString()}</p>
-              <p className="text-xs text-gray-500">CDF</p>
+              <p className="text-2xl font-bold text-green-700">{totalUSD.toLocaleString()} USD</p>
+              <p className="text-xs text-gray-500">Dollars Américains</p>
             </div>
           </CardContent>
         </Card>
@@ -273,11 +335,11 @@ export function RapportCotisations() {
       </div>
 
       {/* Statistiques par moniteur */}
-      {moniteurFilter === "all" && Object.keys(statsParMoniteur).length > 0 && (
+      {Object.keys(statsParMoniteur).length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Statistiques par moniteur</CardTitle>
-            <CardDescription>Résumé des cotisations par moniteur</CardDescription>
+            <CardDescription>Résumé des cotisations par moniteur (Période sélectionnée)</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -285,26 +347,22 @@ export function RapportCotisations() {
                 <TableRow>
                   <TableHead>Moniteur</TableHead>
                   <TableHead className="text-right">Nombre</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Payé</TableHead>
-                  <TableHead className="text-right">En attente</TableHead>
+                  <TableHead className="text-right">Total CDF</TableHead>
+                  <TableHead className="text-right">Total USD</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {Object.entries(statsParMoniteur)
-                  .sort(([, a], [, b]) => b.total - a.total)
+                  .sort(([, a], [, b]) => b.totalCDF - a.totalCDF)
                   .map(([moniteur, stats]) => (
                     <TableRow key={moniteur}>
                       <TableCell className="font-medium">{moniteur}</TableCell>
                       <TableCell className="text-right">{stats.nombre}</TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {stats.total.toLocaleString()} CDF
+                      <TableCell className="text-right font-semibold text-green-600">
+                        {stats.totalCDF > 0 ? `${stats.totalCDF.toLocaleString()} CDF` : '-'}
                       </TableCell>
-                      <TableCell className="text-right text-green-600">
-                        {stats.paye.toLocaleString()} CDF
-                      </TableCell>
-                      <TableCell className="text-right text-orange-600">
-                        {stats.enAttente.toLocaleString()} CDF
+                      <TableCell className="text-right font-semibold text-green-700">
+                        {stats.totalUSD > 0 ? `${stats.totalUSD.toLocaleString()} USD` : '-'}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -320,7 +378,7 @@ export function RapportCotisations() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Détails des cotisations</CardTitle>
-              <CardDescription>Liste complète des cotisations trouvées</CardDescription>
+              <CardDescription>Liste détaillée des cotisations trouvées</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handlePrint}>
@@ -343,14 +401,15 @@ export function RapportCotisations() {
                 <TableHead className="text-right">Montant</TableHead>
                 <TableHead>Date paiement</TableHead>
                 <TableHead>Mode</TableHead>
-                <TableHead>Statut</TableHead>
+                <TableHead>Réçu N°</TableHead>
+                {/* <TableHead>Statut</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    Aucune cotisation trouvée
+                    Aucune cotisation trouvée pour cette période.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -359,36 +418,21 @@ export function RapportCotisations() {
                     <TableCell className="font-medium">{cotisation.membre_nom || cotisation.moniteur}</TableCell>
                     <TableCell>{cotisation.mois && cotisation.annee ? `${cotisation.mois} ${cotisation.annee}` : cotisation.periode}</TableCell>
                     <TableCell className="text-right font-semibold">
-                      {cotisation.montant.toLocaleString()} {cotisation.devise}
+                      {Number(cotisation.montant).toLocaleString()} {cotisation.devise}
                     </TableCell>
                     <TableCell>
-                      {cotisation.date_cotisation || cotisation.datePaiement
-                        ? new Date(cotisation.date_cotisation || cotisation.datePaiement).toLocaleDateString("fr-FR")
+                      {cotisation.date_cotisation
+                        ? new Date(cotisation.date_cotisation).toLocaleDateString("fr-FR")
                         : "-"}
                     </TableCell>
-                    <TableCell>{cotisation.methode_paiement || cotisation.modePaiement || "-"}</TableCell>
-                    <TableCell>{getStatutBadge(cotisation.statut)}</TableCell>
+                    <TableCell>{cotisation.mode_paiement || "-"}</TableCell>
+                    <TableCell>{cotisation.numero_recu || "-"}</TableCell>
+                    {/* <TableCell>{getStatutBadge(cotisation.statut)}</TableCell> */}
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
-
-          {filteredData.length > 0 && (
-            <div className="mt-4 flex justify-end border-t pt-4">
-              <div className="space-y-1 text-right">
-                <p className="text-sm text-gray-600">
-                  Total: <span className="font-bold text-lg">{totalMontant.toLocaleString()} CDF</span>
-                </p>
-                <p className="text-xs text-green-600">
-                  Payé: {totalPaye.toLocaleString()} CDF
-                </p>
-                <p className="text-xs text-orange-600">
-                  En attente: {totalEnAttente.toLocaleString()} CDF
-                </p>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

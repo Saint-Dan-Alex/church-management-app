@@ -29,10 +29,16 @@ export interface Cotisation {
 }
 
 export const cotisationsService = {
-  async getAll(params?: { type_cotisation?: string; annee?: string }): Promise<any> {
+  async getAll(params?: Record<string, any>): Promise<any> {
     const queryParams = new URLSearchParams();
-    if (params?.type_cotisation) queryParams.append('type_cotisation', params.type_cotisation);
-    if (params?.annee) queryParams.append('annee', params.annee);
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     return api.get<any>(`/cotisations${query}`);
