@@ -24,14 +24,22 @@ export default async function DashboardPage() {
     monitorsStats = null
   }
 
-  const monitorsActifs = monitorsStats?.actifs ?? 24
-  const enfantsInscrits = dashboardStats?.children?.total ?? 156
-  const presenceMoyenne = dashboardStats?.worship?.moyenne_effectif
-    ? `${Math.round(dashboardStats.worship.moyenne_effectif)}%`
-    : "87%"
-  const cultesTotal = dashboardStats?.worship?.total_cultes ?? 8
-  const activitiesThisMonth = dashboardStats?.activities_this_month ?? 12
-  const sallesActives = dashboardStats?.salles_actives ?? 5
+  const monitorsActifs = monitorsStats?.actifs ?? 0
+  const enfantsInscrits = dashboardStats?.children?.total ?? 0
+
+  // Calcul du % de présence moyenne (Effectif moyen / Total inscrits)
+  let presenceMoyenne = "0%"
+  if (dashboardStats?.worship?.moyenne_effectif && enfantsInscrits > 0) {
+    const pourcentage = (dashboardStats.worship.moyenne_effectif / enfantsInscrits) * 100
+    presenceMoyenne = `${Math.round(pourcentage)}%`
+  }
+
+  const cultesTotal = dashboardStats?.worship?.total_cultes ?? 0
+  const activitiesThisMonth = dashboardStats?.activities_this_month ?? 0
+  const sallesActives = dashboardStats?.salles_actives ?? 0
+
+  const recentActivities = dashboardStats?.recent_activities ?? []
+  const upcomingEvents = dashboardStats?.upcoming_events ?? []
 
   return (
     <div className="space-y-6">
@@ -67,7 +75,7 @@ export default async function DashboardPage() {
             <CardDescription className="text-gray-600">Prochaines activités et cultes</CardDescription>
           </CardHeader>
           <CardContent>
-            <UpcomingEvents />
+            <UpcomingEvents data={upcomingEvents} />
           </CardContent>
         </Card>
       </div>
@@ -79,7 +87,7 @@ export default async function DashboardPage() {
             <CardDescription className="text-gray-600">Dernières actions dans le système</CardDescription>
           </CardHeader>
           <CardContent>
-            <RecentActivity />
+            <RecentActivity data={recentActivities} />
           </CardContent>
         </Card>
         <Card className="dashboard-card border border-gray-200">
