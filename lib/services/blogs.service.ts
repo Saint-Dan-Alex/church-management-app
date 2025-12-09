@@ -2,9 +2,9 @@ import { api } from '@/lib/utils/api';
 import type { Blog } from '@/lib/types/api';
 
 export const blogsService = {
-  async getAll(params?: { status?: string }): Promise<Blog[]> {
+  async getAll(params?: { status?: string }): Promise<any> {
     const query = params?.status ? `?status=${params.status}` : '';
-    return api.get<Blog[]>(`/blogs${query}`);
+    return api.get(`/blogs${query}`);
   },
 
   async getPublished(): Promise<Blog[]> {
@@ -29,5 +29,9 @@ export const blogsService = {
 
   async getCategories(): Promise<import('@/lib/types/api').BlogCategory[]> {
     return api.get<import('@/lib/types/api').BlogCategory[]>('/blog-categories');
+  },
+
+  async uploadImage(formData: FormData): Promise<{ url: string; path: string }> {
+    return api.post('/upload', formData);
   },
 };

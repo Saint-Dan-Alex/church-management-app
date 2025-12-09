@@ -25,13 +25,14 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
     const fetchBlogs = async () => {
       try {
         setLoading(true)
-        const data = await blogsService.getAll({ status })
-        // S'assurer que data est un tableau
+        const response: any = await blogsService.getAll({ status })
+        // L'API Laravel renvoie une réponse paginée { data: [...], ... }
+        const data = response.data || response
         setBlogs(Array.isArray(data) ? data : [])
       } catch (err) {
         setError("Erreur lors du chargement des articles")
         console.error("Erreur:", err)
-        setBlogs([]) // Initialiser avec un tableau vide en cas d'erreur
+        setBlogs([])
       } finally {
         setLoading(false)
       }
@@ -41,10 +42,14 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
   }, [status])
 
   const filteredBlogs = Array.isArray(blogs) ? blogs.filter((blog) => {
+    const title = blog.title || blog.titre || ""
+    const excerpt = blog.excerpt || blog.extrait || ""
+    const content = blog.content || blog.contenu || ""
+
     const matchesSearch =
-      (blog.title || blog.titre)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (blog.excerpt || blog.extrait)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (blog.content || blog.contenu)?.toLowerCase().includes(searchQuery.toLowerCase())
+      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      content.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesStatus = !status || blog.status === status || blog.statut === status
 
@@ -63,7 +68,7 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
     if (confirm(`Êtes-vous sûr de vouloir supprimer "${blog.title || blog.titre}" ?`)) {
       try {
         await blogsService.delete(blog.id)
-        setBlogs(Array.isArray(blogs) ? blogs.filter(b => b.id !== blog.id) : [])
+        setBlogs(prev => prev.filter(b => b.id !== blog.id))
         toast.success(`Article "${blog.title || blog.titre}" supprimé avec succès`)
       } catch (err) {
         toast.error("Erreur lors de la suppression")
@@ -99,7 +104,19 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
         </div>
       ) : (
         filteredBlogs.map((blog) => (
-          <Card key={blog.id} className="overflow-hidden">
+          <Card key={blog.id} className="overflow-hidden flex flex-col">
+            {blog.image && (
+              <div className="relative h-48 w-full bg-muted">
+                <img
+                  src={blog.image}
+                  alt={blog.title || blog.titre}
+                  className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -108,14 +125,16 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
                   </CardTitle>
                   <div className="flex flex-wrap gap-2 mb-2">
                     <Badge variant="secondary" className="text-xs">
-                      {blog.category || blog.categorie}
+                      {typeof blog.category === 'object' && blog.category?.name
+                        ? blog.category.name
+                        : (typeof blog.category === 'string' ? blog.category : (blog.categorie || 'Sans catégorie'))
+                      }
                     </Badge>
                     <Badge
-                      className={`text-xs ${
-                        blog.status === "published" || blog.statut === "publie"
+                      className={`text-xs ${blog.status === "published" || blog.statut === "publie"
                           ? "bg-green-500"
                           : "bg-yellow-500"
-                      }`}
+                        }`}
                     >
                       {blog.status === "published" || blog.statut === "publie" ? "Publié" : "Brouillon"}
                     </Badge>
@@ -136,7 +155,7 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
                       <Edit className="h-4 w-4 mr-2" />
                       Modifier
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => handleDelete(blog)}
                       className="text-red-600"
                     >
@@ -147,20 +166,20 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
                 </DropdownMenu>
               </div>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 flex-1 flex flex-col justify-between">
               <p className="text-sm text-gray-600 line-clamp-3 mb-3">
                 {blog.excerpt || blog.extrait}
               </p>
-              <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center justify-between text-xs text-gray-500 mt-auto">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1">
                     <User className="h-3 w-3" />
                     <span>{blog.author || blog.auteur}</span>
                   </div>
-                  {blog.date && (
+                  {(blog.published_at || blog.date || blog.created_at) && (
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      <span>{new Date(blog.date).toLocaleDateString()}</span>
+                      <span>{new Date(blog.published_at || blog.date || blog.created_at!).toLocaleDateString()}</span>
                     </div>
                   )}
                 </div>

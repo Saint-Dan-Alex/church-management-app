@@ -12,6 +12,7 @@ use App\Http\Controllers\API\BlogController;
 use App\Http\Controllers\API\BlogCategoryController;
 use App\Http\Controllers\API\VideoController;
 use App\Http\Controllers\API\PhotoController;
+use App\Http\Controllers\API\UploadController;
 use App\Http\Controllers\API\ExpenseController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\PresenceController;
@@ -63,6 +64,9 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('blogs', BlogController::class);
     Route::get('blogs-published', [BlogController::class, 'published']);
     Route::apiResource('blog-categories', BlogCategoryController::class)->only(['index', 'store']);
+
+    // Upload Route
+    Route::post('upload', [UploadController::class, 'store']);
 
     // Videos Routes
     Route::apiResource('videos', VideoController::class);
