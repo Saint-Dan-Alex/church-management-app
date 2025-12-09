@@ -9,28 +9,23 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Calendar, User, Eye } from "lucide-react"
-
-interface BlogPost {
-  id: string
-  title: string
-  excerpt: string
-  content?: string
-  category: string
-  author: string
-  status: string
-  date: string
-  views: number
-  image?: string
-}
+import type { Blog } from "@/lib/types/api"
 
 interface ViewBlogDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  post: BlogPost | null
+  blog: Blog | null
 }
 
-export function ViewBlogDialog({ open, onOpenChange, post }: ViewBlogDialogProps) {
-  if (!post) return null
+export function ViewBlogDialog({ open, onOpenChange, blog }: ViewBlogDialogProps) {
+  if (!blog) return null
+
+  const categoryName = typeof blog.category === 'object' && blog.category?.name
+    ? blog.category.name
+    : (typeof blog.category === 'string' ? blog.category : (blog.categorie || 'Sans catégorie'))
+
+  const status = blog.status || blog.statut
+  const isPublished = status === "published" || status === "publie"
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -38,23 +33,23 @@ export function ViewBlogDialog({ open, onOpenChange, post }: ViewBlogDialogProps
         <DialogHeader>
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Badge variant={post.status === "published" ? "default" : "secondary"}>
-                {post.status === "published" ? "Publié" : "Brouillon"}
+              <Badge variant={isPublished ? "default" : "secondary"}>
+                {isPublished ? "Publié" : "Brouillon"}
               </Badge>
-              <Badge variant="outline">{post.category}</Badge>
+              <Badge variant="outline">{categoryName}</Badge>
             </div>
-            <DialogTitle className="text-2xl">{post.title}</DialogTitle>
+            <DialogTitle className="text-2xl">{blog.title || blog.titre}</DialogTitle>
           </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="space-y-4">
             {/* Image */}
-            {post.image && (
-              <div className="w-full h-64 rounded-lg overflow-hidden">
+            {blog.image && (
+              <div className="w-full h-64 rounded-lg overflow-hidden bg-muted">
                 <img
-                  src={post.image}
-                  alt={post.title}
+                  src={blog.image}
+                  alt={blog.title || blog.titre}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -64,35 +59,48 @@ export function ViewBlogDialog({ open, onOpenChange, post }: ViewBlogDialogProps
             <div className="flex items-center gap-4 text-sm text-muted-foreground border-y py-3">
               <div className="flex items-center gap-1">
                 <User className="h-4 w-4" />
-                <span>{post.author}</span>
+                <span>{blog.author || blog.auteur}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
-                <span>{new Date(post.date).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric"
-                })}</span>
+                <span>
+                  {(blog.published_at || blog.date || blog.created_at) && new Date(blog.published_at || blog.date || blog.created_at!).toLocaleDateString("fr-FR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric"
+                  })}
+                </span>
               </div>
-              {post.status === "published" && (
+              {isPublished && (
                 <div className="flex items-center gap-1">
                   <Eye className="h-4 w-4" />
-                  <span>{post.views} vues</span>
+                  <span>{blog.views || blog.vues || 0} vues</span>
                 </div>
               )}
             </div>
 
+            {/* Tags */}
+            {blog.tags && Array.isArray(blog.tags) && blog.tags.length > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                {blog.tags.map(tag => (
+                  <Badge key={tag} variant="secondary" className="text-xs">
+                    #{tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
             {/* Extrait */}
-            {post.excerpt && (
+            {(blog.excerpt || blog.extrait) && (
               <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                <p className="text-sm italic text-gray-700">{post.excerpt}</p>
+                <p className="text-sm italic text-gray-700">{blog.excerpt || blog.extrait}</p>
               </div>
             )}
 
             {/* Contenu */}
             <div className="prose prose-sm max-w-none">
               <div className="text-gray-700 whitespace-pre-wrap">
-                {post.content || post.excerpt}
+                {blog.content || blog.contenu}
               </div>
             </div>
           </div>

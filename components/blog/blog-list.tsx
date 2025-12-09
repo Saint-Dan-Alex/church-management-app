@@ -8,7 +8,8 @@ import { Calendar, User, Eye, MoreVertical, Edit, Trash, Share2 } from "lucide-r
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ViewBlogDialog } from "./view-blog-dialog"
 import { EditBlogDialog } from "./edit-blog-dialog"
-import { blogsService, type Blog } from "@/lib/services/blogs.service"
+import { blogsService } from "@/lib/services/blogs.service"
+import type { Blog } from "@/lib/types/api"
 import { toast } from "sonner"
 
 interface BlogListProps {
@@ -20,6 +21,9 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
   const [blogs, setBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null)
+  const [isViewOpen, setIsViewOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(false)
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -57,11 +61,13 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
   }) : []
 
   const handleView = (blog: Blog) => {
-    alert(`👁️ Affichage de: "${blog.title || blog.titre}"\n\n(Ouvrir dans une modal ou nouvelle page)`)
+    setSelectedBlog(blog)
+    setIsViewOpen(true)
   }
 
   const handleEdit = (blog: Blog) => {
-    alert(`✏️ Modification de: "${blog.title || blog.titre}"\n\n(Ouvrir dans un formulaire d'édition)`)
+    setSelectedBlog(blog)
+    setIsEditOpen(true)
   }
 
   const handleDelete = async (blog: Blog) => {
@@ -132,8 +138,8 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
                     </Badge>
                     <Badge
                       className={`text-xs ${blog.status === "published" || blog.statut === "publie"
-                          ? "bg-green-500"
-                          : "bg-yellow-500"
+                        ? "bg-green-500"
+                        : "bg-yellow-500"
                         }`}
                     >
                       {blog.status === "published" || blog.statut === "publie" ? "Publié" : "Brouillon"}
@@ -192,6 +198,8 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
           </Card>
         ))
       )}
+      <ViewBlogDialog open={isViewOpen} onOpenChange={setIsViewOpen} blog={selectedBlog} />
+      <EditBlogDialog open={isEditOpen} onOpenChange={setIsEditOpen} blog={selectedBlog} />
     </div>
   )
 }
