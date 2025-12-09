@@ -16,14 +16,14 @@ class StoreSortieRequest extends FormRequest
         return [
             'libelle' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'categorie' => 'required|in:salaires,fournitures,equipements,loyer,electricite,eau,internet,transport,reparations,dons,autre',
+            'categorie' => 'required|string|max:255', // Accepte UUID ou nom de catégorie
             'montant' => 'required|numeric|min:0',
             'devise' => 'required|in:CDF,USD',
             'date_sortie' => 'required|date',
             'beneficiaire' => 'nullable|string|max:255',
             'reference' => 'nullable|string|max:255',
             'remarque' => 'nullable|string',
-            'enregistre_par' => 'required|uuid',
+            'enregistre_par' => 'nullable|string|max:255', // Accepte "1" ou UUID
             'enregistre_par_nom' => 'required|string|max:255',
         ];
     }
