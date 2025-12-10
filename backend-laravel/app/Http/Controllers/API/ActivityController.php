@@ -64,6 +64,17 @@ class ActivityController extends Controller
      *     )
      * )
      */
+    public function publicIndex(Request $request): JsonResponse
+    {
+        $activities = Activity::where('date', '>=', now())
+            ->where('statut', '!=', 'annulee')
+            ->orderBy('date', 'asc')
+            ->take(6)
+            ->get();
+
+        return response()->json($activities);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = Activity::query();

@@ -117,6 +117,11 @@ class BlogController extends Controller
         return response()->json($blogs);
     }
 
+    public function publicIndex(Request $request): JsonResponse
+    {
+        return $this->published($request);
+    }
+
     private function handleCategory($input)
     {
         // Si c'est un UUID valide et qu'il existe, on l'utilise

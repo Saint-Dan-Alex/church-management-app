@@ -3,44 +3,49 @@ import { Button } from "@/components/ui/button"
 import { Calendar, ArrowRight } from "lucide-react"
 import Link from "next/link"
 
-export function BlogPreview() {
-  const posts = [
-    {
-      id: 1,
-      title: "La puissance de la prière",
-      excerpt:
-        "Découvrez comment la prière peut transformer votre vie quotidienne et renforcer votre relation avec Dieu.",
-      date: "15 Mars 2024",
-      category: "Enseignement",
-    },
-    {
-      id: 2,
-      title: "Vivre dans la gratitude",
-      excerpt: "Apprenez à cultiver un cœur reconnaissant et à voir les bénédictions de Dieu dans chaque situation.",
-      date: "10 Mars 2024",
-      category: "Vie Chrétienne",
-    },
-    {
-      id: 3,
-      title: "Le service dans l'église",
-      excerpt: "Explorez les différentes façons de servir dans la communauté et de faire une différence.",
-      date: "5 Mars 2024",
-      category: "Communauté",
-    },
-  ]
+interface BlogPost {
+  id: string
+  title: string
+  excerpt?: string
+  content?: string
+  published_at: string
+  category?: { name: string }
+}
+
+interface BlogPreviewProps {
+  posts?: BlogPost[]
+}
+
+export function BlogPreview({ posts = [] }: BlogPreviewProps) {
+  const getExcerpt = (post: BlogPost) => {
+    if (post.excerpt) return post.excerpt
+    if (post.content) {
+      // Retire HTML tags et coupe
+      const content = post.content.replace(/<[^>]+>/g, '')
+      return content.substring(0, 100) + '...'
+    }
+    return ''
+  }
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    return new Intl.DateTimeFormat("fr-FR", { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(dateStr))
+  }
+
+  if (posts.length === 0) return null; // Ne rien afficher si pas de posts
 
   return (
     <section className="py-24 px-4 bg-slate-900/50">
       <div className="container mx-auto max-w-6xl">
         <div className="flex items-center justify-between mb-12">
           <div>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Derniers Messages</h2>
-            <p className="text-xl text-slate-400">Enseignements et réflexions pour nourrir votre foi</p>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 uppercase tracking-tight">Derniers Enseignements</h2>
+            <p className="text-slate-400">Ressources pour votre croissance spirituelle</p>
           </div>
           <Button
             asChild
             variant="outline"
-            className="hidden md:flex border-amber-600 text-amber-400 hover:bg-slate-800 bg-transparent hover:text-amber-300"
+            className="hidden md:flex border-amber-600 text-amber-500 hover:bg-amber-600/10"
           >
             <Link href="/blog-public">
               Voir tous les messages
@@ -53,27 +58,34 @@ export function BlogPreview() {
           {posts.map((post) => (
             <Card
               key={post.id}
-              className="bg-slate-800/50 border-amber-600/30 hover:bg-slate-800 transition-colors group"
+              className="bg-slate-800 border-slate-700 hover:border-amber-600/50 transition-all duration-300 group h-full flex flex-col"
             >
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 text-sm text-amber-400 mb-3">
+              <CardContent className="p-6 flex-1 flex flex-col">
+                <div className="flex items-center gap-2 text-sm text-amber-500 mb-3 font-medium">
                   <Calendar className="h-4 w-4" />
-                  <span>{post.date}</span>
+                  <span>{formatDate(post.published_at)}</span>
+                  {post.category && (
+                    <>
+                      <span className="text-slate-600">•</span>
+                      <span className="text-slate-400">{post.category.name}</span>
+                    </>
+                  )}
                 </div>
-                <span className="inline-block px-3 py-1 text-xs font-medium bg-amber-500/20 text-amber-300 rounded-full mb-4">
-                  {post.category}
-                </span>
-                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-amber-400 transition-colors">
+
+                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-amber-500 transition-colors line-clamp-2">
                   {post.title}
                 </h3>
-                <p className="text-slate-400 text-sm leading-relaxed mb-4">{post.excerpt}</p>
-                <Link
-                  href={`/blog-public/${post.id}`}
-                  className="text-amber-400 hover:text-amber-300 text-sm font-medium inline-flex items-center gap-1"
-                >
-                  Lire la suite
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+                <p className="text-slate-400 text-sm leading-relaxed mb-6 flex-1 line-clamp-3">{getExcerpt(post)}</p>
+
+                <div className="mt-auto pt-4 border-t border-slate-700/50">
+                  <Link
+                    href={`/blog-public/${post.id}`}
+                    className="text-amber-500 hover:text-amber-400 text-sm font-bold uppercase tracking-wider inline-flex items-center gap-1 group-hover:gap-2 transition-all"
+                  >
+                    Lire la suite
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -83,7 +95,7 @@ export function BlogPreview() {
           <Button
             asChild
             variant="outline"
-            className="border-amber-600 text-amber-400 hover:bg-slate-800 bg-transparent hover:text-amber-300"
+            className="border-amber-600 text-amber-500 hover:bg-amber-600/10 w-full"
           >
             <Link href="/blog-public">
               Voir tous les messages

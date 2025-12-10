@@ -98,6 +98,11 @@ class VideoController extends Controller
         return response()->json($videos);
     }
 
+    public function publicIndex(Request $request): JsonResponse
+    {
+        return $this->index($request);
+    }
+
     private function handleCategory($input)
     {
         if (!$input) return null;

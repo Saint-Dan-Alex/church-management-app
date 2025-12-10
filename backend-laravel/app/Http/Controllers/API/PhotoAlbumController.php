@@ -37,4 +37,8 @@ class PhotoAlbumController extends Controller
 
         return response()->json($album, 201);
     }
+    public function publicIndex(): JsonResponse
+    {
+        return $this->index();
+    }
 }

@@ -133,6 +133,12 @@ Route::prefix('v1')->group(function () {
     Route::get('public-settings', [SettingController::class, 'index'])
         ->defaults('public_only', true)
         ->defaults('key_value', true);
+
+    // Public Content Routes
+    Route::get('public/blogs', [App\Http\Controllers\API\BlogController::class, 'publicIndex']);
+    Route::get('public/videos', [App\Http\Controllers\API\VideoController::class, 'publicIndex']);
+    Route::get('public/albums', [App\Http\Controllers\API\PhotoAlbumController::class, 'publicIndex']);
+    Route::get('public/activities', [App\Http\Controllers\API\ActivityController::class, 'publicIndex']);
 });
 
 // Health check route
