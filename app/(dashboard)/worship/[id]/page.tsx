@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Edit, Trash2, Calendar, Users, DollarSign, Star, Download, Loader2 } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, Calendar, Users, DollarSign, Star, Printer, Loader2 } from "lucide-react"
 import { worshipReportsService } from "@/lib/services/worship-reports.service"
 import { toast } from "sonner"
+import { ReportHeader } from "@/components/reports/report-header"
+import { ReportAnalysis } from "@/components/reports/report-analysis"
 
 export default function WorshipReportDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
@@ -77,127 +79,8 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
     }
   }
 
-  const handleDownloadPDF = () => {
-    if (!report) return
-
-    const orateurs = parseJsonArray(report.orateurs)
-    const moniteurs = parseJsonArray(report.moniteurs)
-
-    const printWindow = window.open("", "", "width=800,height=600")
-    if (!printWindow) return
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Rapport de Culte - ${report.salle}</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
-            h1 { color: #1e40af; font-size: 28px; margin-bottom: 10px; text-align: center; }
-            h2 { color: #2563eb; font-size: 20px; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 5px; }
-            .header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #3b82f6; padding-bottom: 20px; }
-            .date { color: #6b7280; font-size: 14px; margin-bottom: 5px; }
-            .salle-badge { display: inline-block; padding: 8px 16px; background: #fee2e2; color: #991b1b; border-radius: 8px; font-weight: bold; margin: 10px 0; }
-            .section { margin-bottom: 25px; page-break-inside: avoid; }
-            .info-line { padding: 8px; margin-bottom: 5px; background: #f9fafb; border-radius: 4px; }
-            .info-label { font-weight: bold; color: #4b5563; }
-            .effectif-box { background: #dbeafe; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; }
-            .effectif-line { font-size: 18px; margin: 5px 0; }
-            @media print { body { padding: 20px; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="date">📅 ${formatDate(report.date)}</div>
-            <h1>Rapport de Culte du Dimanche</h1>
-            <div class="salle-badge">${report.salle}</div>
-          </div>
-
-          <div class="section">
-            <h2>👥 Personnel</h2>
-            ${orateurs.length > 0
-        ? `
-              <div class="info-line">
-                <span class="info-label">Orateur(s):</span> ${orateurs.join(", ")}
-              </div>
-            `
-        : ""
-      }
-            <div class="info-line">
-              <span class="info-label">Prédicateur:</span> ${report.predicateur}
-            </div>
-            ${moderateurs.length > 0
-        ? `
-              <div class="info-line">
-                <span class="info-label">Modérateurs:</span> ${moderateurs.join(", ")}
-              </div>
-            `
-        : ""
-      }
-            ${assistants.length > 0
-        ? `
-              <div class="info-line">
-                <span class="info-label">Assistants:</span> ${assistants.join(", ")}
-              </div>
-            `
-        : ""
-      }
-          </div>
-
-          <div class="section">
-            <h2>📊 Effectifs</h2>
-            <div class="effectif-box">
-              <div class="effectif-line">
-                <strong>Frères:</strong> ${report.effectif_freres}
-              </div>
-              <div class="effectif-line">
-                <strong>Sœurs:</strong> ${report.effectif_soeurs}
-              </div>
-              <div class="effectif-line" style="font-size: 22px; margin-top: 10px;">
-                <strong>TOTAL:</strong> ${report.effectif_total}
-              </div>
-            </div>
-          </div>
-
-          ${report.offrandes
-        ? `
-            <div class="section">
-              <h2>💰 Offrandes</h2>
-              <div class="info-line" style="font-size: 18px;">
-                ${report.offrandes}
-              </div>
-            </div>
-          `
-        : ""
-      }
-
-          ${report.nombre_nouveaux_venus > 0
-        ? `
-            <div class="section">
-              <h2>✨ Nouveaux Venus (${report.nombre_nouveaux_venus})</h2>
-            </div>
-          `
-        : ""
-      }
-
-          <div style="margin-top: 50px; text-align: center; color: #6b7280; font-size: 12px;">
-            <p>Ministère Auprès des Enfants et Adolescents</p>
-            <p>Centre Évangélique / Arche de l'Alliance, Masina</p>
-          </div>
-        </body>
-      </html>
-    `
-
-    printWindow.document.write(htmlContent)
-    printWindow.document.close()
-
-    printWindow.onload = () => {
-      printWindow.focus()
-      printWindow.print()
-      printWindow.close()
-    }
+  const handlePrint = () => {
+    window.print()
   }
 
   if (isLoading) {
@@ -221,10 +104,30 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
   const moderateurs = parseJsonArray(report.moderateurs)
   const assistants = parseJsonArray(report.assistants)
 
+  const percentFreres = report.effectif_total > 0 ? (report.effectif_freres / report.effectif_total) * 100 : 0
+  const percentSoeurs = report.effectif_total > 0 ? (report.effectif_soeurs / report.effectif_total) * 100 : 0
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6" id="worship-report-print">
+      <style jsx global>{`
+        @media print {
+          body * { visibility: hidden; }
+          #worship-report-print, #worship-report-print * { visibility: visible; }
+          #worship-report-print { position: absolute; left: 0; top: 0; width: 100%; }
+          .no-print { display: none !important; }
+        }
+      `}</style>
+
+      {/* Header Print Only */}
+      <div className="hidden print:block mb-8">
+        <ReportHeader
+          title="Rapport de Culte"
+          subtitle={`${report.salle} - ${formatDate(report.date)}`}
+        />
+      </div>
+
+      {/* Header Screen */}
+      <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-5 w-5" />
@@ -235,9 +138,9 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDownloadPDF}>
-            <Download className="mr-2 h-4 w-4" />
-            Télécharger PDF
+          <Button variant="outline" onClick={handlePrint}>
+            <Printer className="mr-2 h-4 w-4" />
+            Imprimer
           </Button>
           <Button variant="outline" onClick={() => router.push(`/worship/${id}/edit`)}>
             <Edit className="mr-2 h-4 w-4" />
@@ -253,8 +156,8 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Colonne gauche - Infos principales */}
         <div className="lg:col-span-1 space-y-6">
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="print:shadow-none print:border-none">
+            <CardContent className="pt-6 print:p-0">
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-gray-600">
                   <Calendar className="h-4 w-4" />
@@ -268,9 +171,9 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
           </Card>
 
           {/* Effectifs */}
-          <Card className="border-blue-200 bg-blue-50">
+          <Card className="border-blue-200 bg-blue-50 print:bg-transparent print:border-black">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-900">
+              <CardTitle className="flex items-center gap-2 text-blue-900 print:text-black">
                 <Users className="h-5 w-5" />
                 Effectifs
               </CardTitle>
@@ -278,17 +181,17 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-blue-700">Frères</span>
-                  <span className="text-2xl font-bold text-blue-900">{report.effectif_freres}</span>
+                  <span className="text-blue-700 print:text-black">Frères</span>
+                  <span className="text-2xl font-bold text-blue-900 print:text-black">{report.effectif_freres}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-pink-700">Sœurs</span>
-                  <span className="text-2xl font-bold text-pink-900">{report.effectif_soeurs}</span>
+                  <span className="text-pink-700 print:text-black">Sœurs</span>
+                  <span className="text-2xl font-bold text-pink-900 print:text-black">{report.effectif_soeurs}</span>
                 </div>
-                <div className="pt-3 border-t border-blue-200">
+                <div className="pt-3 border-t border-blue-200 print:border-black">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-blue-900">TOTAL</span>
-                    <span className="text-3xl font-bold text-blue-900">{report.effectif_total}</span>
+                    <span className="font-semibold text-blue-900 print:text-black">TOTAL</span>
+                    <span className="text-3xl font-bold text-blue-900 print:text-black">{report.effectif_total}</span>
                   </div>
                 </div>
               </div>
@@ -297,15 +200,15 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
 
           {/* Offrandes */}
           {report.offrandes && (
-            <Card className="border-green-200 bg-green-50">
+            <Card className="border-green-200 bg-green-50 print:bg-transparent print:border-black">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-green-900">
+                <CardTitle className="flex items-center gap-2 text-green-900 print:text-black">
                   <DollarSign className="h-5 w-5" />
                   Offrandes
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-semibold text-green-900">{report.offrandes}</p>
+                <p className="text-lg font-semibold text-green-900 print:text-black">{report.offrandes}</p>
               </CardContent>
             </Card>
           )}
@@ -314,7 +217,7 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
         {/* Colonne droite - Détails */}
         <div className="lg:col-span-2 space-y-6">
           {/* Personnel */}
-          <Card>
+          <Card className="print:shadow-none print:border-black">
             <CardHeader>
               <CardTitle>Personnel</CardTitle>
             </CardHeader>
@@ -325,7 +228,7 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
                     <h4 className="font-semibold text-gray-900 mb-2">Orateur(s)</h4>
                     <div className="flex flex-wrap gap-2">
                       {orateurs.map((orateur, index) => (
-                        <Badge key={index} variant="outline" className="bg-blue-50">
+                        <Badge key={index} variant="outline" className="bg-blue-50 print:bg-transparent print:border-black">
                           {orateur}
                         </Badge>
                       ))}
@@ -335,7 +238,7 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
 
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">Prédicateur</h4>
-                  <Badge variant="outline" className="bg-purple-50 text-purple-800">
+                  <Badge variant="outline" className="bg-purple-50 text-purple-800 print:bg-transparent print:text-black print:border-black">
                     {report.predicateur}
                   </Badge>
                 </div>
@@ -345,7 +248,7 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
                     <h4 className="font-semibold text-gray-900 mb-2">Modérateurs</h4>
                     <div className="flex flex-wrap gap-2">
                       {moderateurs.map((moderateur, index) => (
-                        <Badge key={index} variant="outline" className="bg-green-50">
+                        <Badge key={index} variant="outline" className="bg-green-50 print:bg-transparent print:border-black">
                           {moderateur}
                         </Badge>
                       ))}
@@ -358,7 +261,7 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
                     <h4 className="font-semibold text-gray-900 mb-2">Assistants</h4>
                     <div className="flex flex-wrap gap-2">
                       {assistants.map((assistant, index) => (
-                        <Badge key={index} variant="outline" className="bg-yellow-50">
+                        <Badge key={index} variant="outline" className="bg-yellow-50 print:bg-transparent print:border-black">
                           {assistant}
                         </Badge>
                       ))}
@@ -371,15 +274,15 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
 
           {/* Nouveaux venus */}
           {report.nombre_nouveaux_venus > 0 && (
-            <Card className="border-yellow-200 bg-yellow-50">
+            <Card className="border-yellow-200 bg-yellow-50 print:bg-transparent print:border-black">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-yellow-900">
+                <CardTitle className="flex items-center gap-2 text-yellow-900 print:text-black">
                   <Star className="h-5 w-5" />
                   Nouveaux Venus ({report.nombre_nouveaux_venus})
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 print:text-black">
                   {report.nombre_nouveaux_venus} nouveau{report.nombre_nouveaux_venus > 1 ? 'x' : ''} venu{report.nombre_nouveaux_venus > 1 ? 's' : ''} enregistré{report.nombre_nouveaux_venus > 1 ? 's' : ''}
                 </p>
               </CardContent>
@@ -387,6 +290,21 @@ export default function WorshipReportDetailsPage({ params }: { params: Promise<{
           )}
         </div>
       </div>
+
+      <ReportAnalysis
+        title="Analyse du Culte"
+        metrics={[
+          { label: "Total Participants", value: report.effectif_total, unit: "", previousValue: undefined },
+          { label: "Proportion Frères", value: percentFreres, unit: "%" },
+          { label: "Proportion Sœurs", value: percentSoeurs, unit: "%" },
+          ...(report.nombre_nouveaux_venus > 0 ? [{ label: "Nouveaux Venus", value: report.nombre_nouveaux_venus, unit: "" }] : [])
+        ]}
+        customComment={
+          report.nombre_nouveaux_venus > 0
+            ? `Nous avons eu la joie d'accueillir ${report.nombre_nouveaux_venus} nouvelles personnes. Un suivi s'impose pour leur intégration.`
+            : "Aucun nouveau venu n'a été enregistré lors de ce culte."
+        }
+      />
     </div>
   )
 }

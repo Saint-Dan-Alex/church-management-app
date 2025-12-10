@@ -1,4 +1,3 @@
-```
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -208,125 +207,125 @@ export function CommissionsSection() {
     <section id="commissions" className="py-24 px-4 bg-slate-950">
       <div className="container mx-auto max-w-7xl">
         <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight uppercase">Nos Commissions</h2>
-            <div className="h-1 w-20 bg-amber-500 rounded-full mx-auto"></div>
-            <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-                Découvrez les différents départements de l'Arche de l'Alliance où vous pouvez servir Dieu, développer vos talents et impacter des vies.
-            </p>
+          <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight uppercase">Nos Commissions</h2>
+          <div className="h-1 w-20 bg-amber-500 rounded-full mx-auto"></div>
+          <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+            Découvrez les différents départements de l'Arche de l'Alliance où vous pouvez servir Dieu, développer vos talents et impacter des vies.
+          </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {commissions.map((item) => (
             <Dialog key={item.id}>
-                <DialogTrigger asChild>
-                    <div id={item.id} className="scroll-mt-32 cursor-pointer group h-full">
-                        <Card className="bg-slate-900 border-slate-800 hover:border-amber-600/50 transition-all hover:-translate-y-2 h-full flex flex-col items-start text-left relative overflow-hidden">
-                             {/* Effet de lueur au hover */}
-                             <div className={`absolute top - 0 right - 0 w - 32 h - 32 ${ item.bgColor } blur - 3xl rounded - full - mr - 16 - mt - 16 opacity - 0 group - hover: opacity - 50 transition - opacity`} />
-                            
-                            <CardHeader className="relative z-10 w-full">
-                                <div className={`w - 14 h - 14 rounded - xl ${ item.bgColor } flex items - center justify - center mb - 6 group - hover: scale - 110 transition - transform duration - 300`}>
-                                    <item.icon className={`h - 7 w - 7 ${ item.color } `} />
-                                </div>
-                                <CardTitle className="text-2xl font-bold text-white mb-2 group-hover:text-amber-500 transition-colors uppercase tracking-tight">
-                                    {item.title}
-                                </CardTitle>
-                                <CardDescription className="text-slate-400 text-base leading-relaxed">
-                                    {item.shortDesc}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="mt-auto pt-0 relative z-10 w-full">
-                                <div className="flex items-center text-sm font-bold text-amber-600 uppercase tracking-widest gap-2 group-hover:gap-3 transition-all">
-                                    En savoir plus <ArrowRight className="h-4 w-4" />
-                                </div>
-                            </CardContent>
-                        </Card>
+              <DialogTrigger asChild>
+                <div id={item.id} className="scroll-mt-32 cursor-pointer group h-full">
+                  <Card className="bg-slate-900 border-slate-800 hover:border-amber-600/50 transition-all hover:-translate-y-2 h-full flex flex-col items-start text-left relative overflow-hidden">
+                    {/* Effet de lueur au hover */}
+                    <div className={`absolute top-0 right-0 w-32 h-32 ${item.bgColor} blur-3xl rounded-full -mr-16 -mt-16 opacity-0 group-hover:opacity-50 transition-opacity`} />
+
+                    <CardHeader className="relative z-10 w-full">
+                      <div className={`w-14 h-14 rounded-xl ${item.bgColor} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                        <item.icon className={`h-7 w-7 ${item.color} `} />
+                      </div>
+                      <CardTitle className="text-2xl font-bold text-white mb-2 group-hover:text-amber-500 transition-colors uppercase tracking-tight">
+                        {item.title}
+                      </CardTitle>
+                      <CardDescription className="text-slate-400 text-base leading-relaxed">
+                        {item.shortDesc}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="mt-auto pt-0 relative z-10 w-full">
+                      <div className="flex items-center text-sm font-bold text-amber-600 uppercase tracking-widest gap-2 group-hover:gap-3 transition-all">
+                        En savoir plus <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </DialogTrigger>
+
+              <DialogContent className="bg-slate-950 border-slate-800 text-white max-w-4xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
+                <DialogHeader className="p-8 pb-4 bg-slate-900/50 border-b border-slate-800">
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className={`w-10 h-10 rounded-lg ${item.bgColor} flex items-center justify-center`}>
+                      <item.icon className={`h-5 w-5 ${item.color} `} />
                     </div>
-                </DialogTrigger>
-                
-                <DialogContent className="bg-slate-950 border-slate-800 text-white max-w-4xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
-                    <DialogHeader className="p-8 pb-4 bg-slate-900/50 border-b border-slate-800">
-                        <div className="flex items-center gap-4 mb-2">
-                             <div className={`w - 10 h - 10 rounded - lg ${ item.bgColor } flex items - center justify - center`}>
-                                <item.icon className={`h - 5 w - 5 ${ item.color } `} />
-                            </div>
-                            <DialogTitle className="text-2xl md:text-3xl font-bold uppercase tracking-tight">{item.title}</DialogTitle>
-                        </div>
-                        <DialogDescription className="text-slate-400 text-lg">
-                            {item.details.definition}
-                        </DialogDescription>
-                    </DialogHeader>
-                    
-                    <ScrollArea className="flex-1 p-8 pt-6">
-                        <div className="grid md:grid-cols-2 gap-8">
-                            {/* Mission */}
-                            <div className="space-y-4">
-                                <h4 className="flex items-center gap-2 text-lg font-bold text-amber-500 uppercase tracking-wide">
-                                    <BookOpen className="h-5 w-5" /> Mission
-                                </h4>
-                                <ul className="space-y-3">
-                                    {item.details.mission.map((m, i) => (
-                                        <li key={i} className="flex items-start gap-3 group">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 group-hover:bg-amber-500 transition-colors" />
-                                            <span className="text-slate-300 leading-relaxed">{m}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
+                    <DialogTitle className="text-2xl md:text-3xl font-bold uppercase tracking-tight">{item.title}</DialogTitle>
+                  </div>
+                  <DialogDescription className="text-slate-400 text-lg">
+                    {item.details.definition}
+                  </DialogDescription>
+                </DialogHeader>
 
-                             {/* Rôles */}
-                             <div className="space-y-4">
-                                <h4 className="flex items-center gap-2 text-lg font-bold text-blue-500 uppercase tracking-wide">
-                                    <CheckCircle2 className="h-5 w-5" /> Rôles
-                                </h4>
-                                <ul className="space-y-3">
-                                    {item.details.roles.map((r, i) => (
-                                        <li key={i} className="flex items-start gap-3 group">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 group-hover:bg-blue-500 transition-colors" />
-                                            <span className="text-slate-300 leading-relaxed">{r}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                            {/* Conditions */}
-                            <div className="space-y-4 pt-4 border-t border-slate-800/50 md:border-none md:pt-0">
-                                <h4 className="flex items-center gap-2 text-lg font-bold text-emerald-500 uppercase tracking-wide">
-                                    <CheckCircle2 className="h-5 w-5" /> Conditions d'Adhésion
-                                </h4>
-                                <ul className="space-y-3">
-                                    {item.details.conditions.map((c, i) => (
-                                        <li key={i} className="flex items-start gap-3 group">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 group-hover:bg-emerald-500 transition-colors" />
-                                            <span className="text-slate-300 leading-relaxed">{c}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                             {/* Dispositions */}
-                             <div className="space-y-4 pt-4 border-t border-slate-800/50 md:border-none md:pt-0">
-                                <h4 className="flex items-center gap-2 text-lg font-bold text-purple-500 uppercase tracking-wide">
-                                    <CheckCircle2 className="h-5 w-5" /> Dispositions Pratiques
-                                </h4>
-                                <ul className="space-y-3">
-                                    {item.details.dispositions.map((d, i) => (
-                                        <li key={i} className="flex items-start gap-3 group">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 group-hover:bg-purple-500 transition-colors" />
-                                            <span className="text-slate-300 leading-relaxed">{d}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                    </ScrollArea>
-                    
-                    <div className="p-6 bg-slate-900 border-t border-slate-800 flex justify-end">
-                        <Button className="bg-white text-slate-950 hover:bg-slate-200 font-bold">
-                            Rejoindre cette commission
-                        </Button>
+                <ScrollArea className="flex-1 p-8 pt-6">
+                  <div className="grid md:grid-cols-2 gap-8">
+                    {/* Mission */}
+                    <div className="space-y-4">
+                      <h4 className="flex items-center gap-2 text-lg font-bold text-amber-500 uppercase tracking-wide">
+                        <BookOpen className="h-5 w-5" /> Mission
+                      </h4>
+                      <ul className="space-y-3">
+                        {item.details.mission.map((m, i) => (
+                          <li key={i} className="flex items-start gap-3 group">
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 group-hover:bg-amber-500 transition-colors" />
+                            <span className="text-slate-300 leading-relaxed">{m}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                </DialogContent>
+
+                    {/* Rôles */}
+                    <div className="space-y-4">
+                      <h4 className="flex items-center gap-2 text-lg font-bold text-blue-500 uppercase tracking-wide">
+                        <CheckCircle2 className="h-5 w-5" /> Rôles
+                      </h4>
+                      <ul className="space-y-3">
+                        {item.details.roles.map((r, i) => (
+                          <li key={i} className="flex items-start gap-3 group">
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 group-hover:bg-blue-500 transition-colors" />
+                            <span className="text-slate-300 leading-relaxed">{r}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Conditions */}
+                    <div className="space-y-4 pt-4 border-t border-slate-800/50 md:border-none md:pt-0">
+                      <h4 className="flex items-center gap-2 text-lg font-bold text-emerald-500 uppercase tracking-wide">
+                        <CheckCircle2 className="h-5 w-5" /> Conditions d'Adhésion
+                      </h4>
+                      <ul className="space-y-3">
+                        {item.details.conditions.map((c, i) => (
+                          <li key={i} className="flex items-start gap-3 group">
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 group-hover:bg-emerald-500 transition-colors" />
+                            <span className="text-slate-300 leading-relaxed">{c}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Dispositions */}
+                    <div className="space-y-4 pt-4 border-t border-slate-800/50 md:border-none md:pt-0">
+                      <h4 className="flex items-center gap-2 text-lg font-bold text-purple-500 uppercase tracking-wide">
+                        <CheckCircle2 className="h-5 w-5" /> Dispositions Pratiques
+                      </h4>
+                      <ul className="space-y-3">
+                        {item.details.dispositions.map((d, i) => (
+                          <li key={i} className="flex items-start gap-3 group">
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 group-hover:bg-purple-500 transition-colors" />
+                            <span className="text-slate-300 leading-relaxed">{d}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </ScrollArea>
+
+                <div className="p-6 bg-slate-900 border-t border-slate-800 flex justify-end">
+                  <Button className="bg-white text-slate-950 hover:bg-slate-200 font-bold">
+                    Rejoindre cette commission
+                  </Button>
+                </div>
+              </DialogContent>
             </Dialog>
           ))}
         </div>
@@ -334,4 +333,4 @@ export function CommissionsSection() {
     </section>
   )
 }
-```
+

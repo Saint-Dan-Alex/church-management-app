@@ -31,7 +31,16 @@ const getDatesMoisEncours = () => {
   return { firstDay, lastDay }
 }
 
+// Import additionnel
+import { ReportHeader } from "@/components/reports/report-header"
+import { ReportAnalysis } from "@/components/reports/report-analysis"
+
+// ... (reste des imports)
+
+// ...
+
 export function RapportCotisations() {
+  // ... (Hooks et state)
   const { toast } = useToast()
   const [cotisations, setCotisations] = useState<any[]>([])
   const [moniteursList, setMoniteursList] = useState<any[]>([])
@@ -63,13 +72,6 @@ export function RapportCotisations() {
       setError(null)
 
       // Charger les cotisations (toutes) et les moniteurs en parallèle
-      // On utilise import dynamique pour monitorsService si pas dispo dans l'index global, 
-      // ou on suppose qu'il est dispo. 
-      // Pour éviter les erreurs d'import, je vais utiliser un require ou assumer l'import.
-      // Je vais utiliser cotisationsService qui est déjà là, et ajouter monitorsService.
-
-      // Ici on triche un peu : on charge tout (per_page=2000) pour faire le filtrage côté client
-      // C'est plus fluide pour un rapport interactif "léger"
       const [cotisationsRes, moniteursRes] = await Promise.all([
         cotisationsService.getAll({ per_page: 2000 }),
         import("@/lib/services/monitors.service").then(m => m.monitorsService.getAll())
@@ -213,9 +215,18 @@ export function RapportCotisations() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Filtres de recherche */}
-      <Card>
+    <div className="space-y-6 print:space-y-4">
+
+      {/* En-tête pour l'impression uniquement */}
+      <div className="hidden print:block">
+        <ReportHeader
+          title="Rapport Financier des Cotisations"
+          subtitle={`Période du ${new Date(dateDebut).toLocaleDateString("fr-FR")} au ${new Date(dateFin).toLocaleDateString("fr-FR")}`}
+        />
+      </div>
+
+      {/* Filtres de recherche (Cachés à l'impression) */}
+      <Card className="print:hidden">
         <CardHeader>
           <CardTitle>Filtres de recherche</CardTitle>
           <CardDescription>Recherchez les cotisations par moniteur et période</CardDescription>
@@ -238,8 +249,6 @@ export function RapportCotisations() {
                       </SelectItem>
                     )
                   })}
-                  {/* Fallback pour les moniteurs dans les cotisations mais pas dans la liste officielle */}
-                  {/* Optionnel, pour simplification on ne met que la liste officielle */}
                 </SelectContent>
               </Select>
             </div>
@@ -265,8 +274,6 @@ export function RapportCotisations() {
             </div>
 
             <div className="flex items-end gap-2">
-              {/* Le bouton Rechercher n'est plus strictement nécessaire car l'effet applique les filtres auto, 
-                  mais on peut le garder pour forcer un refresh si besoin ou juste par UX */}
               <Button onClick={applyFilters} className="flex-1">
                 <Search className="mr-2 h-4 w-4" />
                 Actualiser
@@ -280,8 +287,8 @@ export function RapportCotisations() {
       </Card>
 
       {/* Statistiques générales */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+      <div className="grid gap-4 md:grid-cols-4 print:grid-cols-4">
+        <Card className="print:border print:shadow-none">
           <CardContent className="p-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -289,12 +296,12 @@ export function RapportCotisations() {
                 <p className="text-sm text-gray-600">Nombre total</p>
               </div>
               <p className="text-2xl font-bold">{nombreCotisations}</p>
-              <p className="text-xs text-gray-500">Cotisations enregistrées</p>
+              <p className="text-xs text-gray-500">Cotisations</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="print:border print:shadow-none">
           <CardContent className="p-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -302,12 +309,12 @@ export function RapportCotisations() {
                 <p className="text-sm text-gray-600">Total CDF</p>
               </div>
               <p className="text-2xl font-bold text-green-600">{totalCDF.toLocaleString()} CDF</p>
-              <p className="text-xs text-gray-500">Francs Congolais</p>
+              <p className="text-xs text-gray-500">Recettes locales</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="print:border print:shadow-none">
           <CardContent className="p-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -315,31 +322,46 @@ export function RapportCotisations() {
                 <p className="text-sm text-gray-600">Total USD</p>
               </div>
               <p className="text-2xl font-bold text-green-700">{totalUSD.toLocaleString()} USD</p>
-              <p className="text-xs text-gray-500">Dollars Américains</p>
+              <p className="text-xs text-gray-500">Devises étrangères</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="print:border print:shadow-none">
           <CardContent className="p-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-purple-600" />
-                <p className="text-sm text-gray-600">Taux de paiement</p>
+                <p className="text-sm text-gray-600">Taux de recouvrement</p>
               </div>
               <p className="text-2xl font-bold text-purple-600">{tauxPaiement}%</p>
-              <p className="text-xs text-gray-500">{nombrePayees}/{nombreCotisations} payées</p>
+              <p className="text-xs text-gray-500">Performance</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Analyse Automatique (Visible écran + print) */}
+      <ReportAnalysis
+        title="Analyse Financière & Commentaires"
+        metrics={[
+          { label: "Volume des cotisations (CDF)", value: totalCDF, unit: "CDF" },
+          { label: "Volume des cotisations (USD)", value: totalUSD, unit: "USD" },
+          { label: "Taux de participation", value: tauxPaiement, unit: "%", target: 80 }
+        ]}
+        customComment={
+          tauxPaiement < 50
+            ? "Le taux de recouvrement des cotisations est inférieur à la moyenne espérée. Il est recommandé de sensibiliser les moniteurs sur l'importance de la contribution."
+            : "Excellente performance de recouvrement. La trésorerie se porte bien grâce à la fidélité des contributions."
+        }
+      />
+
       {/* Statistiques par moniteur */}
       {Object.keys(statsParMoniteur).length > 0 && (
-        <Card>
+        <Card className="print:break-inside-avoid print:shadow-none print:border">
           <CardHeader>
-            <CardTitle>Statistiques par moniteur</CardTitle>
-            <CardDescription>Résumé des cotisations par moniteur (Période sélectionnée)</CardDescription>
+            <CardTitle>Synthèse par Moniteur</CardTitle>
+            <CardDescription>Performance individuelle de recouvrement</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -354,6 +376,7 @@ export function RapportCotisations() {
               <TableBody>
                 {Object.entries(statsParMoniteur)
                   .sort(([, a], [, b]) => b.totalCDF - a.totalCDF)
+                  // Limiter à top 10 pour l'impression si trop long ? Non, on met tout.
                   .map(([moniteur, stats]) => (
                     <TableRow key={moniteur}>
                       <TableCell className="font-medium">{moniteur}</TableCell>
@@ -373,8 +396,8 @@ export function RapportCotisations() {
       )}
 
       {/* Tableau détaillé */}
-      <Card>
-        <CardHeader>
+      <Card className="print:shadow-none print:border-none">
+        <CardHeader className="print:hidden">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Détails des cotisations</CardTitle>
@@ -392,6 +415,10 @@ export function RapportCotisations() {
             </div>
           </div>
         </CardHeader>
+        {/* On force l'affichage du titre de section à l'impression */}
+        <div className="hidden print:block mb-4 mt-8">
+          <h3 className="text-xl font-bold uppercase underline">Détails des Transactions</h3>
+        </div>
         <CardContent>
           <Table>
             <TableHeader>
@@ -399,10 +426,9 @@ export function RapportCotisations() {
                 <TableHead>Moniteur</TableHead>
                 <TableHead>Période</TableHead>
                 <TableHead className="text-right">Montant</TableHead>
-                <TableHead>Date paiement</TableHead>
+                <TableHead>Date</TableHead>
                 <TableHead>Mode</TableHead>
-                <TableHead>Réçu N°</TableHead>
-                {/* <TableHead>Statut</TableHead> */}
+                <TableHead>N° Reçu</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -427,7 +453,6 @@ export function RapportCotisations() {
                     </TableCell>
                     <TableCell>{cotisation.mode_paiement || "-"}</TableCell>
                     <TableCell>{cotisation.numero_recu || "-"}</TableCell>
-                    {/* <TableCell>{getStatutBadge(cotisation.statut)}</TableCell> */}
                   </TableRow>
                 ))
               )}
@@ -435,6 +460,22 @@ export function RapportCotisations() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Footer Impression */}
+      <div className="hidden print:block mt-12 pt-8 border-t border-black">
+        <div className="flex justify-between text-sm">
+          <div>
+            <p className="font-bold">Pour la Coordination</p>
+            <div className="h-20"></div>
+            <p>Sceau et Signature</p>
+          </div>
+          <div>
+            <p className="font-bold">La Caisse</p>
+            <div className="h-20"></div>
+            <p>Signature</p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

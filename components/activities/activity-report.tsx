@@ -24,6 +24,8 @@ import {
 import type { Payment, PaymentStats } from "@/types/payment"
 import type { Presence } from "@/types/presence"
 import type { Expense } from "@/types/expense"
+import { ReportHeader } from "@/components/reports/report-header"
+import { ReportAnalysis } from "@/components/reports/report-analysis"
 
 interface ActivityReportProps {
   activite: {
@@ -84,7 +86,7 @@ export function ActivityReport({
     }
     return sum
   }, 0)
-  
+
   const totalEntrees = paymentStats?.totalPaye || 0
   const bilan = totalEntrees - totalDepenses
   const tauxCouverture = totalDepenses > 0 ? (totalEntrees / totalDepenses) * 100 : 0
@@ -115,25 +117,11 @@ export function ActivityReport({
   return (
     <div className="space-y-6" id="activity-report">
       {/* Logo et informations de l'église */}
-      <Card className="border-t-4 border-t-blue-600">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-6 pb-4 border-b">
-            <div className="w-20 h-20 flex-shrink-0 flex items-center justify-center">
-              <img
-                src={CHURCH_INFO.logo}
-                alt={CHURCH_INFO.logoAlt}
-                className="max-w-full max-h-full object-contain"
-                style={{ width: '80px', height: '80px' }}
-              />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-blue-900">{CHURCH_INFO.name}</h2>
-              <p className="text-base text-blue-700">{CHURCH_INFO.ministry}</p>
-              <p className="text-sm text-gray-600 mt-1">{CHURCH_INFO.address}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* En-tête du rapport standardisé */}
+      <ReportHeader
+        title="Rapport d'Activité"
+        subtitle={`${activite.titre} - ${new Date(activite.date).toLocaleDateString("fr-FR", { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`}
+      />
 
       {/* En-tête du rapport */}
       <Card className="border-t-4 border-t-blue-600">
@@ -162,9 +150,9 @@ export function ActivityReport({
                 <Printer className="mr-2 h-4 w-4" />
                 Imprimer
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleExport}
                 disabled={isExporting}
               >
@@ -325,15 +313,15 @@ export function ActivityReport({
                           presence.statut === "present"
                             ? "bg-green-100 text-green-700"
                             : presence.statut === "retard"
-                            ? "bg-orange-100 text-orange-700"
-                            : "bg-red-100 text-red-700"
+                              ? "bg-orange-100 text-orange-700"
+                              : "bg-red-100 text-red-700"
                         }
                       >
                         {presence.statut === "present"
                           ? "Présent"
                           : presence.statut === "retard"
-                          ? "Retard"
-                          : "Absent"}
+                            ? "Retard"
+                            : "Absent"}
                       </Badge>
                     </div>
                   ))}
@@ -457,7 +445,7 @@ export function ActivityReport({
                   </p>
                   <p className="text-xs text-green-600 mt-1">Paiements collectés</p>
                 </div>
-                
+
                 <div className="p-4 bg-red-50 rounded-lg">
                   <p className="text-sm text-red-700 font-medium">Total Dépenses</p>
                   <p className="text-2xl font-bold text-red-900">
@@ -465,7 +453,7 @@ export function ActivityReport({
                   </p>
                   <p className="text-xs text-red-600 mt-1">{expenses.length} dépenses</p>
                 </div>
-                
+
                 <div className={`p-4 rounded-lg ${bilan >= 0 ? 'bg-blue-50' : 'bg-orange-50'}`}>
                   <p className={`text-sm font-medium ${bilan >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
                     Bilan
@@ -524,20 +512,37 @@ export function ActivityReport({
         </Card>
       )}
 
-      {/* Note de bas de page */}
-      <Card className="print:block">
-        <CardContent className="pt-6">
-          <div className="text-center text-sm text-gray-500">
-            <p className="font-semibold text-gray-700">{CHURCH_INFO.name}</p>
-            <p>{CHURCH_INFO.ministry}</p>
-            <p className="mt-2">Rapport généré le {new Date().toLocaleString("fr-FR")}</p>
-            <p className="mt-1 italic">{CHURCH_INFO.motto}</p>
-          </div>
-        </CardContent>
-      </Card>
+    </Card>
+  )
+}
 
-      {/* Styles pour l'impression */}
-      <style jsx global>{`
+{/* Analyse Automatique */ }
+<ReportAnalysis
+  metrics={[
+    { label: "Taux de Présence", value: tauxPresence, unit: "%", target: 80 },
+    ...(paymentStats ? [{ label: "Taux de Recouvrement", value: paymentStats.tauxPaiement, unit: "%", target: 90 }] : []),
+    ...(expenses.length > 0 ? [{ label: "Taux de Couverture", value: tauxCouverture, unit: "%", target: 100 }] : [])
+  ]}
+  customComment={
+    tauxPresence < 50 ? "La participation est inférieure à la moyenne attendue. Il serait judicieux de renforcer la mobilisation." :
+      "Le taux de participation démontre une bonne dynamique de groupe."
+  }
+/>
+
+{/* Note de bas de page */ }
+<Card className="print:block">
+  <CardContent className="pt-6">
+    <div className="text-center text-sm text-gray-500">
+      <p className="font-semibold text-gray-700">{CHURCH_INFO.name}</p>
+      <p>{CHURCH_INFO.ministry}</p>
+      <p className="mt-2">Rapport généré le {new Date().toLocaleString("fr-FR")}</p>
+      <p className="mt-1 italic">{CHURCH_INFO.motto}</p>
+    </div>
+  </CardContent>
+</Card>
+
+{/* Styles pour l'impression */ }
+<style jsx global>{`
         @media print {
           body * {
             visibility: hidden;
@@ -557,6 +562,6 @@ export function ActivityReport({
           }
         }
       `}</style>
-    </div>
+    </div >
   )
 }
