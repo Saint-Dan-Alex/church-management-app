@@ -38,9 +38,7 @@ class TwoFactorEmailCode extends Notification
     {
         return (new MailMessage)
             ->subject('Votre code d\'authentification à deux facteurs')
-            ->line('Voici votre code de vérification : ' . $this->code)
-            ->line('Ce code expirera dans 10 minutes.')
-            ->line('Si vous n\'avez pas demandé ce code, aucune action n\'est requise.');
+            ->view('emails.two-factor-code', ['code' => $this->code]);
     }
 
     /**

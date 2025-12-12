@@ -5,6 +5,16 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
 
+function getAuthHeader(): { Authorization: string } | {} {
+  if (typeof document !== 'undefined') {
+    const match = document.cookie.match(new RegExp('(^| )api-token=([^;]+)'));
+    if (match) {
+      return { 'Authorization': `Bearer ${match[2]}` };
+    }
+  }
+  return {};
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -49,6 +59,7 @@ export const api = {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        ...getAuthHeader(),
         ...options?.headers,
       },
       credentials: 'include',
@@ -64,6 +75,7 @@ export const api = {
     const isFormData = data instanceof FormData;
     const headers: any = {
       'Accept': 'application/json',
+      ...getAuthHeader(),
       ...options?.headers,
     };
 
@@ -90,6 +102,7 @@ export const api = {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        ...getAuthHeader(),
         ...options?.headers,
       },
       credentials: 'include',
@@ -108,6 +121,7 @@ export const api = {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        ...getAuthHeader(),
         ...options?.headers,
       },
       credentials: 'include',
@@ -126,6 +140,7 @@ export const api = {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        ...getAuthHeader(),
         ...options?.headers,
       },
       credentials: 'include',

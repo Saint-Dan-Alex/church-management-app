@@ -2,43 +2,138 @@
 
 import { cookies } from "next/headers"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1"
+
 export interface User {
-  id: string
+  id: number
   email: string
   name: string
-  role: "admin" | "user"
+  role: string
+  token?: string
 }
 
-// Mock users database (replace with real database later)
-const USERS = [
-  { id: "1", email: "admin@eglise.com", password: "admin123", name: "Administrateur", role: "admin" as const },
-  { id: "2", email: "user@eglise.com", password: "user123", name: "Utilisateur", role: "user" as const },
-]
+export type LoginResult =
+  | { success: true; user?: User; token?: string; two_factor_required?: false }
+  | { success: true; two_factor_required: true; email: string }
+  | { success: false; error: string }
 
-export async function login(email: string, password: string) {
-  const user = USERS.find((u) => u.email === email && u.password === password)
+export async function login(email: string, password: string): Promise<LoginResult> {
+  try {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ email, password }),
+      cache: 'no-store'
+    })
 
-  if (!user) {
-    return { success: false, error: "Email ou mot de passe incorrect" }
+    const data = await response.json()
+
+    if (!response.ok) {
+      // Validation error or other
+      const errorMessage = data.message || data.errors?.email?.[0] || "Erreur de connexion"
+      return { success: false, error: errorMessage }
+    }
+
+    if (data.two_factor_required) {
+      return { success: true, two_factor_required: true, email: data.email }
+    }
+
+    // Should not happen with current backend logic (always 2FA), but consistent handling:
+    if (data.token) {
+      await createSession(data.user, data.token)
+      return { success: true, user: data.user, token: data.token }
+    }
+
+    return { success: false, error: "Réponse inattendue du serveur" }
+
+  } catch (error) {
+    console.error("Login error:", error)
+    return { success: false, error: "Erreur de connexion au serveur" }
   }
+}
 
-  const { password: _, ...userWithoutPassword } = user
+export async function verifyTwoFactor(email: string, code: string): Promise<LoginResult> {
+  try {
+    const response = await fetch(`${API_URL}/auth/verify-2fa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ email, code }),
+      cache: 'no-store'
+    })
 
-  // Set cookie
+    const data = await response.json()
+
+    if (!response.ok) {
+      const errorMessage = data.message || data.errors?.code?.[0] || "Code invalide"
+      return { success: false, error: errorMessage }
+    }
+
+    if (data.token) {
+      await createSession(data.user, data.token)
+      return { success: true, user: data.user, token: data.token }
+    }
+
+    return { success: false, error: "Token manquant dans la réponse" }
+
+  } catch (error) {
+    return { success: false, error: "Erreur lors de la vérification" }
+  }
+}
+
+export async function resendTwoFactorCode(email: string) {
+  try {
+    await fetch(`${API_URL}/auth/resend-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ email }),
+    })
+    return { success: true }
+  } catch (e) {
+    return { success: false }
+  }
+}
+
+async function createSession(user: User, token: string) {
   const cookieStore = await cookies()
-  cookieStore.set("auth-user", JSON.stringify(userWithoutPassword), {
+
+  // Cookie de session sécurisé pour Next.js Middleware & Server Components
+  cookieStore.set("auth-user", JSON.stringify({ ...user, token }), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7, // 7 days
   })
 
-  return { success: true, user: userWithoutPassword }
+  // Cookie accessible par JS pour les appels API client-side (Bearer Token)
+  cookieStore.set("api-token", token, {
+    httpOnly: false, // Accesssible via JS for api.ts
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7,
+  })
 }
 
 export async function logout() {
   const cookieStore = await cookies()
+
+  // Optional: Call API to revoke token
+  const token = cookieStore.get("api-token")?.value
+  if (token) {
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/json"
+        }
+      })
+    } catch (e) {
+      // Ignore logout errors
+    }
+  }
+
   cookieStore.delete("auth-user")
+  cookieStore.delete("api-token")
 }
 
 export async function getCurrentUser(): Promise<User | null> {
@@ -58,5 +153,5 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function isAdmin(): Promise<boolean> {
   const user = await getCurrentUser()
-  return user?.role === "admin"
+  return user?.role === "ADMIN" // Backend returns uppercase role
 }
