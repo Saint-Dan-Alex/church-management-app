@@ -28,6 +28,7 @@ use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\UserManagementController;
 use App\Http\Controllers\API\CommissionController;
 use App\Http\Controllers\API\SettingController;
+use App\Http\Controllers\API\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,16 @@ use App\Http\Controllers\API\SettingController;
 */
 
 Route::prefix('v1')->group(function () {
+    // Auth Routes (Public)
+    Route::post('auth/login', [AuthController::class, 'login']);
+    Route::post('auth/verify-2fa', [AuthController::class, 'verifyTwoFactor']);
+    Route::post('auth/resend-code', [AuthController::class, 'resendCode']);
+
+    // Auth Routes (Protected)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::get('auth/me', [AuthController::class, 'me']);
+    });
 
     // Monitors Routes
     Route::apiResource('monitors', MonitorController::class);
