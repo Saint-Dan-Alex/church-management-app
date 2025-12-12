@@ -512,37 +512,33 @@ export function ActivityReport({
         </Card>
       )}
 
-    </Card>
-  )
-}
+      {/* Analyse Automatique */}
+      <ReportAnalysis
+        metrics={[
+          { label: "Taux de Présence", value: tauxPresence, unit: "%", target: 80 },
+          ...(paymentStats ? [{ label: "Taux de Recouvrement", value: paymentStats.tauxPaiement, unit: "%", target: 90 }] : []),
+          ...(expenses.length > 0 ? [{ label: "Taux de Couverture", value: tauxCouverture, unit: "%", target: 100 }] : [])
+        ]}
+        customComment={
+          tauxPresence < 50 ? "La participation est inférieure à la moyenne attendue. Il serait judicieux de renforcer la mobilisation." :
+            "Le taux de participation démontre une bonne dynamique de groupe."
+        }
+      />
 
-{/* Analyse Automatique */ }
-<ReportAnalysis
-  metrics={[
-    { label: "Taux de Présence", value: tauxPresence, unit: "%", target: 80 },
-    ...(paymentStats ? [{ label: "Taux de Recouvrement", value: paymentStats.tauxPaiement, unit: "%", target: 90 }] : []),
-    ...(expenses.length > 0 ? [{ label: "Taux de Couverture", value: tauxCouverture, unit: "%", target: 100 }] : [])
-  ]}
-  customComment={
-    tauxPresence < 50 ? "La participation est inférieure à la moyenne attendue. Il serait judicieux de renforcer la mobilisation." :
-      "Le taux de participation démontre une bonne dynamique de groupe."
-  }
-/>
+      {/* Note de bas de page */}
+      <Card className="print:block">
+        <CardContent className="pt-6">
+          <div className="text-center text-sm text-gray-500">
+            <p className="font-semibold text-gray-700">{CHURCH_INFO.name}</p>
+            <p>{CHURCH_INFO.ministry}</p>
+            <p className="mt-2">Rapport généré le {new Date().toLocaleString("fr-FR")}</p>
+            <p className="mt-1 italic">{CHURCH_INFO.motto}</p>
+          </div>
+        </CardContent>
+      </Card>
 
-{/* Note de bas de page */ }
-<Card className="print:block">
-  <CardContent className="pt-6">
-    <div className="text-center text-sm text-gray-500">
-      <p className="font-semibold text-gray-700">{CHURCH_INFO.name}</p>
-      <p>{CHURCH_INFO.ministry}</p>
-      <p className="mt-2">Rapport généré le {new Date().toLocaleString("fr-FR")}</p>
-      <p className="mt-1 italic">{CHURCH_INFO.motto}</p>
-    </div>
-  </CardContent>
-</Card>
-
-{/* Styles pour l'impression */ }
-<style jsx global>{`
+      {/* Styles pour l'impression */}
+      <style jsx global>{`
         @media print {
           body * {
             visibility: hidden;
