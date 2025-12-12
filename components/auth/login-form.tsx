@@ -115,33 +115,53 @@ export function LoginForm() {
   // Render Login Step
   if (step === 'login') {
     return (
-      <Card className="border-slate-700 bg-slate-800/50 backdrop-blur">
+      <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-xl">
         <CardHeader>
-          <CardTitle className="text-white">Bienvenue</CardTitle>
-          <CardDescription className="text-slate-300">Entrez vos identifiants pour continuer</CardDescription>
+          <CardTitle className="text-gray-900">Bienvenue</CardTitle>
+          <CardDescription className="text-gray-500">Entrez vos identifiants pour continuer</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-200">Email</Label>
-              <Input
-                id="email" type="email" placeholder="admin@eglise.com"
-                value={email} onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-400"
-              />
+              <Label htmlFor="email" className="text-gray-700">Email</Label>
+              <div className="relative">
+                <Input
+                  id="email" type="email" placeholder="admin@eglise.com"
+                  value={email} onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="pl-10 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:ring-primary"
+                />
+                <div className="absolute left-3 top-2.5 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-200">Mot de passe</Label>
-              <Input
-                id="password" type="password" placeholder="••••••••"
-                value={password} onChange={(e) => setPassword(e.target.value)}
-                required
-                className="bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-400"
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-gray-700">Mot de passe</Label>
+                <Button variant="link" className="p-0 h-auto text-xs text-primary font-normal" type="button" onClick={() => toast.info("Veuillez contacter l'administrateur")}>
+                  Mot de passe oublié ?
+                </Button>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password" type="password" placeholder="••••••••"
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pl-10 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:ring-primary"
+                />
+                <div className="absolute left-3 top-2.5 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                </div>
+              </div>
             </div>
-            {error && <p className="text-sm text-red-400">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
+            {error && (
+              <div className="p-3 rounded-md bg-red-50 border border-red-100 text-sm text-red-600 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></svg>
+                {error}
+              </div>
+            )}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200" disabled={loading}>
               {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connexion...</> : "Se connecter"}
             </Button>
           </form>
@@ -152,14 +172,14 @@ export function LoginForm() {
 
   // Render 2FA Step
   return (
-    <Card className="border-slate-700 bg-slate-800/50 backdrop-blur">
+    <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-xl">
       <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
+        <CardTitle className="text-gray-900 flex items-center gap-2">
           <CheckCircle2 className="h-6 w-6 text-green-500" />
           Vérification
         </CardTitle>
-        <CardDescription className="text-slate-300">
-          Un code à 6 chiffres a été envoyé à <strong>{email}</strong>
+        <CardDescription className="text-gray-500">
+          Un code à 6 chiffres a été envoyé à <strong className="text-gray-900">{email}</strong>
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -175,25 +195,29 @@ export function LoginForm() {
                 value={twoFactorCode[idx] || ''}
                 onChange={(e) => handleCodeChange(idx, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(idx, e)}
-                className="w-10 h-12 text-center text-lg font-bold bg-slate-900/50 border-slate-600 text-white"
+                className="w-12 h-14 text-center text-xl font-bold bg-gray-50 border-gray-200 text-gray-900 focus-visible:ring-primary shadow-sm"
               />
             ))}
           </div>
 
-          {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+          {error && (
+            <div className="p-3 rounded-md bg-red-50 border border-red-100 text-sm text-red-600 text-center">
+              {error}
+            </div>
+          )}
 
-          <Button type="submit" className="w-full" disabled={loading || twoFactorCode.length < 6}>
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading || twoFactorCode.length < 6}>
             {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Vérification...</> : "Valider"}
           </Button>
 
-          <div className="flex justify-between items-center text-sm">
-            <Button type="button" variant="link" className="text-slate-400 p-0" onClick={() => setStep('login')}>
+          <div className="flex justify-between items-center text-sm pt-2">
+            <Button type="button" variant="link" className="text-gray-500 hover:text-gray-900 p-0" onClick={() => setStep('login')}>
               <ArrowLeft className="mr-1 h-3 w-3" /> Retour
             </Button>
             <Button
               type="button"
               variant="link"
-              className="text-blue-400 p-0"
+              className="text-primary hover:text-primary/80 p-0"
               onClick={handleResendCode}
               disabled={resending}
             >
