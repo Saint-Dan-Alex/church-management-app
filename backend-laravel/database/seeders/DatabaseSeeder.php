@@ -20,30 +20,30 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             RolesAndPermissionsSeeder::class,
             // 1. Salles (en premier - pas de dépendances)
-            SalleSeeder::class,
+            // SalleSeeder::class,
 
             // 2. Monitors et Children (créent automatiquement des Users via Observer)
-            MonitorSeeder::class,
-            ChildSeeder::class,
+            // MonitorSeeder::class,
+            // ChildSeeder::class,
 
             // 3. Activities (dépend de Monitor pour responsable_id)
-            ActivitySeeder::class,
+            // ActivitySeeder::class,
 
             // 4. Modules financiers et opérationnels
-            PaymentSeeder::class,
-            ExpenseSeeder::class,
-            PresenceSeeder::class,
-            CotisationSeeder::class,
-            SortieSeeder::class,
+            // PaymentSeeder::class,
+            // ExpenseSeeder::class,
+            // PresenceSeeder::class,
+            // CotisationSeeder::class,
+            // SortieSeeder::class,
 
             // 5. Contenus et médias
-            BlogSeeder::class,
-            VideoSeeder::class,
-            PhotoSeeder::class,
+            // BlogSeeder::class,
+            // VideoSeeder::class,
+            // PhotoSeeder::class,
 
             // 6. Enseignements et rapports
-            TeachingSeeder::class,
-            WorshipReportSeeder::class,
+            // TeachingSeeder::class,
+            // WorshipReportSeeder::class,
             // 7. Admin par défaut
 
         ]);
@@ -51,12 +51,12 @@ class DatabaseSeeder extends Seeder
         // Réaffecter les salles des enfants selon l'âge après insertion
         Artisan::call('children:reassign-salles');
 
-        $this->command->info('✅ Base de données peuplée avec succès !');
-        $this->command->info('📊 Résumé :');
-        $this->command->info('   - 5 Salles créées');
-        $this->command->info('   - 5 Moniteurs créés (+ 5 Users auto)');
-        $this->command->info('   - 5 Enfants créés (+ 5 Users auto)');
-        $this->command->info('   - 5 Activités créées');
+        // $this->command->info('✅ Base de données peuplée avec succès !');
+        // $this->command->info('📊 Résumé :');
+        // $this->command->info('   - 5 Salles créées');
+        // $this->command->info('   - 5 Moniteurs créés (+ 5 Users auto)');
+        // $this->command->info('   - 5 Enfants créés (+ 5 Users auto)');
+        // $this->command->info('   - 5 Activités créées');
         $this->command->info('   - Données de test pour tous les modules');
     }
 }

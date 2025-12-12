@@ -11,7 +11,7 @@ class AdminSeeder extends Seeder
     {
         // Crée ou met à jour un compte administrateur par défaut
         User::updateOrCreate(
-            ['email' => 'admin@church.local'],
+            ['email' => 'admin@church.com'],
             [
                 'name' => 'Admin',
                 // Le cast 'password' => 'hashed' dans le modèle User va hasher automatiquement ce mot de passe
