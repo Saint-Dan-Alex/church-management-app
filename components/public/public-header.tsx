@@ -105,7 +105,7 @@ export function PublicHeader({ settings = {} }: PublicHeaderProps) {
           {/* Desktop Login Button */}
           <div className="hidden lg:block">
             <Button asChild size="default" className="bg-white text-slate-950 hover:bg-slate-200 rounded-full px-6 font-semibold shadow-lg shadow-white/5 transition-all hover:scale-105">
-              <Link href="/login">Nous rejoindre</Link>
+              <Link href="/login">Se connecter</Link>
             </Button>
           </div>
 
@@ -159,7 +159,7 @@ export function PublicHeader({ settings = {} }: PublicHeaderProps) {
             ))}
             <div className="pt-4 mt-4 border-t border-white/10">
               <Button asChild className="w-full bg-white text-slate-950 hover:bg-slate-200 rounded-full py-6 font-semibold">
-                <Link href="/login">Nous rejoindre</Link>
+                <Link href="/login">Se connecter</Link>
               </Button>
             </div>
           </div>

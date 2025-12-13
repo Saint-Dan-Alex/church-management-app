@@ -145,7 +145,15 @@ export async function getCurrentUser(): Promise<User | null> {
   }
 
   try {
-    return JSON.parse(userCookie.value)
+    const user = JSON.parse(userCookie.value)
+
+    // Validate session: must have a token (new auth system)
+    // This invalidates old mock cookies that didn't have a token
+    if (!user.token) {
+      return null
+    }
+
+    return user
   } catch {
     return null
   }
