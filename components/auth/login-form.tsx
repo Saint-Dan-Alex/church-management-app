@@ -62,12 +62,10 @@ export function LoginForm() {
 
   function handleSuccess(user: any) {
     toast.success("Connexion réussie")
-    if (user?.role === "ADMIN") {
-      router.push("/dashboard")
-    } else {
-      router.push("/dashboard")
-    }
-    router.refresh()
+    // Force hard navigation to ensure cookies are recognized by the server immediately
+    setTimeout(() => {
+      window.location.href = "/dashboard"
+    }, 500) // Petit délai pour laisser le toast s'afficher
   }
 
   async function handleResendCode() {
