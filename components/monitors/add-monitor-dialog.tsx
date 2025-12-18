@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Upload, Loader2 } from "lucide-react"
+import { Upload, Loader2, Camera } from "lucide-react"
 import { toast } from "sonner"
 import type { Monitor } from "@/types/monitor"
 import { monitorsService } from "@/lib/services/monitors.service"
@@ -66,19 +66,20 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
   const [salles, setSalles] = useState<Salle[]>([])
   const [roles, setRoles] = useState<Role[]>([])
 
+  // Camera state
+  const [isCameraOpen, setIsCameraOpen] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
   // Charger les salles disponibles depuis l'API Laravel
   useEffect(() => {
     const fetchSalles = async () => {
       try {
         const response = await sallesService.getAll()
-
-        // L'API renvoie soit un tableau simple, soit un objet paginé avec .data
         const sallesArray = Array.isArray(response)
           ? response
           : Array.isArray((response as any).data)
             ? (response as any).data
             : []
-
         setSalles(sallesArray)
       } catch (err) {
         console.error('Erreur lors du chargement des salles:', err)
@@ -107,6 +108,52 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
       fetchRoles()
     }
   }, [open])
+
+  // Stop camera when dialog closes
+  useEffect(() => {
+    if (!open) {
+      handleStopCamera()
+    }
+  }, [open])
+
+  const handleStartCamera = async () => {
+    try {
+      setIsCameraOpen(true)
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    } catch (err) {
+      console.error("Erreur caméra:", err)
+      toast.error("Impossible d'accéder à la caméra")
+      setIsCameraOpen(false)
+    }
+  }
+
+  const handleStopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream
+      stream.getTracks().forEach(track => track.stop())
+      videoRef.current.srcObject = null
+    }
+    setIsCameraOpen(false)
+  }
+
+  const handleTakePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement("canvas")
+      canvas.width = videoRef.current.videoWidth
+      canvas.height = videoRef.current.videoHeight
+      const ctx = canvas.getContext("2d")
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0)
+        const base64String = canvas.toDataURL("image/jpeg")
+        setPhotoPreview(base64String)
+        setFormData(prev => ({ ...prev, photo: base64String }))
+        handleStopCamera()
+      }
+    }
+  }
 
   const resetForm = () => {
     setFormData({
@@ -146,7 +193,6 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validation des champs obligatoires
     if (!formData.nom || !formData.prenom || !formData.email || !formData.telephone || !formData.adresse || !formData.dateAdhesion) {
       toast.error("Veuillez remplir tous les champs obligatoires")
       return
@@ -156,19 +202,14 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
     setError(null)
 
     try {
-      // Préparer les données pour l'envoi
       const monitorData = {
         ...formData,
-        // Convertir les dates au format attendu par l'API (YYYY-MM-DD)
-        // Les inputs type="date" renvoient déjà ce format, pas besoin de toISOString() qui ajoute l'heure et peut décaler le jour
         dateNaissance: formData.dateNaissance || null,
         dateConversion: formData.dateConversion || null,
         dateBapteme: formData.dateBapteme || null,
         dateAdhesion: formData.dateAdhesion || null,
         dateAffectationActuelle: formData.dateAffectationActuelle || null,
-        // S'assurer que les booléens sont des booléens
         baptiseSaintEsprit: Boolean(formData.baptiseSaintEsprit),
-        // Si une photo a été téléchargée, l'envoyer
         ...(photoPreview && { photo: photoPreview })
       }
 
@@ -177,32 +218,26 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
       const newMonitor = await monitorsService.create(monitorData)
       toast.success("Moniteur ajouté avec succès")
       onOpenChange(false)
-
-      // Réinitialiser le formulaire
       resetForm()
+      handleStopCamera()
 
-      // Recharger la liste des moniteurs si nécessaire
       if (onMonitorAdded) {
         onMonitorAdded(newMonitor as any)
       }
 
     } catch (err: any) {
       console.error('Erreur lors de l\'ajout du moniteur:', err)
-
-      let errorMessage = "Une erreur est survenue lors de l'ajout du moniteur";
-
+      let errorMessage = "Une erreur est survenue lors de l'ajout du moniteur"
       if (err.status === 422 && err.data) {
-        // Erreur de validation Laravel
         if (err.data.errors) {
-          const validationErrors = Object.values(err.data.errors).flat().join(', ');
-          errorMessage = `Erreur de validation: ${validationErrors}`;
+          const validationErrors = Object.values(err.data.errors).flat().join(', ')
+          errorMessage = `Erreur de validation: ${validationErrors}`
         } else if (err.data.message) {
-          errorMessage = err.data.message;
+          errorMessage = err.data.message
         }
       } else if (err.message) {
-        errorMessage = err.message;
+        errorMessage = err.message
       }
-
       setError(errorMessage)
       toast.error(errorMessage)
     } finally {
@@ -214,6 +249,7 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen) {
         resetForm()
+        handleStopCamera()
       }
       onOpenChange(isOpen)
     }}>
@@ -230,30 +266,65 @@ export function AddMonitorDialog({ open, onOpenChange, onMonitorAdded }: AddMoni
               </div>
             )}
 
-            {/* Photo */}
+            {/* Photo Section */}
             <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={photoPreview || undefined} />
-                <AvatarFallback className="bg-blue-100 text-blue-600">
-                  <Upload className="h-8 w-8" />
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <Label htmlFor="photo" className="cursor-pointer">
-                  <div className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
-                    <Upload className="h-4 w-4" />
-                    {photoPreview ? 'Changer la photo' : 'Ajouter une photo'}
+              {isCameraOpen ? (
+                <div className="flex flex-col items-center gap-2 w-full max-w-sm">
+                  <div className="relative aspect-video w-full bg-black rounded-lg overflow-hidden">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                </Label>
-                <Input
-                  id="photo"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                  disabled={isLoading}
-                />
-              </div>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="destructive" size="sm" onClick={handleStopCamera}>
+                      Annuler
+                    </Button>
+                    <Button type="button" size="sm" onClick={handleTakePhoto}>
+                      Capturer
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={photoPreview || undefined} />
+                    <AvatarFallback className="bg-blue-100 text-blue-600">
+                      <Upload className="h-8 w-8" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex gap-4">
+                    <div>
+                      <Label htmlFor="photo" className="cursor-pointer">
+                        <div className="flex items-center gap-2 text-sm text-blue-600 hover:underline px-3 py-2 bg-blue-50 rounded-md">
+                          <Upload className="h-4 w-4" />
+                          {photoPreview ? 'Changer' : 'Importer'}
+                        </div>
+                      </Label>
+                      <Input
+                        id="photo"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handlePhotoChange}
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      onClick={handleStartCamera}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Caméra
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Informations personnelles */}
