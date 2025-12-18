@@ -61,7 +61,6 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
     const fetchRoles = async () => {
       try {
         const data = await rolesService.getAll()
-        // Adaptation si l'API retourne { data: [...] }
         const rolesArray = Array.isArray(data)
           ? data
           : Array.isArray((data as any).data)

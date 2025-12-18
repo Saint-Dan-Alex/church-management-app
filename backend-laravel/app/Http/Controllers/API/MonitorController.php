@@ -223,22 +223,20 @@ class MonitorController extends Controller
      */
     private function syncUserRole(string $email, ?string $monitorRole)
     {
+        if (empty($monitorRole)) return;
+
         $user = \App\Models\User::where('email', $email)->first();
         if ($user) {
-            $newUserType = 'MONITEUR'; // Default
+            $role = $monitorRole;
+            $lowerRole = strtolower($monitorRole);
             
-            if ($monitorRole === 'responsable') {
-                $newUserType = 'CHEF_SALLE';
-            }
-            
-            // Check current user type (case insensitive)
-            $currentUserType = strtoupper($user->user_type ?? '');
-            if ($currentUserType === 'ADMIN' || $currentUserType === 'COORDINATION') {
-                // Don't downgrade admins or coordinators
-                return;
+            if ($lowerRole === 'responsable') {
+                $role = 'CHEF_SALLE';
+            } elseif (in_array($lowerRole, ['adjoint', 'membre', 'moniteur'])) {
+                $role = 'MONITEUR';
             }
 
-            $user->update(['user_type' => $newUserType]);
+            $user->update(['user_type' => $role]);
         }
     }
 

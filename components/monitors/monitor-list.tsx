@@ -267,6 +267,9 @@ export function MonitorList({ searchQuery, onGenerateQR, refreshTrigger = 0 }: M
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         monitor={editingMonitor}
+        onSave={(updatedMonitor) => {
+          setMonitors(monitors.map(m => m.id === updatedMonitor.id ? updatedMonitor : m))
+        }}
       />
 
       <ConfirmDialog
