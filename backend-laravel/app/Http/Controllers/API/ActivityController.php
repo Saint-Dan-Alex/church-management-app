@@ -75,6 +75,11 @@ class ActivityController extends Controller
         return response()->json($activities);
     }
 
+    public function publicShow(Activity $activity): JsonResponse
+    {
+        return response()->json($activity);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = Activity::query();

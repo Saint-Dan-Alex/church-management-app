@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Church, Menu, X, ChevronDown } from "lucide-react"
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 
 interface PublicHeaderProps {
   settings?: Record<string, any>
@@ -12,6 +13,7 @@ interface PublicHeaderProps {
 export function PublicHeader({ settings = {} }: PublicHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null)
+  const pathname = usePathname()
 
   const appName = settings?.app_name || "Centre Evangelique Arche de l'Alliance"
   const logo = settings?.app_logo
@@ -21,19 +23,20 @@ export function PublicHeader({ settings = {} }: PublicHeaderProps) {
     {
       name: "L'Église",
       submenu: [
-        { name: "Vision & Mission", href: "#vision" },
-        { name: "Notre Histoire", href: "#histoire" },
-        { name: "Le Pasteur", href: "#pasteur" },
+        { name: "Vision & Mission", href: "/#vision" },
+        { name: "Notre Histoire", href: "/#histoire" },
+        { name: "Le Pasteur", href: "/#pasteur" },
       ],
     },
     {
       name: "Nos Commissions",
       submenu: [
-        { name: "Évangélisation", href: "#evangelisation" },
-        { name: "Accueil & Protocole", href: "#accueil" },
-        { name: "Social & Compassion", href: "#social" },
-        { name: "Jeunesse", href: "#jeunesse" },
-        { name: "Femmes", href: "#femmes" },
+        { name: "Intercession", href: "/#intercession" },
+        { name: "Accueil & Protocole", href: "/#accueil" },
+        { name: "Évangélisation", href: "/#evangelisation" },
+        { name: "Louange & Adoration", href: "/#louange" },
+        { name: "Danse & Chorégraphie", href: "/#danse" },
+        { name: "Logistique & Médias", href: "/#medias" },
       ],
     },
     {
@@ -44,10 +47,19 @@ export function PublicHeader({ settings = {} }: PublicHeaderProps) {
         { name: "Enseignements", href: "/blog-public" },
       ],
     },
-    { name: "Activités", href: "#activites" },
-    { name: "Contact", href: "#contact" },
+    { name: "Activités", href: "/#activites" },
+    { name: "Contact", href: "/#contact" },
   ]
-  /* Navigation End */
+
+  // Helper to handle anchor links correctly
+  // If we are on the homepage ('/'), we use '#id' to avoid unnecessary reload/fetch
+  // If we are elsewhere, we use '/#id' to navigate to home then scroll
+  const resolveHref = (href: string) => {
+    if (href.startsWith("/#")) {
+      return pathname === "/" ? href.substring(1) : href
+    }
+    return href
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10 transition-all duration-300">
@@ -75,7 +87,7 @@ export function PublicHeader({ settings = {} }: PublicHeaderProps) {
             {navigation.map((item) => (
               <div key={item.name} className="relative group">
                 <Link
-                  href={item.href || "#"}
+                  href={resolveHref(item.href || "#")}
                   className="px-2 py-2 text-sm font-medium text-slate-200 hover:text-white transition-colors flex items-center gap-1 tracking-wide"
                 >
                   {item.name}
@@ -89,7 +101,7 @@ export function PublicHeader({ settings = {} }: PublicHeaderProps) {
                       {item.submenu.map((subitem) => (
                         <Link
                           key={subitem.name}
-                          href={subitem.href}
+                          href={resolveHref(subitem.href)}
                           className="block px-4 py-3 text-sm text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-all"
                         >
                           {subitem.name}
@@ -136,7 +148,7 @@ export function PublicHeader({ settings = {} }: PublicHeaderProps) {
                         {item.submenu.map((subitem) => (
                           <Link
                             key={subitem.name}
-                            href={subitem.href}
+                            href={resolveHref(subitem.href)}
                             className="block px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
                             onClick={() => setMobileMenuOpen(false)}
                           >
@@ -148,7 +160,7 @@ export function PublicHeader({ settings = {} }: PublicHeaderProps) {
                   </>
                 ) : (
                   <Link
-                    href={item.href}
+                    href={resolveHref(item.href || "#")}
                     className="block px-4 py-3 text-slate-200 font-medium rounded-lg hover:bg-white/5 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >

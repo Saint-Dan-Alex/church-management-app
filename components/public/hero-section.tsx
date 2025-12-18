@@ -54,7 +54,7 @@ export function HeroSection({ settings = {} }: HeroSectionProps) {
             variant="outline"
             className="text-lg border-white/20 text-white hover:bg-white/10 bg-transparent rounded-full px-8 py-6 backdrop-blur-sm transition-all hover:scale-105"
           >
-            <Link href="#contact">En savoir plus</Link>
+            <Link href="/#contact">En savoir plus</Link>
           </Button>
         </div>
       </div>

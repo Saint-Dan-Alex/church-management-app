@@ -122,6 +122,16 @@ class BlogController extends Controller
         return $this->published($request);
     }
 
+    public function publicShow(Blog $blog): JsonResponse
+    {
+        // Increment views only if not viewed recently? 
+        // For simplicity, just increment.
+        $blog->increment('views');
+        $blog->load('category');
+        
+        return response()->json($blog);
+    }
+
     private function handleCategory($input)
     {
         // Si c'est un UUID valide et qu'il existe, on l'utilise

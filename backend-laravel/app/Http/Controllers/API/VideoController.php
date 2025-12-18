@@ -103,6 +103,12 @@ class VideoController extends Controller
         return $this->index($request);
     }
 
+    public function publicShow(Video $video): JsonResponse
+    {
+        $video->increment('vues');
+        return response()->json($video->load('category'));
+    }
+
     private function handleCategory($input)
     {
         if (!$input) return null;

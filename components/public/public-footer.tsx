@@ -2,7 +2,11 @@ import { Church, Mail, Phone, MapPin, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-export function PublicFooter() {
+interface PublicFooterProps {
+  settings?: Record<string, any>
+}
+
+export function PublicFooter({ settings = {} }: PublicFooterProps) {
   return (
     <footer id="contact" className="bg-slate-950 border-t border-amber-600/30 py-12 px-4">
       <div className="container mx-auto max-w-6xl">

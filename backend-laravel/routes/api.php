@@ -147,9 +147,13 @@ Route::prefix('v1')->group(function () {
 
     // Public Content Routes
     Route::get('public/blogs', [App\Http\Controllers\API\BlogController::class, 'publicIndex']);
+    Route::get('public/blogs/{blog}', [App\Http\Controllers\API\BlogController::class, 'publicShow']);
     Route::get('public/videos', [App\Http\Controllers\API\VideoController::class, 'publicIndex']);
+    Route::get('public/videos/{video}', [App\Http\Controllers\API\VideoController::class, 'publicShow']);
     Route::get('public/albums', [App\Http\Controllers\API\PhotoAlbumController::class, 'publicIndex']);
+    Route::get('public/albums/{photo_album}', [App\Http\Controllers\API\PhotoAlbumController::class, 'publicShow']);
     Route::get('public/activities', [App\Http\Controllers\API\ActivityController::class, 'publicIndex']);
+    Route::get('public/activities/{activity}', [App\Http\Controllers\API\ActivityController::class, 'publicShow']);
 });
 
 // Health check route

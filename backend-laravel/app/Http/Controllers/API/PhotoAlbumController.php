@@ -39,6 +39,21 @@ class PhotoAlbumController extends Controller
     }
     public function publicIndex(): JsonResponse
     {
-        return $this->index();
+        $albums = PhotoAlbum::with('photos')->orderBy('created_at', 'desc')->get();
+        
+        $albums->transform(function ($album) {
+            $album->photo_count = $album->photos->count();
+            $album->cover_image = $album->photos->first() ? $album->photos->first()->url : null;
+            $album->unsetRelation('photos');
+            return $album;
+        });
+
+        return response()->json($albums);
+    }
+
+    public function publicShow(PhotoAlbum $photoAlbum): JsonResponse
+    {
+        $photoAlbum->load('photos');
+        return response()->json($photoAlbum);
     }
 }
