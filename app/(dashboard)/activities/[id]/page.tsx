@@ -171,116 +171,121 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/activities')}>
+      <div className="flex flex-col gap-4">
+        {/* Ligne du haut : Bouton retour + Actions */}
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="icon" onClick={() => router.push('/activities')} className="shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <div className="flex items-center gap-3 mb-1 flex-wrap">
-              <h1 className="text-3xl font-bold text-blue-900">{activity.title}</h1>
-              <Badge className={getTypeBadge(activity.type)}>
-                {activity.type === 'libre' ? 'Libre' : 'Payante'}
-              </Badge>
-              <Badge className={getStatutBadge(activity.status)}>
-                {getStatusLabel(activity.status)}
-              </Badge>
-              <Badge variant="outline" className="text-gray-600 border-gray-300">
-                {activity.category}
-              </Badge>
-            </div>
-            <p className="text-gray-600">{activity.description}</p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)} className="text-xs sm:text-sm">
+              <Edit className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Modifier</span>
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleDelete} className="text-xs sm:text-sm">
+              <Trash2 className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Supprimer</span>
+            </Button>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Modifier
-          </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            <Trash2 className="mr-2 h-4 w-4" />
-            Supprimer
-          </Button>
+
+        {/* Titre et informations */}
+        <div className="space-y-3">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-900 leading-tight break-words">
+            {activity.title}
+          </h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge className={`${getTypeBadge(activity.type)} text-xs sm:text-sm`}>
+              {activity.type === 'libre' ? 'Libre' : 'Payante'}
+            </Badge>
+            <Badge className={`${getStatutBadge(activity.status)} text-xs sm:text-sm`}>
+              {getStatusLabel(activity.status)}
+            </Badge>
+            <Badge variant="outline" className="text-gray-600 border-gray-300 text-xs sm:text-sm">
+              {activity.category}
+            </Badge>
+          </div>
+          <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{activity.description}</p>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         {/* Colonne gauche - Infos de l'activité */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informations</CardTitle>
+        <div className="lg:col-span-1 space-y-4 sm:space-y-6">
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Informations</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 sm:space-y-4">
               <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Date</p>
-                  <p className="text-base text-gray-900">
+                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Date</p>
+                  <p className="text-sm sm:text-base text-gray-900 break-words">
                     {formatDate(activity.date)}
                     {activity.end_date && activity.end_date !== activity.date && (
-                      <span className="block text-sm text-gray-500">au {formatDate(activity.end_date)}</span>
+                      <span className="block text-xs sm:text-sm text-gray-500">au {formatDate(activity.end_date)}</span>
                     )}
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Horaire</p>
-                  <p className="text-base text-gray-900">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Horaire</p>
+                  <p className="text-sm sm:text-base text-gray-900">
                     {activity.time} ({activity.duration})
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Lieu</p>
-                  <p className="text-base text-gray-900">{activity.location}</p>
+                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Lieu</p>
+                  <p className="text-sm sm:text-base text-gray-900 break-words">{activity.location}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Users className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Responsable</p>
-                  <p className="text-base text-gray-900">{activity.organizer}</p>
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Responsable</p>
+                  <p className="text-sm sm:text-base text-gray-900 break-words">{activity.organizer}</p>
                 </div>
               </div>
               {activity.price && parseFloat(activity.price.toString()) > 0 && (
                 <div className="flex items-start gap-3">
-                  <DollarSign className="h-5 w-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Prix</p>
-                    <p className="text-base text-gray-900 font-semibold">{activity.price} {activity.currency}</p>
+                  <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Prix</p>
+                    <p className="text-sm sm:text-base text-gray-900 font-semibold">{activity.price} {activity.currency}</p>
                   </div>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                 Participants ({Array.isArray(activity.participants) ? activity.participants.length : activity.participants})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              <div className="space-y-2 max-h-[250px] sm:max-h-[300px] overflow-y-auto">
                 {Array.isArray(activity.participants) && activity.participants.length > 0 ? (
                   (activity.participants as any[]).map((participant: any, index: number) => (
                     <div
                       key={participant.id || index}
-                      className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg"
+                      className="flex items-center gap-2 sm:gap-3 p-2 bg-gray-50 rounded-lg"
                     >
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm">
+                      <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 text-blue-700 font-semibold text-xs sm:text-sm shrink-0">
                         {(participant.participant_nom_complet || participant.participant_nom || "Inconnu").charAt(0)}
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900">
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                           {participant.participant_nom_complet || `${participant.participant_nom} ${participant.participant_prenom || ''}`}
                         </span>
                         <span className="text-xs text-gray-500">{participant.participant_type}</span>
@@ -288,7 +293,7 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">Aucun participant enregistré.</p>
+                  <p className="text-xs sm:text-sm text-gray-500 text-center py-4">Aucun participant enregistré.</p>
                 )}
               </div>
             </CardContent>
@@ -297,51 +302,51 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
 
         {/* Colonne droite - Gestion de présence */}
         <div className="lg:col-span-2">
-          <Tabs defaultValue="participants" className="space-y-6">
-            <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-              <TabsList className="w-full justify-start h-auto bg-transparent p-0 border-b rounded-none space-x-2">
+          <Tabs defaultValue="participants" className="space-y-4 sm:space-y-6">
+            <div className="overflow-x-auto pb-2 -mx-2 sm:-mx-4 px-2 sm:px-4 scrollbar-hide">
+              <TabsList className="inline-flex min-w-max w-auto justify-start h-auto bg-transparent p-0 border-b rounded-none gap-1 sm:gap-2">
                 <TabsTrigger
                   value="participants"
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all"
+                  className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
                 >
-                  <Users className="mr-2 h-4 w-4" />
-                  Participants
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Participants</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="presence"
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all"
+                  className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
                 >
-                  <QrCode className="mr-2 h-4 w-4" />
-                  Présence
+                  <QrCode className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Présence</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="paiements"
                   disabled={activity.type !== 'payante'}
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all disabled:opacity-50"
+                  className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all disabled:opacity-50 whitespace-nowrap"
                 >
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  Paiements
+                  <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Paiements</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="finances"
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all"
+                  className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
                 >
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  Finances
+                  <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Finances</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="rapport"
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all"
+                  className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
                 >
-                  <FileTextIcon className="mr-2 h-4 w-4" />
-                  Rapport
+                  <FileTextIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Rapport</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="details"
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all"
+                  className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
                 >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Détails
+                  <FileText className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Détails</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -366,9 +371,9 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
             </TabsContent>
 
             <TabsContent value="paiements">
-              <div className="flex justify-end mb-4">
-                <Button onClick={() => setIsPaymentDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="mr-2 h-4 w-4" />
+              <div className="flex justify-end mb-3 sm:mb-4">
+                <Button onClick={() => setIsPaymentDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm w-full sm:w-auto">
+                  <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   Encaisser un paiement
                 </Button>
               </div>
@@ -380,9 +385,9 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
             </TabsContent>
 
             <TabsContent value="finances">
-              <div className="flex justify-end mb-4">
-                <Button onClick={() => setIsExpenseDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="mr-2 h-4 w-4" />
+              <div className="flex justify-end mb-3 sm:mb-4">
+                <Button onClick={() => setIsExpenseDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm w-full sm:w-auto">
+                  <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   Ajouter une dépense
                 </Button>
               </div>
@@ -414,13 +419,13 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
                 paymentStats={{
                   totalPaye: financeStats.totalRecettes,
                   totalRestant: Math.max(0, (activity.participants?.length || 0) * (Number(activity.price) || 0) - financeStats.totalRecettes),
-                  nombrePaiesComplet: (activity.participants as any[] || []).filter((p: any) => 
+                  nombrePaiesComplet: (activity.participants as any[] || []).filter((p: any) =>
                     p.statut_paiement === 'paid' || parseFloat(String(p.montant_paye || 0)) >= (Number(activity.price) || 0)
                   ).length,
-                  nombrePaiesPartiel: (activity.participants as any[] || []).filter((p: any) => 
-                     p.statut_paiement === 'partial' || (parseFloat(String(p.montant_paye || 0)) > 0 && parseFloat(String(p.montant_paye || 0)) < (Number(activity.price) || 0))
+                  nombrePaiesPartiel: (activity.participants as any[] || []).filter((p: any) =>
+                    p.statut_paiement === 'partial' || (parseFloat(String(p.montant_paye || 0)) > 0 && parseFloat(String(p.montant_paye || 0)) < (Number(activity.price) || 0))
                   ).length,
-                  nombreEnAttente: (activity.participants as any[] || []).filter((p: any) => 
+                  nombreEnAttente: (activity.participants as any[] || []).filter((p: any) =>
                     !p.montant_paye || parseFloat(String(p.montant_paye || 0)) === 0
                   ).length,
                   nombreEnRetard: 0,
