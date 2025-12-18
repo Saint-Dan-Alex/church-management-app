@@ -102,13 +102,9 @@ export function EditChildDialog({ open, onOpenChange, child }: EditChildDialogPr
         }
       })
 
-      // Update nom_complet if parts changed (optional, backend handles virtual, but frontend might need it)
-      if (payload.nom || payload.post_nom || payload.prenom) {
-        const nom = payload.nom || child.nom || ''
-        const postNom = payload.post_nom !== undefined ? payload.post_nom : (child.post_nom || '')
-        const prenom = payload.prenom || child.prenom || ''
-        payload.nom_complet = `${nom} ${postNom ? postNom + ' ' : ''}${prenom}`.trim()
-      }
+      // Remove nom_complet from payload - it's a virtual/generated column in MySQL
+      // The database automatically calculates it from nom, post_nom, and prenom
+      delete payload.nom_complet
 
       await childrenService.update(child.id, payload)
       toast.success("Enfant mis à jour avec succès")
