@@ -63,8 +63,8 @@ export function SalleList({ searchQuery = "", refreshTrigger = 0 }: SalleListPro
     const matchesSearch =
       salle.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
       salle.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      salle.responsableNom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      salle.adjointNom?.toLowerCase().includes(searchQuery.toLowerCase())
+      salle.responsable_nom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      salle.adjoint_nom?.toLowerCase().includes(searchQuery.toLowerCase())
 
     return matchesSearch
   }) : []
@@ -175,21 +175,21 @@ export function SalleList({ searchQuery = "", refreshTrigger = 0 }: SalleListPro
                 </DropdownMenu>
               </div>
 
-              {(salle.responsableNom || salle.adjointNom) && (
+              {(salle.responsable_nom || salle.adjoint_nom) && (
                 <div className="border-t pt-3">
                   <div className="text-xs text-gray-500 mb-2">Responsables:</div>
                   <div className="space-y-1">
-                    {salle.responsableNom && (
+                    {salle.responsable_nom && (
                       <div className="flex items-center gap-2 text-xs">
                         <Crown className="h-3 w-3 text-yellow-500" />
-                        <span>{salle.responsableNom}</span>
+                        <span>{salle.responsable_nom}</span>
                         <Badge variant="outline" className="text-xs">Responsable</Badge>
                       </div>
                     )}
-                    {salle.adjointNom && (
+                    {salle.adjoint_nom && (
                       <div className="flex items-center gap-2 text-xs">
                         <Shield className="h-3 w-3 text-blue-500" />
-                        <span>{salle.adjointNom}</span>
+                        <span>{salle.adjoint_nom}</span>
                         <Badge variant="outline" className="text-xs">Adjoint</Badge>
                       </div>
                     )}

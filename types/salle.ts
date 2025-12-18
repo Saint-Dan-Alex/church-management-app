@@ -9,15 +9,15 @@ export interface Salle {
   nom: string // Nom libre de la salle
   description: string
   capacite: number
-  responsableId?: string // ID du moniteur responsable
-  responsableNom?: string // Nom complet du responsable
-  adjointId?: string // ID de l'adjoint
-  adjointNom?: string // Nom complet de l'adjoint
+  responsable_id?: string // ID du moniteur responsable
+  responsable_nom?: string // Nom complet du responsable
+  adjoint_id?: string // ID de l'adjoint
+  adjoint_nom?: string // Nom complet de l'adjoint
   moniteurs: MoniteurSalle[] // Liste des moniteurs membres
   historique?: MoniteurSalleHistorique[] // Historique complet
   actif: boolean
-  createdAt: Date
-  updatedAt: Date
+  created_at: Date
+  updated_at: Date
 }
 
 export interface MoniteurSalle {

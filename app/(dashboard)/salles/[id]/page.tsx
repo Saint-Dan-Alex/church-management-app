@@ -84,15 +84,24 @@ export default function SalleDetailsPage({ params }: { params: Promise<{ id: str
   }
 
   const getRoleBadge = (role: string) => {
-    if (role === "responsable") return "bg-blue-100 text-blue-700 border-blue-300"
-    if (role === "adjoint") return "bg-green-100 text-green-700 border-green-300"
+    const r = role.toLowerCase()
+    if (r === "responsable" || r === "chef_salle") return "bg-blue-100 text-blue-700 border-blue-300"
+    if (r === "adjoint") return "bg-green-100 text-green-700 border-green-300"
     return "bg-gray-100 text-gray-700 border-gray-300"
   }
 
   const getRoleIcon = (role: string) => {
-    if (role === "responsable") return <Crown className="h-4 w-4" />
-    if (role === "adjoint") return <Shield className="h-4 w-4" />
+    const r = role.toLowerCase()
+    if (r === "responsable" || r === "chef_salle") return <Crown className="h-4 w-4" />
+    if (r === "adjoint") return <Shield className="h-4 w-4" />
     return <Users className="h-4 w-4" />
+  }
+
+  const formatRoleLabel = (role: string) => {
+    const r = role.toLowerCase()
+    if (r === "chef_salle" || r === "responsable") return "Responsable"
+    if (r === "adjoint") return "Adjoint"
+    return "Moniteur"
   }
 
   const formatDate = (date: Date | string) => {
@@ -254,25 +263,25 @@ export default function SalleDetailsPage({ params }: { params: Promise<{ id: str
               <CardTitle className="text-blue-900">Responsables</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {salle.responsableNom && (
+              {salle.responsable_nom && (
                 <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
                   <Crown className="h-5 w-5 text-blue-600" />
                   <div>
                     <p className="text-sm text-gray-600">Responsable</p>
-                    <p className="font-semibold text-gray-900">{salle.responsableNom}</p>
+                    <p className="font-semibold text-gray-900">{salle.responsable_nom}</p>
                   </div>
                 </div>
               )}
-              {salle.adjointNom && (
+              {salle.adjoint_nom && (
                 <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
                   <Shield className="h-5 w-5 text-green-600" />
                   <div>
                     <p className="text-sm text-gray-600">Adjoint</p>
-                    <p className="font-semibold text-gray-900">{salle.adjointNom}</p>
+                    <p className="font-semibold text-gray-900">{salle.adjoint_nom}</p>
                   </div>
                 </div>
               )}
-              {!salle.responsableNom && !salle.adjointNom && (
+              {!salle.responsable_nom && !salle.adjoint_nom && (
                 <p className="text-sm text-gray-600 italic">Aucun responsable affecté</p>
               )}
             </CardContent>
@@ -283,11 +292,11 @@ export default function SalleDetailsPage({ params }: { params: Promise<{ id: str
             <CardContent className="pt-6 space-y-3">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Calendar className="h-4 w-4" />
-                <span>Créée le {formatDate(salle.createdAt)}</span>
+                <span>Créée le {formatDate(salle.created_at)}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Clock className="h-4 w-4" />
-                <span>Mise à jour le {formatDate(salle.updatedAt)}</span>
+                <span>Mise à jour le {formatDate(salle.updated_at)}</span>
               </div>
             </CardContent>
           </Card>
@@ -327,7 +336,7 @@ export default function SalleDetailsPage({ params }: { params: Promise<{ id: str
                       </div>
                       <Badge variant="outline" className={getRoleBadge(moniteur.role)}>
                         <span className="mr-1">{getRoleIcon(moniteur.role)}</span>
-                        {moniteur.role ? moniteur.role.charAt(0).toUpperCase() + moniteur.role.slice(1) : 'Membre'}
+                        {moniteur.role ? formatRoleLabel(moniteur.role) : 'Membre'}
                       </Badge>
                     </div>
                   ))}
@@ -374,14 +383,11 @@ export default function SalleDetailsPage({ params }: { params: Promise<{ id: str
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <p className="font-semibold text-gray-900">{entry.moniteurNomComplet}</p>
-                            <p className="text-sm text-gray-600">
-                              {formatDate(entry.dateDebut)}
-                              {entry.dateFin ? ` - ${formatDate(entry.dateFin)}` : " - Aujourd'hui"}
-                            </p>
+                            {/* ... */}
                           </div>
                           <div className="flex flex-col items-end gap-2">
                             <Badge variant="outline" className={getRoleBadge(entry.role)}>
-                              {entry.role.charAt(0).toUpperCase() + entry.role.slice(1)}
+                              {entry.role ? formatRoleLabel(entry.role) : ''}
                             </Badge>
                             {entry.actif && (
                               <Badge className="bg-green-600 text-white">Actif</Badge>

@@ -17,11 +17,13 @@ class StoreSalleRequest extends FormRequest
             'nom' => 'required|string|max:255',
             'description' => 'required|string',
             'capacite' => 'required|integer|min:1',
-            'responsableId' => 'nullable|uuid|exists:monitors,id',
-            'responsableNom' => 'nullable|string|max:255',
-            'adjointId' => 'nullable|uuid|exists:monitors,id',
-            'adjointNom' => 'nullable|string|max:255',
+            'responsable_id' => 'nullable|uuid|exists:monitors,id',
+            'responsable_nom' => 'nullable|string|max:255',
+            'adjoint_id' => 'nullable|uuid|exists:monitors,id',
+            'adjoint_nom' => 'nullable|string|max:255',
             'actif' => 'required|boolean',
+            'moniteurs_ids' => 'nullable|array',
+            'moniteurs_ids.*' => 'uuid|exists:monitors,id',
         ];
     }
 }

@@ -41,8 +41,8 @@ export function AddSalleDialog({ open, onOpenChange, onSuccess }: AddSalleDialog
     nom: undefined,
     description: "",
     capacite: 50,
-    responsableId: undefined,
-    adjointId: undefined,
+    responsable_id: undefined,
+    adjoint_id: undefined,
     moniteurs: [],
     actif: true,
   })
@@ -88,11 +88,11 @@ export function AddSalleDialog({ open, onOpenChange, onSuccess }: AddSalleDialog
     if (moniteursSelectionnes.includes(moniteurId)) {
       setMoniteursSelectionnes(moniteursSelectionnes.filter((id) => id !== moniteurId))
       // Si c'était le responsable ou l'adjoint, le retirer
-      if (formData.responsableId === moniteurId) {
-        setFormData((prev) => ({ ...prev, responsableId: undefined }))
+      if (formData.responsable_id === moniteurId) {
+        setFormData((prev) => ({ ...prev, responsable_id: undefined }))
       }
-      if (formData.adjointId === moniteurId) {
-        setFormData((prev) => ({ ...prev, adjointId: undefined }))
+      if (formData.adjoint_id === moniteurId) {
+        setFormData((prev) => ({ ...prev, adjoint_id: undefined }))
       }
     } else {
       setMoniteursSelectionnes([...moniteursSelectionnes, moniteurId])
@@ -118,10 +118,11 @@ export function AddSalleDialog({ open, onOpenChange, onSuccess }: AddSalleDialog
         nom: formData.nom,
         description: formData.description,
         capacite: formData.capacite,
-        responsable_id: formData.responsableId, // snake_case pour Laravel souvent
-        adjoint_id: formData.adjointId,
+        responsable_id: formData.responsable_id,
+        responsable_nom: formData.responsable_id ? getMoniteurById(formData.responsable_id)?.nom : undefined,
+        adjoint_id: formData.adjoint_id,
+        adjoint_nom: formData.adjoint_id ? getMoniteurById(formData.adjoint_id)?.nom : undefined,
         actif: formData.actif,
-        // On envoie aussi les moniteurs associés si l'API le gère à la création
         moniteurs_ids: moniteursSelectionnes
       }
 
@@ -134,8 +135,8 @@ export function AddSalleDialog({ open, onOpenChange, onSuccess }: AddSalleDialog
         nom: undefined,
         description: "",
         capacite: 50,
-        responsableId: undefined,
-        adjointId: undefined,
+        responsable_id: undefined,
+        adjoint_id: undefined,
         moniteurs: [],
         actif: true,
       })
@@ -243,12 +244,12 @@ export function AddSalleDialog({ open, onOpenChange, onSuccess }: AddSalleDialog
                           >
                             {moniteur.nomComplet}
                           </Label>
-                          {formData.responsableId === moniteur.id && (
+                          {formData.responsable_id === moniteur.id && (
                             <Badge variant="outline" className="bg-blue-50 text-blue-700">
                               Responsable
                             </Badge>
                           )}
-                          {formData.adjointId === moniteur.id && (
+                          {formData.adjoint_id === moniteur.id && (
                             <Badge variant="outline" className="bg-green-50 text-green-700">
                               Adjoint
                             </Badge>
@@ -273,8 +274,8 @@ export function AddSalleDialog({ open, onOpenChange, onSuccess }: AddSalleDialog
                     <div className="grid gap-2">
                       <Label htmlFor="responsable">Responsable</Label>
                       <Select
-                        value={formData.responsableId || ""}
-                        onValueChange={(value) => setFormData({ ...formData, responsableId: value })}
+                        value={formData.responsable_id || ""}
+                        onValueChange={(value) => setFormData({ ...formData, responsable_id: value })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Choisir un responsable" />
@@ -291,15 +292,15 @@ export function AddSalleDialog({ open, onOpenChange, onSuccess }: AddSalleDialog
                     <div className="grid gap-2">
                       <Label htmlFor="adjoint">Adjoint</Label>
                       <Select
-                        value={formData.adjointId || ""}
-                        onValueChange={(value) => setFormData({ ...formData, adjointId: value })}
+                        value={formData.adjoint_id || ""}
+                        onValueChange={(value) => setFormData({ ...formData, adjoint_id: value })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Choisir un adjoint" />
                         </SelectTrigger>
                         <SelectContent>
                           {moniteursDisponiblesPourResponsable
-                            .filter((m) => m.id !== formData.responsableId)
+                            .filter((m) => m.id !== formData.responsable_id)
                             .map((moniteur) => (
                               <SelectItem key={moniteur.id} value={moniteur.id}>
                                 {moniteur.nomComplet}

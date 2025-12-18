@@ -79,7 +79,21 @@ class SalleController extends Controller
      */
     public function store(StoreSalleRequest $request): JsonResponse
     {
-        $salle = Salle::create($request->validated());
+        $data = $request->validated();
+        
+        $moniteursIds = $data['moniteurs_ids'] ?? [];
+        unset($data['moniteurs_ids']);
+
+        $salle = Salle::create($data);
+
+        // Association des moniteurs
+        if (!empty($moniteursIds)) {
+            \App\Models\Monitor::whereIn('id', $moniteursIds)->update([
+                'salle_actuelle_id' => $salle->id,
+                'salle_actuelle_nom' => $salle->nom,
+                'date_affectation_actuelle' => now(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Salle créée avec succès',
