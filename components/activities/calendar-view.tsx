@@ -113,12 +113,12 @@ export function CalendarView() {
   return (
     <Card className="p-6">
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl font-bold capitalize">
             {currentDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
           </h2>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={goToToday}>
+          <div className="flex gap-2 justify-center sm:justify-end">
+            <Button variant="outline" onClick={goToToday} size="sm">
               Aujourd'hui
             </Button>
             <Button variant="outline" size="icon" onClick={previousMonth}>

@@ -18,12 +18,12 @@ export default function ActivitiesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Activités</h1>
           <p className="text-muted-foreground">Gestion des activités et calendrier</p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
+        <Button onClick={() => setIsAddDialogOpen(true)} className="w-full md:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Nouvelle Activité
         </Button>
