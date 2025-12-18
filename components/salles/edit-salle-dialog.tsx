@@ -133,9 +133,9 @@ export function EditSalleDialog({ open, onOpenChange, salle, onSuccess }: EditSa
         description: formData.description,
         capacite: formData.capacite,
         responsable_id: formData.responsable_id,
-        responsable_nom: formData.responsable_id ? getMoniteurById(formData.responsable_id)?.nom : undefined,
+        responsable_nom: formData.responsable_id ? getMoniteurById(formData.responsable_id)?.nomComplet : undefined,
         adjoint_id: formData.adjoint_id,
-        adjoint_nom: formData.adjoint_id ? getMoniteurById(formData.adjoint_id)?.nom : undefined,
+        adjoint_nom: formData.adjoint_id ? getMoniteurById(formData.adjoint_id)?.nomComplet : undefined,
         actif: formData.actif,
         moniteurs_ids: moniteursSelectionnes
       }

@@ -267,25 +267,29 @@ export default function SalleDetailsPage({ params }: { params: Promise<{ id: str
               <CardTitle className="text-blue-900">Responsables</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {salle.responsable_nom && (
+              {(salle.responsable || salle.responsable_nom) && (
                 <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
                   <Crown className="h-5 w-5 text-blue-600" />
                   <div>
                     <p className="text-sm text-gray-600">Responsable</p>
-                    <p className="font-semibold text-gray-900">{salle.responsable_nom}</p>
+                    <p className="font-semibold text-gray-900">
+                      {salle.responsable?.nomComplet || salle.responsable_nom}
+                    </p>
                   </div>
                 </div>
               )}
-              {salle.adjoint_nom && (
+              {(salle.adjoint || salle.adjoint_nom) && (
                 <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
                   <Shield className="h-5 w-5 text-green-600" />
                   <div>
                     <p className="text-sm text-gray-600">Adjoint</p>
-                    <p className="font-semibold text-gray-900">{salle.adjoint_nom}</p>
+                    <p className="font-semibold text-gray-900">
+                      {salle.adjoint?.nomComplet || salle.adjoint_nom}
+                    </p>
                   </div>
                 </div>
               )}
-              {!salle.responsable_nom && !salle.adjoint_nom && (
+              {(!salle.responsable && !salle.responsable_nom) && (!salle.adjoint && !salle.adjoint_nom) && (
                 <p className="text-sm text-gray-600 italic">Aucun responsable affecté</p>
               )}
             </CardContent>

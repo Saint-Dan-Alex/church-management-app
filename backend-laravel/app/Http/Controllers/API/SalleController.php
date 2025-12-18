@@ -159,6 +159,17 @@ class SalleController extends Controller
     {
         $salle->load(['responsable', 'adjoint', 'moniteurs', 'historique']);
         
+        // Transformer la collection de moniteurs pour aplatir les données du pivot
+        $salle->moniteurs->transform(function ($moniteur) {
+            $moniteurData = $moniteur->toArray();
+            if ($moniteur->pivot) {
+                $moniteurData['role'] = $moniteur->pivot->role;
+                $moniteurData['dateAffectation'] = $moniteur->pivot->date_affectation;
+                // On s'assure que nomComplet est là (déjà fait par le modèle Monitor)
+            }
+            return $moniteurData;
+        });
+
         return response()->json($salle);
     }
 

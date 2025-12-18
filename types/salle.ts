@@ -13,6 +13,8 @@ export interface Salle {
   responsable_nom?: string // Nom complet du responsable
   adjoint_id?: string // ID de l'adjoint
   adjoint_nom?: string // Nom complet de l'adjoint
+  responsable?: { nomComplet: string; nom: string; prenom: string } // Objet relationnel
+  adjoint?: { nomComplet: string; nom: string; prenom: string } // Objet relationnel
   moniteurs: MoniteurSalle[] // Liste des moniteurs membres
   historique?: MoniteurSalleHistorique[] // Historique complet
   actif: boolean

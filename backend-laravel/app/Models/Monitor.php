@@ -67,6 +67,7 @@ class Monitor extends Model
             'salleActuelleNom' => $this->salle_actuelle_nom ?? $this->salleActuelle?->nom,
             'roleActuel' => $this->role_actuel,
             'dateAffectationActuelle' => $this->date_affectation_actuelle,
+            'nomComplet' => $this->nom_complet,
         ];
 
         return array_merge($attributes, $camelCaseAttributes);
