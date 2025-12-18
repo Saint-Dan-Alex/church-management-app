@@ -75,7 +75,7 @@ export function AddWorshipReportDialog({ open, onOpenChange, onSuccess }: AddWor
     effectif_freres: "",
     effectif_soeurs: "",
     offrandes: "",
-    nombre_nouveaux_venus: 0,
+    nombre_nouveaux_venus: "",
   })
 
   useEffect(() => {
@@ -152,7 +152,7 @@ export function AddWorshipReportDialog({ open, onOpenChange, onSuccess }: AddWor
         effectif_freres: parseInt(formData.effectif_freres) || 0,
         effectif_soeurs: parseInt(formData.effectif_soeurs) || 0,
         offrandes: formData.offrandes,
-        nombre_nouveaux_venus: formData.nombre_nouveaux_venus,
+        nombre_nouveaux_venus: parseInt(formData.nombre_nouveaux_venus) || 0,
       }
 
       await worshipReportsService.create(dataToSend)
@@ -170,7 +170,7 @@ export function AddWorshipReportDialog({ open, onOpenChange, onSuccess }: AddWor
         effectif_freres: "",
         effectif_soeurs: "",
         offrandes: "",
-        nombre_nouveaux_venus: 0,
+        nombre_nouveaux_venus: "",
       })
     } catch (error: any) {
       console.error("Erreur lors de l'enregistrement:", error)
@@ -415,7 +415,7 @@ export function AddWorshipReportDialog({ open, onOpenChange, onSuccess }: AddWor
                       type="number"
                       min="0"
                       value={formData.nombre_nouveaux_venus}
-                      onChange={(e) => setFormData({ ...formData, nombre_nouveaux_venus: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setFormData({ ...formData, nombre_nouveaux_venus: e.target.value })}
                       placeholder="0"
                     />
                   </div>
