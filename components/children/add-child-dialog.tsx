@@ -28,9 +28,10 @@ import { CommissionCombobox } from "./commission-combobox"
 interface AddChildDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
-export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
+export function AddChildDialog({ open, onOpenChange, onSuccess }: AddChildDialogProps) {
   const [formData, setFormData] = useState<Partial<ChildFormData>>({
     // Identification
     nom: "",
@@ -141,7 +142,6 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
     try {
       // Calculer le nom complet
       const nomComplet = `${formData.prenom} ${formData.postNom} ${formData.nom}`.trim()
-
       const payload: any = {
         nom: formData.nom,
         post_nom: formData.postNom,
@@ -186,6 +186,7 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
 
       await childrenService.create(payload)
       toast.success("Enfant ajouté avec succès")
+      if (onSuccess) onSuccess()
       onOpenChange(false)
       handleStopCamera()
       setPhotoPreview(null)
@@ -215,14 +216,14 @@ export function AddChildDialog({ open, onOpenChange }: AddChildDialogProps) {
       }
       onOpenChange(isOpen)
     }}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-w-[calc(100vw-2rem)]">
         <DialogHeader>
           <DialogTitle>Ajouter un Enfant</DialogTitle>
           <DialogDescription>Remplissez les informations de l'enfant et de son parent/tuteur</DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[75vh]">
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-6 py-4 pr-4">
+        <ScrollArea className="max-h-[75vh] w-full">
+          <form onSubmit={handleSubmit} className="w-full max-w-full overflow-hidden">
+            <div className="grid gap-6 py-4 pr-4 w-full">
               {/* Photo */}
               <div className="flex flex-col items-center gap-4">
                 {isCameraOpen ? (

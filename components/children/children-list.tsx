@@ -17,9 +17,10 @@ interface ChildrenListProps {
   searchQuery?: string
   group?: string
   onSelectChild: (childId: string) => void
+  refreshTrigger?: number
 }
 
-export function ChildrenList({ searchQuery = "", group, onSelectChild }: ChildrenListProps) {
+export function ChildrenList({ searchQuery = "", group, onSelectChild, refreshTrigger = 0 }: ChildrenListProps) {
   const router = useRouter()
   const [children, setChildren] = useState<Child[]>([])
   const [loading, setLoading] = useState(true)
@@ -59,7 +60,7 @@ export function ChildrenList({ searchQuery = "", group, onSelectChild }: Childre
     }
 
     fetchChildren()
-  }, [])
+  }, [refreshTrigger])
 
   const filteredChildren = Array.isArray(children) ? children.filter((child) => {
     const searchLower = searchQuery.toLowerCase()

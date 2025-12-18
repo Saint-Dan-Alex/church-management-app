@@ -12,6 +12,7 @@ import { ChildrenStats } from "@/components/children/children-stats"
 export default function ChildrenPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [selectedChild, setSelectedChild] = useState<string | null>(null)
 
   return (
@@ -56,7 +57,7 @@ export default function ChildrenPage() {
               </Button>
             </div>
 
-            <ChildrenList searchQuery={searchQuery} onSelectChild={setSelectedChild} />
+            <ChildrenList searchQuery={searchQuery} onSelectChild={setSelectedChild} refreshTrigger={refreshTrigger} />
           </TabsContent>
 
           <TabsContent value="stats">
@@ -64,7 +65,11 @@ export default function ChildrenPage() {
           </TabsContent>
         </Tabs>
 
-        <AddChildDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+        <AddChildDialog
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          onSuccess={() => setRefreshTrigger(prev => prev + 1)}
+        />
       </div>
     </Suspense>
   )
