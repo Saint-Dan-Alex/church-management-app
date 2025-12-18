@@ -242,14 +242,14 @@ export default function MonitorDetailsPage() {
               <Avatar className="h-32 w-32">
                 <AvatarImage src={monitor.photo || undefined} />
                 <AvatarFallback className="bg-blue-600 text-white text-3xl">
-                  {monitor.prenom.charAt(0)}{monitor.nom.charAt(0)}
+                  {monitor.prenom?.charAt(0) || ''}{monitor.nom?.charAt(0) || ''}
                 </AvatarFallback>
               </Avatar>
               <div className="text-center space-y-1">
                 <h2 className="text-2xl font-bold text-gray-900">
                   {monitor.prenom} {monitor.postNom} {monitor.nom}
                 </h2>
-                <p className="text-gray-600">{calculateAge(monitor.dateNaissance)} ans</p>
+                <p className="text-gray-600">{calculateAge(monitor.dateNaissance as unknown as string)} ans</p>
                 <Badge className="mt-2">{monitor.etatCivil}</Badge>
               </div>
             </div>

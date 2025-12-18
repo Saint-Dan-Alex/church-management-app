@@ -169,7 +169,9 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
     setError(null)
 
     try {
-      const updatedMonitor = await monitorsService.update(formData.id, formData)
+      const response = await monitorsService.update(formData.id, formData)
+      // L'API retourne parfois l'objet enveloppé dans "data"
+      const updatedMonitor = (response as any).data ? (response as any).data : response
       onSave(updatedMonitor)
       toast.success("Moniteur mis à jour avec succès")
       onOpenChange(false)

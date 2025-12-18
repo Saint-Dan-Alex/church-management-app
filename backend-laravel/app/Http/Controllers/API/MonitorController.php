@@ -225,16 +225,20 @@ class MonitorController extends Controller
     {
         $user = \App\Models\User::where('email', $email)->first();
         if ($user) {
-            $newUserRole = 'MONITEUR'; // Default
+            $newUserType = 'MONITEUR'; // Default
             
             if ($monitorRole === 'responsable') {
-                $newUserRole = 'CHEF_SALLE';
-            } elseif ($user->role === 'ADMIN' || $user->role === 'COORDINATION') {
+                $newUserType = 'CHEF_SALLE';
+            }
+            
+            // Check current user type (case insensitive)
+            $currentUserType = strtoupper($user->user_type ?? '');
+            if ($currentUserType === 'ADMIN' || $currentUserType === 'COORDINATION') {
                 // Don't downgrade admins or coordinators
                 return;
             }
 
-            $user->update(['role' => $newUserRole]);
+            $user->update(['user_type' => $newUserType]);
         }
     }
 
