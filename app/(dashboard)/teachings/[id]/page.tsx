@@ -272,88 +272,91 @@ export default function TeachingDetailsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
+      {/* Header responsive */}
+      <div className="flex flex-col gap-4">
+        {/* Ligne du haut : Bouton retour + Actions */}
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Détails de l'Enseignement</h1>
-            <p className="text-gray-600">Informations complètes de la leçon</p>
+          <div className="flex gap-1 sm:gap-2">
+            <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="text-xs sm:text-sm px-2 sm:px-3">
+              <Download className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Télécharger</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)} className="text-xs sm:text-sm px-2 sm:px-3">
+              <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Modifier</span>
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleDelete} className="text-xs sm:text-sm px-2 sm:px-3">
+              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Supprimer</span>
+            </Button>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDownloadPDF}>
-            <Download className="mr-2 h-4 w-4" />
-            Télécharger PDF
-          </Button>
-          <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Modifier
-          </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            <Trash2 className="mr-2 h-4 w-4" />
-            Supprimer
-          </Button>
+
+        {/* Titre */}
+        <div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 leading-tight">Détails de l'Enseignement</h1>
+          <p className="text-sm sm:text-base text-gray-600">Informations complètes de la leçon</p>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         {/* Colonne gauche - Infos principales */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Date de la séance</p>
-                    <p className="text-base text-gray-900">{formatDate(teaching.date_seance)}</p>
+        <div className="lg:col-span-1 space-y-4 sm:space-y-6">
+          <Card className="shadow-sm">
+            <CardContent className="pt-4 sm:pt-6">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Date de la séance</p>
+                    <p className="text-sm sm:text-base text-gray-900 break-words">{formatDate(teaching.date_seance)}</p>
                   </div>
                 </div>
 
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{teaching.theme}</h3>
+                <div className="border-t pt-3 sm:pt-4">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2">{teaching.theme}</h3>
                   {teaching.sous_theme && (
-                    <p className="text-sm text-gray-600 mb-2">{teaching.sous_theme}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">{teaching.sous_theme}</p>
                   )}
-                  <p className="text-base text-gray-800 font-medium">{teaching.sujet}</p>
+                  <p className="text-sm sm:text-base text-gray-800 font-medium">{teaching.sujet}</p>
                 </div>
 
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium text-gray-600 mb-2">Textes bibliques</p>
-                  <p className="text-sm text-gray-900">{teaching.textes_bibliques}</p>
+                <div className="border-t pt-3 sm:pt-4">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1 sm:mb-2">Textes bibliques</p>
+                  <p className="text-xs sm:text-sm text-gray-900">{teaching.textes_bibliques}</p>
                 </div>
 
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium text-gray-600 mb-2">But pédagogique</p>
-                  <p className="text-sm text-gray-900">{teaching.but_pedagogique}</p>
+                <div className="border-t pt-3 sm:pt-4">
+                  <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1 sm:mb-2">But pédagogique</p>
+                  <p className="text-xs sm:text-sm text-gray-900">{teaching.but_pedagogique}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Verset à retenir */}
-          <Card className="border-blue-200 bg-blue-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-900">
-                <BookOpen className="h-5 w-5" />
+          <Card className="border-blue-200 bg-blue-50 shadow-sm">
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 text-blue-900 text-sm sm:text-base">
+                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
                 Verset à retenir (V.A.R)
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-blue-900 italic">{teaching.verset_retenir}</p>
+              <p className="text-xs sm:text-sm text-blue-900 italic">{teaching.verset_retenir}</p>
             </CardContent>
           </Card>
 
           {/* Chants */}
           {teaching.chants && teaching.chants.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Music className="h-5 w-5 text-blue-600" />
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                  <Music className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                   Chants ({teaching.chants.length})
                 </CardTitle>
               </CardHeader>
@@ -362,11 +365,11 @@ export default function TeachingDetailsPage() {
                   {teaching.chants.map((chant, index) => (
                     <div
                       key={chant.id}
-                      className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                      className="flex items-center justify-between p-2 bg-gray-50 rounded gap-2"
                     >
-                      <span className="text-sm text-gray-900">{chant.titre}</span>
+                      <span className="text-xs sm:text-sm text-gray-900 truncate">{chant.titre}</span>
                       {chant.numero && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs shrink-0">
                           N° {chant.numero}
                         </Badge>
                       )}
@@ -379,32 +382,32 @@ export default function TeachingDetailsPage() {
         </div>
 
         {/* Colonne droite - Contenu détaillé */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Matériel et Révision */}
           {(teaching.materiel_didactique || teaching.sujet_revision) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-blue-600" />
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                   Préparation
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {teaching.materiel_didactique && (
                     <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">
                         Matériel didactique (M/D)
                       </p>
-                      <p className="text-sm text-gray-900">{teaching.materiel_didactique}</p>
+                      <p className="text-xs sm:text-sm text-gray-900">{teaching.materiel_didactique}</p>
                     </div>
                   )}
                   {teaching.sujet_revision && (
-                    <div className="border-t pt-4">
-                      <p className="text-sm font-medium text-gray-600 mb-1">
+                    <div className="border-t pt-3 sm:pt-4">
+                      <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">
                         Sujet de révision (S/R)
                       </p>
-                      <p className="text-sm text-gray-900">{teaching.sujet_revision}</p>
+                      <p className="text-xs sm:text-sm text-gray-900">{teaching.sujet_revision}</p>
                     </div>
                   )}
                 </div>
@@ -417,42 +420,42 @@ export default function TeachingDetailsPage() {
             teaching.questions_reponses ||
             teaching.question_decouverte ||
             teaching.reponse_decouverte) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+              <Card className="shadow-sm">
+                <CardHeader className="pb-2 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
                     🔍 Introduction
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {teaching.sensibilisation && (
                       <div>
-                        <p className="text-sm font-medium text-gray-600 mb-1">Sensibilisation</p>
-                        <p className="text-sm text-gray-900">{teaching.sensibilisation}</p>
+                        <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Sensibilisation</p>
+                        <p className="text-xs sm:text-sm text-gray-900">{teaching.sensibilisation}</p>
                       </div>
                     )}
                     {teaching.questions_reponses && (
-                      <div className="border-t pt-4">
-                        <p className="text-sm font-medium text-gray-600 mb-1">
+                      <div className="border-t pt-3 sm:pt-4">
+                        <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">
                           Questions/Réponses (Q.R)
                         </p>
-                        <p className="text-sm text-gray-900">{teaching.questions_reponses}</p>
+                        <p className="text-xs sm:text-sm text-gray-900">{teaching.questions_reponses}</p>
                       </div>
                     )}
                     {teaching.question_decouverte && (
-                      <div className="border-t pt-4">
-                        <p className="text-sm font-medium text-gray-600 mb-1">
+                      <div className="border-t pt-3 sm:pt-4">
+                        <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">
                           Question de découverte (Q.D)
                         </p>
-                        <p className="text-sm text-gray-900">{teaching.question_decouverte}</p>
+                        <p className="text-xs sm:text-sm text-gray-900">{teaching.question_decouverte}</p>
                       </div>
                     )}
                     {teaching.reponse_decouverte && (
-                      <div className="border-t pt-4">
-                        <p className="text-sm font-medium text-gray-600 mb-1">
+                      <div className="border-t pt-3 sm:pt-4">
+                        <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">
                           Réponse de découverte (R)
                         </p>
-                        <p className="text-sm text-gray-900">{teaching.reponse_decouverte}</p>
+                        <p className="text-xs sm:text-sm text-gray-900">{teaching.reponse_decouverte}</p>
                       </div>
                     )}
                   </div>
@@ -462,31 +465,31 @@ export default function TeachingDetailsPage() {
 
           {/* Points à développer */}
           {teaching.type_contenu === "points_developper" && teaching.points && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <List className="h-5 w-5 text-blue-600" />
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                  <List className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                   Points à développer
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {teaching.points.map((point, index) => (
-                    <div key={point.id} className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <Badge className="bg-blue-600 text-white mt-1">
+                    <div key={point.id} className="space-y-2 sm:space-y-3">
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <Badge className="bg-blue-600 text-white mt-0.5 sm:mt-1 text-xs">
                           {index + 1}
                         </Badge>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 mb-3">{point.titre}</h4>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base mb-2 sm:mb-3">{point.titre}</h4>
                           {point.sous_points && point.sous_points.length > 0 && (
-                            <ul className="space-y-2 ml-4">
+                            <ul className="space-y-1 sm:space-y-2 ml-2 sm:ml-4">
                               {point.sous_points.map((sousPoint) => (
                                 <li
                                   key={sousPoint.id}
-                                  className="flex items-start gap-2 text-sm text-gray-700"
+                                  className="flex items-start gap-1 sm:gap-2 text-xs sm:text-sm text-gray-700"
                                 >
-                                  <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                  <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 mt-0.5 flex-shrink-0" />
                                   <span>{sousPoint.contenu}</span>
                                 </li>
                               ))}
@@ -506,31 +509,31 @@ export default function TeachingDetailsPage() {
 
           {/* Développement */}
           {teaching.type_contenu === "developpement" && teaching.evenements && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <List className="h-5 w-5 text-blue-600" />
+            <Card className="shadow-sm">
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                  <List className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                   Développement
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {teaching.evenements.map((evenement, index) => (
-                    <div key={evenement.id} className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <Badge className="bg-green-600 text-white mt-1">
+                    <div key={evenement.id} className="space-y-2 sm:space-y-3">
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        <Badge className="bg-green-600 text-white mt-0.5 sm:mt-1 text-xs">
                           {index + 1}
                         </Badge>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 mb-3">{evenement.titre}</h4>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base mb-2 sm:mb-3">{evenement.titre}</h4>
                           {evenement.enseignements && evenement.enseignements.length > 0 && (
-                            <ul className="space-y-2 ml-4">
+                            <ul className="space-y-1 sm:space-y-2 ml-2 sm:ml-4">
                               {evenement.enseignements.map((enseignement) => (
                                 <li
                                   key={enseignement.id}
-                                  className="flex items-start gap-2 text-sm text-gray-700"
+                                  className="flex items-start gap-1 sm:gap-2 text-xs sm:text-sm text-gray-700"
                                 >
-                                  <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                  <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 mt-0.5 flex-shrink-0" />
                                   <span>{enseignement.contenu}</span>
                                 </li>
                               ))}
@@ -550,15 +553,15 @@ export default function TeachingDetailsPage() {
 
           {/* Conclusion */}
           {teaching.conclusion && (
-            <Card className="border-green-200 bg-green-50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-green-900">
-                  <CheckCircle2 className="h-5 w-5" />
+            <Card className="border-green-200 bg-green-50 shadow-sm">
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-green-900 text-sm sm:text-base">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
                   Conclusion
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-green-900 whitespace-pre-wrap">
+                <p className="text-xs sm:text-sm text-green-900 whitespace-pre-wrap">
                   {teaching.conclusion}
                 </p>
               </CardContent>
