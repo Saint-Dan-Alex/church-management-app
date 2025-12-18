@@ -166,8 +166,14 @@ export function AppSidebar() {
                 </DropdownMenuItem>
                 <DropdownMenuItem>
 
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Déconnexion
+                  <div className="flex w-full items-center" onClick={async () => {
+                    const { logout } = await import("@/lib/auth")
+                    await logout()
+                    window.location.href = "/login"
+                  }}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Déconnexion
+                  </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
