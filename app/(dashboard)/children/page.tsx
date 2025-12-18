@@ -17,7 +17,7 @@ export default function ChildrenPage() {
   return (
     <Suspense fallback={<div className="flex items-center justify-center h-screen">Chargement...</div>}>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Enfants</h1>
             <p className="text-muted-foreground">Gestion des enfants et fiches d'information</p>
