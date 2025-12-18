@@ -10,10 +10,11 @@ import { AddSalleDialog } from "@/components/salles/add-salle-dialog"
 export default function SallesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-blue-900">Salles</h1>
           <p className="text-gray-600">Gestion des salles et affectation des moniteurs</p>
@@ -41,9 +42,13 @@ export default function SallesPage() {
       </div>
 
       {/* Liste des salles */}
-      <SalleList />
+      <SalleList searchQuery={searchQuery} refreshTrigger={refreshTrigger} />
 
-      <AddSalleDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      <AddSalleDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={() => setRefreshTrigger(prev => prev + 1)}
+      />
     </div>
   )
 }

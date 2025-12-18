@@ -186,13 +186,14 @@ export default function SalleDetailsPage({ params }: { params: Promise<{ id: str
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <div className="flex items-center gap-3 mb-1">
+            <div className="flex flex-wrap items-center gap-3 mb-1">
               <h1 className="text-3xl font-bold text-blue-900">Salle {salle.nom}</h1>
               <Badge variant="outline" className={getSalleBadgeColor(salle.nom)}>
                 {salle.nom}

@@ -18,9 +18,10 @@ import { toast } from "sonner"
 
 interface SalleListProps {
   searchQuery?: string
+  refreshTrigger?: number
 }
 
-export function SalleList({ searchQuery = "" }: SalleListProps) {
+export function SalleList({ searchQuery = "", refreshTrigger = 0 }: SalleListProps) {
   const router = useRouter()
   const [salles, setSalles] = useState<Salle[]>([])
   const [loading, setLoading] = useState(true)
@@ -56,7 +57,7 @@ export function SalleList({ searchQuery = "" }: SalleListProps) {
     }
 
     fetchSalles()
-  }, [])
+  }, [refreshTrigger])
 
   const filteredSalles = Array.isArray(salles) ? salles.filter((salle) => {
     const matchesSearch =

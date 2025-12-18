@@ -182,12 +182,12 @@ export function AddSalleDialog({ open, onOpenChange, onSuccess }: AddSalleDialog
                       id="capacite"
                       type="number"
                       min="1"
-                      value={formData.capacite === undefined || isNaN(formData.capacite) ? "" : formData.capacite}
+                      value={formData.capacite === undefined ? "" : formData.capacite}
                       onChange={(e) => {
                         const val = e.target.value;
                         setFormData({
                           ...formData,
-                          capacite: val === "" ? 0 : parseInt(val)
+                          capacite: val === "" ? undefined : parseInt(val)
                         })
                       }}
                     />
