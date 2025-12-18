@@ -107,7 +107,8 @@ export default function ChildDetailsPage({ params }: { params: Promise<{ id: str
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-5 w-5" />
@@ -118,11 +119,11 @@ export default function ChildDetailsPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
+          <Button variant="outline" onClick={() => setIsEditDialogOpen(true)} className="flex-1 md:flex-none">
             <Edit className="mr-2 h-4 w-4" />
             Modifier
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
+          <Button variant="destructive" onClick={handleDelete} className="flex-1 md:flex-none">
             <Trash2 className="mr-2 h-4 w-4" />
             Supprimer
           </Button>
