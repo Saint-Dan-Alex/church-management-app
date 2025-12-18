@@ -86,14 +86,47 @@ class SalleController extends Controller
 
         $salle = Salle::create($data);
 
-        // Association des moniteurs
+        // Association des moniteurs (Mise à jour table moniteurs + Pivot)
         if (!empty($moniteursIds)) {
+            // 1. Mettre à jour la table 'monitors' (Direct)
             \App\Models\Monitor::whereIn('id', $moniteursIds)->update([
                 'salle_actuelle_id' => $salle->id,
                 'salle_actuelle_nom' => $salle->nom,
                 'date_affectation_actuelle' => now(),
             ]);
+
+            // 2. Attacher dans la table pivot 'moniteur_salle' (Insertion manuelle car colonnes supplémentaires requises)
+            $moniteurs = \App\Models\Monitor::whereIn('id', $moniteursIds)->get();
+            $pivotInsertData = [];
+
+            foreach ($moniteurs as $moniteur) {
+                // Déterminer le rôle
+                $role = 'membre'; // 'moniteur' n'est pas dans l'enum de la migration ('responsable', 'adjoint', 'membre')
+                if ($moniteur->id === $salle->responsable_id) $role = 'responsable';
+                elseif ($moniteur->id === $salle->adjoint_id) $role = 'adjoint';
+
+                $pivotInsertData[] = [
+                    'id' => \Illuminate\Support\Str::uuid()->toString(),
+                    'moniteur_id' => $moniteur->id,
+                    'moniteur_nom' => $moniteur->nom,
+                    'moniteur_prenom' => $moniteur->prenom,
+                    'moniteur_nom_complet' => $moniteur->nom_complet, // Assumant que l'attribut existe/est append
+                    'salle_id' => $salle->id,
+                    'role' => $role,
+                    'date_affectation' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            if (!empty($pivotInsertData)) {
+                \Illuminate\Support\Facades\DB::table('moniteur_salle')->insert($pivotInsertData);
+            }
         }
+
+        // Si Responsable/Adjoint ne sont pas dans la liste moniteurs_ids, il faut aussi les lier ?
+        // Normalement le frontend inclut tout le monde, mais par sécurité on pourrait vérifier.
+        // Pour l'instant on fait confiance au frontend qui envoie la sélection.
 
         return response()->json([
             'message' => 'Salle créée avec succès',
@@ -160,7 +193,66 @@ class SalleController extends Controller
      */
     public function update(UpdateSalleRequest $request, Salle $salle): JsonResponse
     {
-        $salle->update($request->validated());
+        $data = $request->validated();
+        
+        $moniteursIds = $data['moniteurs_ids'] ?? [];
+        unset($data['moniteurs_ids']); // On ne veut pas l'update directement sur le modèle Salle
+
+        $salle->update($data);
+
+        // Gestion des moniteurs lors de la mise à jour
+        if ($request->has('moniteurs_ids')) {
+            // 1. Gérer les détachements (Moniteurs qui ne sont plus dans la liste)
+            // On trouve les moniteurs qui étaient dans cette salle mais qui ne sont plus dans la nouvelle liste
+            \App\Models\Monitor::where('salle_actuelle_id', $salle->id)
+                ->whereNotIn('id', $moniteursIds)
+                ->update([
+                    'salle_actuelle_id' => null,
+                    'salle_actuelle_nom' => null,
+                    'date_affectation_actuelle' => null,
+                ]);
+
+            // 2. Gérer les attachements (Nouveaux et existants confirmés)
+            if (!empty($moniteursIds)) {
+                \App\Models\Monitor::whereIn('id', $moniteursIds)->update([
+                    'salle_actuelle_id' => $salle->id,
+                    'salle_actuelle_nom' => $salle->nom,
+                    'date_affectation_actuelle' => now(), // Ou conserver l'ancienne si déjà présent ? Pour simplifier, on update.
+                ]);
+            }
+
+            // 3. Mettre à jour la table pivot 'moniteur_salle'
+            // Le plus simple et sûr pour garantir la cohérence : Supprimer tout pour cette salle et recréer
+            \Illuminate\Support\Facades\DB::table('moniteur_salle')->where('salle_id', $salle->id)->delete();
+
+            if (!empty($moniteursIds)) {
+                $moniteurs = \App\Models\Monitor::whereIn('id', $moniteursIds)->get();
+                $pivotInsertData = [];
+
+                foreach ($moniteurs as $moniteur) {
+                    $role = 'membre';
+                    if ($moniteur->id === $salle->responsable_id) $role = 'responsable';
+                    elseif ($moniteur->id === $salle->adjoint_id) $role = 'adjoint';
+
+                    $pivotInsertData[] = [
+                        'id' => \Illuminate\Support\Str::uuid()->toString(),
+                        'moniteur_id' => $moniteur->id,
+                        'moniteur_nom' => $moniteur->nom,
+                        'moniteur_prenom' => $moniteur->prenom,
+                        'moniteur_nom_complet' => $moniteur->nom_complet,
+                        'salle_id' => $salle->id,
+                        'role' => $role,
+                        'date_affectation' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                if (!empty($pivotInsertData)) {
+                    \Illuminate\Support\Facades\DB::table('moniteur_salle')->insert($pivotInsertData);
+                }
+            }
+        }
 
         return response()->json([
             'message' => 'Salle mise à jour avec succès',

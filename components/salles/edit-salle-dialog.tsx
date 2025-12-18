@@ -41,8 +41,8 @@ export function EditSalleDialog({ open, onOpenChange, salle, onSuccess }: EditSa
     nom: salle.nom,
     description: salle.description,
     capacite: salle.capacite,
-    responsableId: salle.responsableId,
-    adjointId: salle.adjointId,
+    responsable_id: salle.responsable_id,
+    adjoint_id: salle.adjoint_id,
     moniteurs: salle.moniteurs,
     actif: salle.actif,
   })
@@ -61,8 +61,8 @@ export function EditSalleDialog({ open, onOpenChange, salle, onSuccess }: EditSa
         nom: salle.nom,
         description: salle.description,
         capacite: salle.capacite,
-        responsableId: salle.responsableId,
-        adjointId: salle.adjointId,
+        responsable_id: salle.responsable_id,
+        adjoint_id: salle.adjoint_id,
         moniteurs: salle.moniteurs,
         actif: salle.actif,
       })
@@ -104,11 +104,11 @@ export function EditSalleDialog({ open, onOpenChange, salle, onSuccess }: EditSa
     if (moniteursSelectionnes.includes(moniteurId)) {
       setMoniteursSelectionnes(moniteursSelectionnes.filter((id) => id !== moniteurId))
       // Si c'était le responsable ou l'adjoint, le retirer
-      if (formData.responsableId === moniteurId) {
-        setFormData((prev) => ({ ...prev, responsableId: undefined }))
+      if (formData.responsable_id === moniteurId) {
+        setFormData((prev) => ({ ...prev, responsable_id: undefined }))
       }
-      if (formData.adjointId === moniteurId) {
-        setFormData((prev) => ({ ...prev, adjointId: undefined }))
+      if (formData.adjoint_id === moniteurId) {
+        setFormData((prev) => ({ ...prev, adjoint_id: undefined }))
       }
     } else {
       setMoniteursSelectionnes([...moniteursSelectionnes, moniteurId])
@@ -132,8 +132,10 @@ export function EditSalleDialog({ open, onOpenChange, salle, onSuccess }: EditSa
         nom: formData.nom,
         description: formData.description,
         capacite: formData.capacite,
-        responsable_id: formData.responsableId,
-        adjoint_id: formData.adjointId,
+        responsable_id: formData.responsable_id,
+        responsable_nom: formData.responsable_id ? getMoniteurById(formData.responsable_id)?.nom : undefined,
+        adjoint_id: formData.adjoint_id,
+        adjoint_nom: formData.adjoint_id ? getMoniteurById(formData.adjoint_id)?.nom : undefined,
         actif: formData.actif,
         moniteurs_ids: moniteursSelectionnes
       }
@@ -251,9 +253,9 @@ export function EditSalleDialog({ open, onOpenChange, salle, onSuccess }: EditSa
                           </Label>
                           {isSelected && (
                             <Badge variant="outline" className="text-xs">
-                              {moniteur.id === formData.responsableId
+                              {moniteur.id === formData.responsable_id
                                 ? "Responsable"
-                                : moniteur.id === formData.adjointId
+                                : moniteur.id === formData.adjoint_id
                                   ? "Adjoint"
                                   : "Membre"}
                             </Badge>
@@ -273,9 +275,9 @@ export function EditSalleDialog({ open, onOpenChange, salle, onSuccess }: EditSa
                     <div className="grid gap-2">
                       <Label htmlFor="responsable">Responsable</Label>
                       <Select
-                        value={formData.responsableId || ""}
+                        value={formData.responsable_id || ""}
                         onValueChange={(value) =>
-                          setFormData({ ...formData, responsableId: value || undefined })
+                          setFormData({ ...formData, responsable_id: value === "_aucun" ? undefined : value })
                         }
                       >
                         <SelectTrigger>
@@ -294,9 +296,9 @@ export function EditSalleDialog({ open, onOpenChange, salle, onSuccess }: EditSa
                     <div className="grid gap-2">
                       <Label htmlFor="adjoint">Adjoint</Label>
                       <Select
-                        value={formData.adjointId || ""}
+                        value={formData.adjoint_id || ""}
                         onValueChange={(value) =>
-                          setFormData({ ...formData, adjointId: value || undefined })
+                          setFormData({ ...formData, adjoint_id: value === "_aucun" ? undefined : value })
                         }
                       >
                         <SelectTrigger>
@@ -305,7 +307,7 @@ export function EditSalleDialog({ open, onOpenChange, salle, onSuccess }: EditSa
                         <SelectContent>
                           <SelectItem value="_aucun">Aucun</SelectItem>
                           {moniteursDisponiblesPourResponsable
-                            .filter((m) => m.id !== formData.responsableId)
+                            .filter((m) => m.id !== formData.responsable_id)
                             .map((moniteur) => (
                               <SelectItem key={moniteur.id} value={moniteur.id}>
                                 {moniteur.nomComplet}

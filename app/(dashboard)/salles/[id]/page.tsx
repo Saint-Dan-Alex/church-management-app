@@ -83,26 +83,30 @@ export default function SalleDetailsPage({ params }: { params: Promise<{ id: str
     return colors[nom] || "bg-gray-100 text-gray-800"
   }
 
-  const getRoleBadge = (role: string) => {
+  const getRoleBadge = (role?: string) => {
+    if (!role) return "bg-gray-100 text-gray-700 border-gray-300"
     const r = role.toLowerCase()
     if (r === "responsable" || r === "chef_salle") return "bg-blue-100 text-blue-700 border-blue-300"
     if (r === "adjoint") return "bg-green-100 text-green-700 border-green-300"
     return "bg-gray-100 text-gray-700 border-gray-300"
   }
 
-  const getRoleIcon = (role: string) => {
+  const getRoleIcon = (role?: string) => {
+    if (!role) return <Users className="h-4 w-4" />
     const r = role.toLowerCase()
     if (r === "responsable" || r === "chef_salle") return <Crown className="h-4 w-4" />
     if (r === "adjoint") return <Shield className="h-4 w-4" />
     return <Users className="h-4 w-4" />
   }
 
-  const formatRoleLabel = (role: string) => {
+  const formatRoleLabel = (role?: string) => {
+    if (!role) return "Moniteur"
     const r = role.toLowerCase()
-    if (r === "chef_salle" || r === "responsable") return "Responsable"
+    if (r === "responsable" || r === "chef_salle") return "Responsable"
     if (r === "adjoint") return "Adjoint"
     return "Moniteur"
   }
+
 
   const formatDate = (date: Date | string) => {
     if (!date) return "-"

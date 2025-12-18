@@ -22,6 +22,8 @@ class UpdateSalleRequest extends FormRequest
             'adjoint_id' => 'nullable|uuid|exists:monitors,id',
             'adjoint_nom' => 'nullable|string|max:255',
             'actif' => 'boolean',
+            'moniteurs_ids' => 'nullable|array',
+            'moniteurs_ids.*' => 'uuid|exists:monitors,id',
         ];
     }
 }

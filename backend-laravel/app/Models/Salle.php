@@ -15,10 +15,10 @@ class Salle extends Model
         'nom',
         'description',
         'capacite',
-        'responsableId',
-        'responsableNom',
-        'adjointId',
-        'adjointNom',
+        'responsable_id',
+        'responsable_nom',
+        'adjoint_id',
+        'adjoint_nom',
         'actif',
     ];
 
