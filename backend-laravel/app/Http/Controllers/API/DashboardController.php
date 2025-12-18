@@ -25,12 +25,16 @@ class DashboardController extends Controller
             'filles' => Child::where('genre', 'F\u00e9minin')->count(),
         ];
 
-        $worshipReports = WorshipReport::all();
-
+        // Optimisation: Utilisation des agrégats SQL direct
+        $worshipCount = WorshipReport::count();
+        $worshipSum = WorshipReport::sum('effectif_total');
+        // Évite la division par zéro si count est 0
+        $worshipAvg = $worshipCount > 0 ? $worshipSum / $worshipCount : 0; 
+        
         $worshipStats = [
-            'total_cultes' => $worshipReports->count(),
-            'total_effectif' => $worshipReports->sum('effectif_total'),
-            'moyenne_effectif' => $worshipReports->avg('effectif_total'),
+            'total_cultes' => $worshipCount,
+            'total_effectif' => $worshipSum,
+            'moyenne_effectif' => round($worshipAvg, 1),
         ];
 
         // Statistiques complémentaires

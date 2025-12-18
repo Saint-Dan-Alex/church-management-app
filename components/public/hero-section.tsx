@@ -19,7 +19,12 @@ export function HeroSection({ settings = {} }: HeroSectionProps) {
 
       {bgImage ? (
         <div className="absolute inset-0 z-0">
-          <img src={bgImage} alt="Hero Background" className="w-full h-full object-cover transition-transform duration-10000 hover:scale-110" />
+          <img
+            src={bgImage}
+            alt="Hero Background"
+            className="w-full h-full object-cover transition-transform duration-10000 hover:scale-110"
+            fetchPriority="high"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/60 to-slate-950" />
           <div className="absolute inset-0 bg-purple-900/20 mix-blend-overlay" /> {/* Touche violette */}
         </div>

@@ -14,11 +14,11 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[oklch(0.20_0.08_260)] via-[oklch(0.25_0.08_260)] to-[oklch(0.20_0.08_260)] p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-[oklch(0.75_0.22_60)]/5 blur-[120px] rounded-full" />
-        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-[oklch(0.25_0.08_260)]/20 blur-[120px] rounded-full" />
+        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-blue-500/10 blur-[120px] rounded-full" />
+        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-amber-500/10 blur-[120px] rounded-full" />
       </div>
 
       <div className="w-full max-w-md relative z-10">

@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateChildRequest;
 use App\Models\Child;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ChildController extends Controller
 {
@@ -236,50 +237,44 @@ class ChildController extends Controller
      */
     public function statistics(): JsonResponse
     {
-        $children = Child::all();
-        $total = $children->count();
-        
-        // Age groups calculation
-        $ageGroups = [
-            '0-2 ans' => 0,
-            '3-5 ans' => 0,
-            '5-7 ans' => 0,
-            '8-10 ans' => 0,
-            '11-13 ans' => 0,
-            '14+ ans' => 0,
-        ];
-        
+        $total = Child::count();
         $now = new \DateTime();
-        
-        foreach ($children as $child) {
-            if (!$child->date_naissance) continue;
-            try {
-                $dob = new \DateTime($child->date_naissance);
-                $age = $dob->diff($now)->y;
-                
-                if ($age <= 2) $ageGroups['0-2 ans']++;
-                elseif ($age <= 5) $ageGroups['3-5 ans']++;
-                elseif ($age <= 7) $ageGroups['5-7 ans']++;
-                elseif ($age <= 10) $ageGroups['8-10 ans']++;
-                elseif ($age <= 13) $ageGroups['11-13 ans']++;
-                else $ageGroups['14+ ans']++;
-            } catch (\Exception $e) {}
-        }
-        
+
+        // Optimisation: Calcul des tranches d'âge directement en base de données
+        // Attention: Nécessite MySQL/MariaDB pour TIMESTAMPDIFF
+        $ageStats = Child::select(DB::raw('
+            CASE
+                WHEN TIMESTAMPDIFF(YEAR, date_naissance, CURDATE()) <= 2 THEN "0-2 ans"
+                WHEN TIMESTAMPDIFF(YEAR, date_naissance, CURDATE()) BETWEEN 3 AND 5 THEN "3-5 ans"
+                WHEN TIMESTAMPDIFF(YEAR, date_naissance, CURDATE()) BETWEEN 6 AND 7 THEN "5-7 ans"
+                WHEN TIMESTAMPDIFF(YEAR, date_naissance, CURDATE()) BETWEEN 8 AND 10 THEN "8-10 ans"
+                WHEN TIMESTAMPDIFF(YEAR, date_naissance, CURDATE()) BETWEEN 11 AND 13 THEN "11-13 ans"
+                ELSE "14+ ans"
+            END as age_range
+        '), DB::raw('count(*) as count'))
+        ->whereNotNull('date_naissance')
+        ->groupBy('age_range')
+        ->pluck('count', 'age_range')
+        ->toArray();
+
+        // Reconstruction du format attendu avec des valeurs par défaut 0
         $ageDistribution = [];
-        foreach ($ageGroups as $group => $count) {
-            $ageDistribution[] = ['group' => $group, 'count' => $count];
+        $ranges = ['0-2 ans', '3-5 ans', '5-7 ans', '8-10 ans', '11-13 ans', '14+ ans'];
+        foreach ($ranges as $range) {
+            $ageDistribution[] = [
+                'group' => $range, 
+                'count' => $ageStats[$range] ?? 0
+            ];
         }
 
         $stats = [
             'total' => $total,
-            'garcons' => $children->where('genre', 'Masculin')->count(),
-            'filles' => $children->where('genre', 'Féminin')->count(),
-            'ouvriers' => $children->where('est_ouvrier', true)->count(),
-            'nouveaux_mois' => $children->where('created_at', '>=', $now->modify('first day of this month'))->count(),
-            'allergies' => $children->where('allergies_connues', true)->count(),
+            'garcons' => Child::where('genre', 'Masculin')->count(),
+            'filles' => Child::where('genre', 'Féminin')->count(),
+            'ouvriers' => Child::where('est_ouvrier', true)->count(),
+            'nouveaux_mois' => Child::where('created_at', '>=', now()->startOfMonth())->count(),
+            'allergies' => Child::where('allergies_connues', true)->count(),
             'ageDistribution' => $ageDistribution,
-            // Placeholder for attendance until feature is implemented
             'attendance' => [
                 ['name' => 'Présents', 'value' => 0, 'color' => 'hsl(var(--primary))'],
                 ['name' => 'Absents', 'value' => $total, 'color' => 'hsl(var(--muted))'],
