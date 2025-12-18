@@ -14,20 +14,22 @@ class UpdateActivityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'titre' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
-            'type' => 'sometimes|in:gratuite,payante',
+            // Les noms doivent correspondre aux colonnes du modèle Activity
+            'title' => 'sometimes|string|max:255',
+            'description' => 'sometimes|nullable|string',
+            'type' => 'sometimes|in:libre,gratuite,payante',
             'date' => 'sometimes|date',
-            'heure_debut' => 'sometimes|date_format:H:i',
-            'heure_fin' => 'sometimes|date_format:H:i|after:heure_debut',
-            'lieu' => 'sometimes|string|max:255',
-            'responsable' => 'sometimes|string|max:255',
-            'responsable_id' => 'sometimes|uuid',
-            'montant_requis' => 'nullable|numeric|min:0',
-            'devise' => 'nullable|in:CDF,USD',
-            'montant_alternatif' => 'nullable|numeric|min:0',
-            'devise_alternative' => 'nullable|in:CDF,USD',
-            'statut' => 'sometimes|in:planifiee,en_cours,terminee,annulee',
+            'end_date' => 'sometimes|nullable|date',
+            'time' => 'sometimes|string',
+            'duration' => 'sometimes|nullable|string',
+            'location' => 'sometimes|nullable|string|max:255',
+            'category' => 'sometimes|nullable|string|max:255',
+            'organizer' => 'sometimes|nullable|string|max:255',
+            'maxParticipants' => 'sometimes|nullable|integer|min:0',
+            'participants' => 'sometimes|nullable|integer|min:0',
+            'price' => 'sometimes|nullable|numeric|min:0',
+            'currency' => 'sometimes|nullable|in:CDF,USD',
+            'status' => 'sometimes|nullable|in:upcoming,ongoing,completed,cancelled,planifiee,en_cours,terminee,annulee',
         ];
     }
 }

@@ -97,7 +97,7 @@ export function EditActivityDialog({ open, onOpenChange, activity, onSuccess }: 
         monitorsService.getAll()
       ])
 
-      setCategories(cats)
+      setCategories(cats as Array<{ id: number, name: string }>)
 
       const childrenData = Array.isArray(children) ? children : (children as any).data || []
       const monitorsData = Array.isArray(monitors) ? monitors : (monitors as any).data || []
@@ -155,6 +155,7 @@ export function EditActivityDialog({ open, onOpenChange, activity, onSuccess }: 
       setIsSaving(true)
       const duration = calculateDuration()
 
+      // Mapper les champs frontend vers les noms attendus par le backend Laravel (modèle Activity)
       const updateData: any = {
         title: formData.title,
         description: formData.description,
@@ -163,13 +164,14 @@ export function EditActivityDialog({ open, onOpenChange, activity, onSuccess }: 
         time: formData.startTime,
         location: formData.location,
         category: formData.category,
-        type: formData.type,
+        type: formData.type, // "libre" ou "payante"
         maxParticipants: parseInt(formData.maxParticipants) || 100,
         organizer: formData.organizers.join(", ") || formData.responsable || "Non spécifié",
         price: formData.type === "payante" ? parseFloat(formData.montantRequis) : null,
         currency: formData.type === "payante" ? formData.devise : null,
       }
 
+      // Ajouter la durée si calculée
       if (duration && !duration.startsWith("Invalide")) {
         updateData.duration = duration
       }
