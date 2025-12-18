@@ -65,7 +65,7 @@ export function LoginForm() {
     if (user?.role === "ADMIN") {
       router.push("/dashboard")
     } else {
-      router.push("/")
+      router.push("/dashboard")
     }
     router.refresh()
   }

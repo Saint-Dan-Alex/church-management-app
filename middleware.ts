@@ -13,9 +13,10 @@ export function middleware(request: NextRequest) {
 
     try {
       const user = JSON.parse(authCookie.value)
-      if (user.role !== "admin") {
-        return NextResponse.redirect(new URL("/", request.url))
-      }
+      // Access allowed for all authenticated users
+      // if (user.role !== "admin") {
+      //   return NextResponse.redirect(new URL("/", request.url))
+      // }
     } catch {
       return NextResponse.redirect(new URL("/login", request.url))
     }

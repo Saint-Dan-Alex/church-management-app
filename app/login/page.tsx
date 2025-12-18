@@ -5,12 +5,8 @@ import { redirect } from "next/navigation"
 export default async function LoginPage() {
   const user = await getCurrentUser()
 
-  if (user?.role === "admin") {
-    redirect("/dashboard")
-  }
-
   if (user) {
-    redirect("/")
+    redirect("/dashboard")
   }
 
   return (
