@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Upload, Loader2 } from "lucide-react"
+import { Upload, Loader2, Camera } from "lucide-react"
 import { toast } from "sonner"
 import type { Monitor } from "@/types/monitor"
 import { monitorsService } from "@/lib/services/monitors.service"
@@ -38,6 +38,10 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
   const [error, setError] = useState<string | null>(null)
   const [salles, setSalles] = useState<{ id: string, nom: string }[]>([])
   const [roles, setRoles] = useState<{ id: string, name: string }[]>([])
+
+  // Camera state
+  const [isCameraOpen, setIsCameraOpen] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     const fetchSalles = async () => {
@@ -94,8 +98,55 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
       setFormData({})
       setPhotoPreview(null)
       setError(null)
+      handleStopCamera()
     }
   }, [open, monitor])
+
+  // Stop camera when dialog closes
+  useEffect(() => {
+    if (!open) {
+      handleStopCamera()
+    }
+  }, [open])
+
+  const handleStartCamera = async () => {
+    try {
+      setIsCameraOpen(true)
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    } catch (err) {
+      console.error("Erreur caméra:", err)
+      toast.error("Impossible d'accéder à la caméra")
+      setIsCameraOpen(false)
+    }
+  }
+
+  const handleStopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream
+      stream.getTracks().forEach(track => track.stop())
+      videoRef.current.srcObject = null
+    }
+    setIsCameraOpen(false)
+  }
+
+  const handleTakePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement("canvas")
+      canvas.width = videoRef.current.videoWidth
+      canvas.height = videoRef.current.videoHeight
+      const ctx = canvas.getContext("2d")
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0)
+        const base64String = canvas.toDataURL("image/jpeg")
+        setPhotoPreview(base64String)
+        setFormData(prev => ({ ...prev, photo: base64String }))
+        handleStopCamera()
+      }
+    }
+  }
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -122,6 +173,7 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
       onSave(updatedMonitor)
       toast.success("Moniteur mis à jour avec succès")
       onOpenChange(false)
+      handleStopCamera()
     } catch (err) {
       console.error('Erreur lors de la mise à jour du moniteur:', err)
       setError('Une erreur est survenue lors de la mise à jour du moniteur')
@@ -134,7 +186,12 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
   if (!monitor) return null
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        handleStopCamera()
+      }
+      onOpenChange(isOpen)
+    }}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Modifier le Moniteur</DialogTitle>
@@ -142,30 +199,65 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 py-4">
-            {/* Photo */}
+            {/* Photo Section */}
             <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={photoPreview || undefined} />
-                <AvatarFallback className="bg-blue-100 text-blue-600">
-                  <Upload className="h-8 w-8" />
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <Label htmlFor="photo-edit" className="cursor-pointer">
-                  <div className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
-                    <Upload className="h-4 w-4" />
-                    {photoPreview ? 'Changer la photo' : 'Ajouter une photo'}
+              {isCameraOpen ? (
+                <div className="flex flex-col items-center gap-2 w-full max-w-sm">
+                  <div className="relative aspect-video w-full bg-black rounded-lg overflow-hidden">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                </Label>
-                <Input
-                  id="photo-edit"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                  disabled={isLoading}
-                />
-              </div>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="destructive" size="sm" onClick={handleStopCamera}>
+                      Annuler
+                    </Button>
+                    <Button type="button" size="sm" onClick={handleTakePhoto}>
+                      Capturer
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={photoPreview || undefined} />
+                    <AvatarFallback className="bg-blue-100 text-blue-600">
+                      <Upload className="h-8 w-8" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex gap-4">
+                    <div>
+                      <Label htmlFor="photo-edit" className="cursor-pointer">
+                        <div className="flex items-center gap-2 text-sm text-blue-600 hover:underline px-3 py-2 bg-blue-50 rounded-md">
+                          <Upload className="h-4 w-4" />
+                          {photoPreview ? 'Changer' : 'Importer'}
+                        </div>
+                      </Label>
+                      <Input
+                        id="photo-edit"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handlePhotoChange}
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      onClick={handleStartCamera}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Caméra
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
             {error && (
@@ -366,10 +458,9 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
                   <Label htmlFor="roleActuel">Rôle dans la salle</Label>
                   <Select
                     value={formData.roleActuel || "none"}
-                    onValueChange={(value: RoleMoniteur | "none") =>
-                      setFormData({ ...formData, roleActuel: value === "none" ? undefined : value })
+                    onValueChange={(value: string) =>
+                      setFormData({ ...formData, roleActuel: value === "none" ? undefined : value as any })
                     }
-                    disabled={!formData.salleActuelleId}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner un rôle" />

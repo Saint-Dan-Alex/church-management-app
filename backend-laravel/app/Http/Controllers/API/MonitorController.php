@@ -133,6 +133,9 @@ class MonitorController extends Controller
             ];
 
             $monitor = Monitor::create($monitorData);
+            
+            // Synchroniser le rôle de l'utilisateur associé
+            $this->syncUserRole($monitor->email, $monitor->role_actuel);
 
             // Créer une notification (wrappé pour éviter de bloquer la réponse en cas d'erreur)
             try {
@@ -218,6 +221,23 @@ class MonitorController extends Controller
      *     @OA\Response(response=422, description="Erreur de validation")
      * )
      */
+    private function syncUserRole(string $email, ?string $monitorRole)
+    {
+        $user = \App\Models\User::where('email', $email)->first();
+        if ($user) {
+            $newUserRole = 'MONITEUR'; // Default
+            
+            if ($monitorRole === 'responsable') {
+                $newUserRole = 'CHEF_SALLE';
+            } elseif ($user->role === 'ADMIN' || $user->role === 'COORDINATION') {
+                // Don't downgrade admins or coordinators
+                return;
+            }
+
+            $user->update(['role' => $newUserRole]);
+        }
+    }
+
     public function update(UpdateMonitorRequest $request, Monitor $monitor): JsonResponse
     {
         $data = $request->validated();
@@ -243,6 +263,9 @@ class MonitorController extends Controller
         if (array_key_exists('dateAffectationActuelle', $data)) $monitorData['date_affectation_actuelle'] = $data['dateAffectationActuelle'];
 
         $monitor->update($monitorData);
+
+        // Synchroniser le rôle de l'utilisateur associé
+        $this->syncUserRole($monitor->email, $monitor->role_actuel);
 
         return response()->json([
             'message' => 'Moniteur mis à jour avec succès',
