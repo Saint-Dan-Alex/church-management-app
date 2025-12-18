@@ -14,9 +14,10 @@ import { Teaching } from "@/types/teaching"
 
 interface TeachingListProps {
   searchQuery: string
+  refreshKey?: number // Permet de forcer le rechargement depuis le parent
 }
 
-export function TeachingList({ searchQuery }: TeachingListProps) {
+export function TeachingList({ searchQuery, refreshKey = 0 }: TeachingListProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [teachings, setTeachings] = useState<Teaching[]>([])
@@ -25,9 +26,10 @@ export function TeachingList({ searchQuery }: TeachingListProps) {
   const [editingTeaching, setEditingTeaching] = useState<Teaching | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
+  // Recharger quand refreshKey change (après création d'un enseignement)
   useEffect(() => {
     loadTeachings()
-  }, [])
+  }, [refreshKey])
 
   const loadTeachings = async () => {
     try {

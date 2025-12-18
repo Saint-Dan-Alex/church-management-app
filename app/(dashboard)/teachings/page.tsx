@@ -10,6 +10,12 @@ import { TeachingList } from "@/components/teachings/teaching-list"
 export default function TeachingsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  // Fonction appelée après création réussie d'un enseignement
+  const handleTeachingCreated = () => {
+    setRefreshKey(prev => prev + 1) // Incrémente pour forcer le rechargement de TeachingList
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
@@ -46,8 +52,12 @@ export default function TeachingsPage() {
         </div>
       </div>
 
-      <TeachingList searchQuery={searchQuery} />
-      <AddTeachingDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      <TeachingList searchQuery={searchQuery} refreshKey={refreshKey} />
+      <AddTeachingDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={handleTeachingCreated}
+      />
     </div>
   )
 }
