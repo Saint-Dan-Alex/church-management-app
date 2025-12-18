@@ -12,6 +12,7 @@ import { EditMonitorDialog } from "@/components/monitors/edit-monitor-dialog"
 import { monitorsService } from "@/lib/services/monitors.service"
 import type { Monitor } from "@/types/monitor"
 import { toast } from "sonner"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface MonitorListProps {
   searchQuery: string
@@ -82,21 +83,29 @@ export function MonitorList({ searchQuery, onGenerateQR, refreshTrigger = 0 }: M
     fetchMonitors(1)
   }, [refreshTrigger])
 
+  const [monitorToDelete, setMonitorToDelete] = useState<{ id: string, name: string } | null>(null)
+
   const handleEdit = (monitor: Monitor) => {
     setEditingMonitor(monitor)
     setIsEditDialogOpen(true)
   }
 
-  const handleDelete = async (monitorId: string, monitorName: string) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${monitorName} ?`)) {
-      try {
-        await monitorsService.delete(monitorId)
-        setMonitors(monitors.filter(monitor => monitor.id !== monitorId))
-        toast.success("Moniteur supprimé avec succès")
-      } catch (err) {
-        console.error("Erreur lors de la suppression du moniteur:", err)
-        toast.error("Erreur lors de la suppression du moniteur")
-      }
+  const handleDelete = (monitorId: string, monitorName: string) => {
+    setMonitorToDelete({ id: monitorId, name: monitorName })
+  }
+
+  const confirmDelete = async () => {
+    if (!monitorToDelete) return
+
+    try {
+      await monitorsService.delete(monitorToDelete.id)
+      setMonitors(monitors.filter(monitor => monitor.id !== monitorToDelete.id))
+      toast.success("Moniteur supprimé avec succès")
+    } catch (err) {
+      console.error("Erreur lors de la suppression du moniteur:", err)
+      toast.error("Erreur lors de la suppression du moniteur")
+    } finally {
+      setMonitorToDelete(null)
     }
   }
   const filteredMonitors = Array.isArray(monitors) ? monitors.filter(
@@ -258,6 +267,16 @@ export function MonitorList({ searchQuery, onGenerateQR, refreshTrigger = 0 }: M
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         monitor={editingMonitor}
+      />
+
+      <ConfirmDialog
+        open={!!monitorToDelete}
+        onOpenChange={(open) => !open && setMonitorToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Supprimer le moniteur"
+        description={`Êtes-vous sûr de vouloir supprimer ${monitorToDelete?.name} ? Cette action est irréversible.`}
+        confirmText="Supprimer"
+        variant="destructive"
       />
 
       {/* Pagination */}

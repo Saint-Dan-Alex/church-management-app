@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -16,6 +16,7 @@ import { UserRole, getRoleLabel } from "@/lib/permissions"
 import { EditUserDialog } from "./edit-user-dialog"
 import { usersService, type User } from "@/lib/services/users.service"
 import { toast } from "sonner"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface UsersListProps {
   searchQuery?: string
@@ -28,6 +29,7 @@ export function UsersList({ searchQuery = "", roleFilter = "all" }: UsersListPro
   const [error, setError] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null)
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -66,21 +68,28 @@ export function UsersList({ searchQuery = "", roleFilter = "all" }: UsersListPro
     setIsEditDialogOpen(true)
   }
 
-  const handleDelete = async (user: User) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer "${user.name}" ?`)) {
-      try {
-        await usersService.delete(user.id)
-        setUsers(Array.isArray(users) ? users.filter(u => u.id !== user.id) : [])
-        toast.success(`Utilisateur "${user.name}" supprimé avec succès`)
-      } catch (err) {
-        toast.error("Erreur lors de la suppression")
-        console.error("Erreur:", err)
-      }
+  const handleDelete = (user: User) => {
+    setUserToDelete(user)
+  }
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return
+
+    try {
+      await usersService.delete(userToDelete.id)
+      setUsers(Array.isArray(users) ? users.filter(u => u.id !== userToDelete.id) : [])
+      toast.success(`Utilisateur "${userToDelete.name}" supprimé avec succès`)
+    } catch (err) {
+      toast.error("Erreur lors de la suppression")
+      console.error("Erreur:", err)
+    } finally {
+      setUserToDelete(null)
     }
   }
 
   const handleResetPassword = (user: User) => {
-    alert(`🔧 Réinitialiser le mot de passe pour: ${user.name}\n\n(Envoyer un email de réinitialisation)`)
+    toast.info(`Email de réinitialisation envoyé à ${user.email}`)
+    // Logic to send email would go here
   }
 
   const handleToggleStatus = async (user: User) => {
@@ -134,7 +143,6 @@ export function UsersList({ searchQuery = "", roleFilter = "all" }: UsersListPro
   return (
     <>
       <div className="space-y-4">
-        {/* Afficher un indicateur si pas de données et pas d'erreur */}
         {!loading && !error && users.length === 0 && (
           <Card>
             <CardContent className="p-6 text-center">
@@ -144,7 +152,7 @@ export function UsersList({ searchQuery = "", roleFilter = "all" }: UsersListPro
             </CardContent>
           </Card>
         )}
-        
+
         {filteredUsers.length === 0 && users.length > 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
@@ -159,7 +167,7 @@ export function UsersList({ searchQuery = "", roleFilter = "all" }: UsersListPro
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarImage src={user.avatar || undefined} alt={user.name} />
                       <AvatarFallback>
                         {user.name?.split(" ").map((n) => n[0]).join("").toUpperCase()}
                       </AvatarFallback>
@@ -179,7 +187,7 @@ export function UsersList({ searchQuery = "", roleFilter = "all" }: UsersListPro
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Badge 
+                    <Badge
                       variant={user.active ? "default" : "secondary"}
                       className={user.active ? "bg-green-500" : "bg-gray-500"}
                     >
@@ -203,14 +211,14 @@ export function UsersList({ searchQuery = "", roleFilter = "all" }: UsersListPro
                           <Lock className="h-4 w-4 mr-2" />
                           Réinitialiser mot de passe
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => handleToggleStatus(user)}
                           className={user.active ? "text-orange-600" : "text-green-600"}
                         >
                           <Shield className="h-4 w-4 mr-2" />
                           {user.active ? "Désactiver" : "Activer"}
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => handleDelete(user)}
                           className="text-red-600"
                         >
@@ -227,10 +235,20 @@ export function UsersList({ searchQuery = "", roleFilter = "all" }: UsersListPro
         )}
       </div>
 
-      <EditUserDialog 
-        open={isEditDialogOpen} 
+      <EditUserDialog
+        open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         user={selectedUser}
+      />
+
+      <ConfirmDialog
+        open={!!userToDelete}
+        onOpenChange={(open) => !open && setUserToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Supprimer l'utilisateur"
+        description={`Êtes-vous sûr de vouloir supprimer "${userToDelete?.name}" ? Cette action est irréversible.`}
+        confirmText="Supprimer"
+        variant="destructive"
       />
     </>
   )

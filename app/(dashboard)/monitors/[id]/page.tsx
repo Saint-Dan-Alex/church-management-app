@@ -31,6 +31,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { EditMonitorDialog } from "@/components/monitors/edit-monitor-dialog"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import type { Monitor } from "@/types/monitor"
 import type { MoniteurSalleHistorique } from "@/types/salle"
 import { monitorsService } from "@/lib/services/monitors.service"
@@ -97,18 +98,26 @@ export default function MonitorDetailsPage() {
     })
   }
 
-  const handleDelete = async () => {
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+
+  // ... (dans le composant)
+
+  const handleDelete = () => {
+    setIsDeleteConfirmOpen(true)
+  }
+
+  const confirmDelete = async () => {
     if (!monitor) return
 
-    if (confirm("Êtes-vous sûr de vouloir supprimer ce moniteur ?")) {
-      try {
-        await monitorsService.delete(monitor.id)
-        toast.success("Moniteur supprimé avec succès")
-        router.push("/monitors")
-      } catch (err) {
-        console.error('Erreur lors de la suppression du moniteur:', err)
-        toast.error("Une erreur est survenue lors de la suppression")
-      }
+    try {
+      await monitorsService.delete(monitor.id)
+      toast.success("Moniteur supprimé avec succès")
+      router.push("/monitors")
+    } catch (err) {
+      console.error('Erreur lors de la suppression du moniteur:', err)
+      toast.error("Une erreur est survenue lors de la suppression")
+    } finally {
+      setIsDeleteConfirmOpen(false)
     }
   }
 
@@ -490,10 +499,21 @@ export default function MonitorDetailsPage() {
         </div>
       </div>
 
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+        onConfirm={confirmDelete}
+        title="Supprimer le moniteur"
+        description="Êtes-vous sûr de vouloir supprimer ce moniteur ? Cette action est irréversible."
+        confirmText="Supprimer"
+        variant="destructive"
+      />
+
       <EditMonitorDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         monitor={monitor}
+        onSave={(updatedMonitor) => setMonitor(updatedMonitor)}
       />
     </div>
   )
