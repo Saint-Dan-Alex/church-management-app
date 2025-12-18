@@ -4,27 +4,21 @@ import { StatsCard } from "@/components/dashboard/stats-card"
 import { AttendanceChart } from "@/components/dashboard/attendance-chart"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { UpcomingEvents } from "@/components/dashboard/upcoming-events"
-import api from "@/lib/utils/api"
+import { apiServer } from "@/lib/utils/api-server"
 
 export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
   let dashboardStats: any = null
-  let monitorsStats: any = null
 
   try {
-    dashboardStats = await api.get("/dashboard-statistics", { cache: "no-store" })
+    dashboardStats = await apiServer.get("/dashboard-statistics", { cache: "no-store" })
   } catch (error) {
+    console.error("Dashboard stats error:", error)
     dashboardStats = null
   }
 
-  try {
-    monitorsStats = await api.get("/monitors-statistics", { cache: "no-store" })
-  } catch (error) {
-    monitorsStats = null
-  }
-
-  const monitorsActifs = monitorsStats?.actifs ?? 0
+  const monitorsActifs = dashboardStats?.monitors?.actifs ?? 0
   const enfantsInscrits = dashboardStats?.children?.total ?? 0
 
   // Calcul du % de présence moyenne (Effectif moyen / Total inscrits)
@@ -40,6 +34,10 @@ export default async function DashboardPage() {
 
   const recentActivities = dashboardStats?.recent_activities ?? []
   const upcomingEvents = dashboardStats?.upcoming_events ?? []
+
+  // Real data from API
+  const attendanceData = dashboardStats?.attendance_chart ?? []
+  const growthRate = dashboardStats?.growth_rate ?? 0
 
   return (
     <div className="space-y-6">
@@ -66,7 +64,7 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AttendanceChart />
+            <AttendanceChart data={attendanceData} />
           </CardContent>
         </Card>
         <Card className="dashboard-card col-span-3 border border-gray-200">
@@ -108,7 +106,9 @@ export default async function DashboardPage() {
                 <TrendingUp className="h-4 w-4 text-green-600" />
                 <span className="text-sm text-gray-600">Taux de croissance</span>
               </div>
-              <span className="text-2xl font-bold text-green-600">+8%</span>
+              <span className={`text-2xl font-bold ${growthRate > 0 ? 'text-green-600' : (growthRate < 0 ? 'text-red-600' : 'text-gray-600')}`}>
+                {growthRate > 0 ? '+' : ''}{growthRate}%
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

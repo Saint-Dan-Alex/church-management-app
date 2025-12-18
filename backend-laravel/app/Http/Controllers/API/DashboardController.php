@@ -100,14 +100,56 @@ class DashboardController extends Controller
             ->take(5)
             ->values();
 
+        // Graphique de présence (6 derniers mois)
+        $attendanceData = [];
+        $totalChildren = Child::count();
+        
+        for ($i = 5; $i >= 0; $i--) {
+            $date = now()->subMonths($i); // Utilise now() qui est mockable ou fixe, attention si timezone diff
+            $monthStart = $date->copy()->startOfMonth()->toDateString();
+            $monthEnd = $date->copy()->endOfMonth()->toDateString();
+            
+            // Somme des présents pour tous les cultes du mois
+            $totalPresent = WorshipReport::whereBetween('date', [$monthStart, $monthEnd])->sum('effectif_total');
+            
+            // Nombre de cultes ce mois-ci
+            $numberOfCultes = WorshipReport::whereBetween('date', [$monthStart, $monthEnd])->count();
+            
+            // Estimation des absents : (Total Enfants * Nb Cultes) - Total Présents
+            // Si pas de culte, pas d'absents comptabilisés
+            $theoreticalMaxPresence = $totalChildren * $numberOfCultes;
+            $absent = max(0, $theoreticalMaxPresence - $totalPresent);
+
+            $attendanceData[] = [
+                'month' => $date->translatedFormat('M'), // Jan, Fév via Laravel locale
+                'present' => (int) $totalPresent,
+                'absent' => (int) $absent
+            ];
+        }
+
+        // Taux de croissance (Basé sur les activités ce mois vs mois dernier)
+        $activitiesLastMonth = Activity::whereBetween('date', [
+            now()->subMonth()->startOfMonth()->toDateString(),
+            now()->subMonth()->endOfMonth()->toDateString(),
+        ])->count();
+
+        $growthRate = 0;
+        if ($activitiesLastMonth > 0) {
+            $growthRate = (($activitiesThisMonth - $activitiesLastMonth) / $activitiesLastMonth) * 100;
+        } elseif ($activitiesThisMonth > 0) {
+            $growthRate = 100;
+        }
+
         return response()->json([
             'monitors' => $monitorsStats,
             'children' => $childrenStats,
             'worship' => $worshipStats,
             'activities_this_month' => $activitiesThisMonth,
+            'growth_rate' => round($growthRate, 1),
             'salles_actives' => $sallesActives,
             'upcoming_events' => $upcomingEvents,
             'recent_activities' => $recentActivities,
+            'attendance_chart' => $attendanceData,
         ]);
     }
 }
