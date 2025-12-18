@@ -115,7 +115,7 @@ export function ActivityReport({
   }
 
   return (
-    <div className="space-y-6" id="activity-report">
+    <div className="space-y-4 sm:space-y-6" id="activity-report">
       {/* Logo et informations de l'église */}
       {/* En-tête du rapport standardisé */}
       <ReportHeader
@@ -124,30 +124,34 @@ export function ActivityReport({
       />
 
       {/* En-tête du rapport */}
-      <Card className="border-t-4 border-t-blue-600">
-        <CardHeader>
-          <div className="flex items-start justify-between">
+      <Card className="border-t-4 border-t-blue-600 shadow-sm">
+        <CardHeader className="pb-3 sm:pb-4">
+          {/* Header responsive : empile sur mobile */}
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Titre et badges */}
             <div className="space-y-2">
-              <CardTitle className="text-2xl">{activite.titre}</CardTitle>
+              <CardTitle className="text-lg sm:text-xl md:text-2xl leading-tight break-words">
+                {activite.titre}
+              </CardTitle>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className="text-sm">
+                <Badge variant="outline" className="text-xs sm:text-sm">
                   {activite.type}
                 </Badge>
                 <Badge
                   variant="outline"
-                  className={
-                    activite.statut === "termine"
+                  className={`text-xs sm:text-sm ${activite.statut === "termine"
                       ? "bg-green-100 text-green-700"
                       : "bg-blue-100 text-blue-700"
-                  }
+                    }`}
                 >
                   {activite.statut}
                 </Badge>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Printer className="mr-2 h-4 w-4" />
+            {/* Boutons d'action */}
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" size="sm" onClick={handlePrint} className="flex-1 sm:flex-none text-xs sm:text-sm">
+                <Printer className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Imprimer
               </Button>
               <Button
@@ -155,80 +159,82 @@ export function ActivityReport({
                 size="sm"
                 onClick={handleExport}
                 disabled={isExporting}
+                className="flex-1 sm:flex-none text-xs sm:text-sm"
               >
-                <Download className="mr-2 h-4 w-4" />
-                {isExporting ? "Export en cours..." : "Exporter PDF"}
+                <Download className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">{isExporting ? "Export..." : "Exporter"}</span>
+                <span className="xs:hidden">{isExporting ? "..." : "PDF"}</span>
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-gray-500" />
-              <div>
-                <p className="text-sm text-gray-600">Date</p>
-                <p className="font-medium">{formatDate(activite.date)}</p>
+        <CardContent className="pt-0">
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600">Date</p>
+                <p className="text-xs sm:text-sm font-medium break-words">{formatDate(activite.date)}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-gray-500" />
-              <div>
-                <p className="text-sm text-gray-600">Horaire</p>
-                <p className="font-medium">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600">Horaire</p>
+                <p className="text-xs sm:text-sm font-medium">
                   {activite.heureDebut} - {activite.heureFin}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-gray-500" />
-              <div>
-                <p className="text-sm text-gray-600">Lieu</p>
-                <p className="font-medium">{activite.lieu}</p>
+            <div className="flex items-start gap-2 sm:gap-3">
+              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600">Lieu</p>
+                <p className="text-xs sm:text-sm font-medium break-words">{activite.lieu}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-gray-500" />
-              <div>
-                <p className="text-sm text-gray-600">Responsable</p>
-                <p className="font-medium">{activite.responsable}</p>
+            <div className="flex items-start gap-2 sm:gap-3">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600">Responsable</p>
+                <p className="text-xs sm:text-sm font-medium break-words">{activite.responsable}</p>
               </div>
             </div>
           </div>
           {activite.description && (
-            <div className="mt-4 pt-4 border-t">
-              <p className="text-sm text-gray-700">{activite.description}</p>
+            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t">
+              <p className="text-xs sm:text-sm text-gray-700">{activite.description}</p>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Statistiques globales */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         {/* Présence */}
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="shadow-sm">
+          <CardContent className="pt-4 sm:pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Présents</p>
-                <p className="text-3xl font-bold text-green-600">{presentsCount}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Présents</p>
+                <p className="text-xl sm:text-3xl font-bold text-green-600">{presentsCount}</p>
                 <p className="text-xs text-gray-500">sur {presences.length} inscrits</p>
               </div>
-              <CheckCircle2 className="h-10 w-10 text-green-600" />
+              <CheckCircle2 className="h-6 w-6 sm:h-10 sm:w-10 text-green-600" />
             </div>
           </CardContent>
         </Card>
 
         {/* Taux de présence */}
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="shadow-sm">
+          <CardContent className="pt-4 sm:pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Taux de présence</p>
-                <p className="text-3xl font-bold text-blue-600">{tauxPresence.toFixed(0)}%</p>
+                <p className="text-xs sm:text-sm text-gray-600">Taux de présence</p>
+                <p className="text-xl sm:text-3xl font-bold text-blue-600">{tauxPresence.toFixed(0)}%</p>
                 <p className="text-xs text-gray-500">Participation</p>
               </div>
-              <TrendingUp className="h-10 w-10 text-blue-600" />
+              <TrendingUp className="h-6 w-6 sm:h-10 sm:w-10 text-blue-600" />
             </div>
           </CardContent>
         </Card>
@@ -236,36 +242,36 @@ export function ActivityReport({
         {/* Paiements collectés */}
         {paymentStats && (
           <>
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="shadow-sm">
+              <CardContent className="pt-4 sm:pt-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Total collecté</p>
-                    <p className="text-3xl font-bold text-green-600">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm text-gray-600">Total collecté</p>
+                    <p className="text-lg sm:text-3xl font-bold text-green-600 truncate">
                       {paymentConfig && formatCurrency(paymentStats.totalPaye, paymentConfig.devise)}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {paymentStats.nombrePaiesComplet} paiements complets
+                      {paymentStats.nombrePaiesComplet} complets
                     </p>
                   </div>
-                  <DollarSign className="h-10 w-10 text-green-600" />
+                  <DollarSign className="h-6 w-6 sm:h-10 sm:w-10 text-green-600 shrink-0" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="shadow-sm">
+              <CardContent className="pt-4 sm:pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Taux de paiement</p>
-                    <p className="text-3xl font-bold text-orange-600">
+                    <p className="text-xs sm:text-sm text-gray-600">Taux de paiement</p>
+                    <p className="text-xl sm:text-3xl font-bold text-orange-600">
                       {paymentStats.tauxPaiement}%
                     </p>
                     <p className="text-xs text-gray-500">
                       {paymentStats.nombreEnAttente} en attente
                     </p>
                   </div>
-                  <AlertCircle className="h-10 w-10 text-orange-600" />
+                  <AlertCircle className="h-6 w-6 sm:h-10 sm:w-10 text-orange-600" />
                 </div>
               </CardContent>
             </Card>
@@ -273,29 +279,29 @@ export function ActivityReport({
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         {/* Rapport de présence */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5" />
               Rapport de Présence
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <p className="text-2xl font-bold text-green-700">{presentsCount}</p>
-                  <p className="text-sm text-green-600">Présents</p>
+            <div className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                <div className="text-center p-2 sm:p-3 bg-green-50 rounded-lg">
+                  <p className="text-lg sm:text-2xl font-bold text-green-700">{presentsCount}</p>
+                  <p className="text-xs sm:text-sm text-green-600">Présents</p>
                 </div>
-                <div className="text-center p-3 bg-orange-50 rounded-lg">
-                  <p className="text-2xl font-bold text-orange-700">{retardsCount}</p>
-                  <p className="text-sm text-orange-600">Retards</p>
+                <div className="text-center p-2 sm:p-3 bg-orange-50 rounded-lg">
+                  <p className="text-lg sm:text-2xl font-bold text-orange-700">{retardsCount}</p>
+                  <p className="text-xs sm:text-sm text-orange-600">Retards</p>
                 </div>
-                <div className="text-center p-3 bg-red-50 rounded-lg">
-                  <p className="text-2xl font-bold text-red-700">{absentsCount}</p>
-                  <p className="text-sm text-red-600">Absents</p>
+                <div className="text-center p-2 sm:p-3 bg-red-50 rounded-lg">
+                  <p className="text-lg sm:text-2xl font-bold text-red-700">{absentsCount}</p>
+                  <p className="text-xs sm:text-sm text-red-600">Absents</p>
                 </div>
               </div>
 

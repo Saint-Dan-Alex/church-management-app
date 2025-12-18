@@ -315,48 +315,48 @@ export function UnifiedParticipantsView({
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Statistiques */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="pt-6">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+        <Card className="shadow-sm">
+          <CardContent className="pt-4 sm:pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Participants</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Total Participants</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.total}</p>
                 <p className="text-xs text-gray-500 mt-1">
                   {stats.presents} présents • {stats.absents} absents
                 </p>
               </div>
-              <Users className="h-10 w-10 text-gray-600" />
+              <Users className="h-8 w-8 sm:h-10 sm:w-10 text-gray-600" />
             </div>
           </CardContent>
         </Card>
 
         {activiteType === "payante" && (
           <>
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="shadow-sm">
+              <CardContent className="pt-4 sm:pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-green-700">Paiements complets</p>
-                    <p className="text-3xl font-bold text-green-900">{stats.payesComplet}</p>
+                    <p className="text-xs sm:text-sm text-green-700">Paiements complets</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-green-900">{stats.payesComplet}</p>
                     <p className="text-xs text-green-600 mt-1">Montant total</p>
                   </div>
-                  <CheckCircle2 className="h-10 w-10 text-green-600" />
+                  <CheckCircle2 className="h-8 w-8 sm:h-10 sm:w-10 text-green-600" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
+            <Card className="shadow-sm">
+              <CardContent className="pt-4 sm:pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-orange-700">Paiements partiels</p>
-                    <p className="text-3xl font-bold text-orange-900">{stats.payesPartiel}</p>
+                    <p className="text-xs sm:text-sm text-orange-700">Paiements partiels</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-orange-900">{stats.payesPartiel}</p>
                     <p className="text-xs text-orange-600 mt-1">+ {stats.nonPayes} non payés</p>
                   </div>
-                  <AlertCircle className="h-10 w-10 text-orange-600" />
+                  <AlertCircle className="h-8 w-8 sm:h-10 sm:w-10 text-orange-600" />
                 </div>
               </CardContent>
             </Card>
@@ -365,44 +365,45 @@ export function UnifiedParticipantsView({
       </div>
 
       {/* Liste des participants */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Liste des Participants ({filteredParticipants.length})
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3 sm:pb-4">
+          {/* Header responsive : empile sur mobile */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="leading-tight">Liste des Participants ({filteredParticipants.length})</span>
             </CardTitle>
             <div className="flex gap-2">
               <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
+                  <Button size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                    <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                     Ajouter
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="w-[95vw] max-w-[425px] rounded-lg">
                   <DialogHeader>
-                    <DialogTitle>Ajouter un participant</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-base sm:text-lg">Ajouter un participant</DialogTitle>
+                    <DialogDescription className="text-xs sm:text-sm">
                       Sélectionnez un enfant, un moniteur ou saisissez un nom pour un visiteur.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label>Personne</Label>
+                      <Label className="text-sm">Personne</Label>
                       <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
                             role="combobox"
                             aria-expanded={comboboxOpen}
-                            className="w-full justify-between"
+                            className="w-full justify-between text-sm"
                           >
-                            {selectedPersonName || "Rechercher ou saisir un nom..."}
+                            <span className="truncate">{selectedPersonName || "Rechercher ou saisir un nom..."}</span>
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[300px] p-0">
+                        <PopoverContent className="w-[280px] sm:w-[300px] p-0">
                           <Command>
                             <CommandInput placeholder="Rechercher..." onValueChange={(val) => {
                               if (!people.find(p => p.nom.toLowerCase() === val.toLowerCase()) && val) {
@@ -449,54 +450,54 @@ export function UnifiedParticipantsView({
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={handleAddParticipant} disabled={isAdding || !selectedPersonName}>
+                    <Button onClick={handleAddParticipant} disabled={isAdding || !selectedPersonName} className="w-full sm:w-auto">
                       {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       Ajouter
                     </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              <Button size="sm" variant="outline">
-                <Download className="mr-2 h-4 w-4" />
+              <Button size="sm" variant="outline" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                <Download className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Exporter
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {/* Barre de recherche */}
-          <div className="relative mb-4">
+          <div className="relative mb-3 sm:mb-4">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
               placeholder="Rechercher un participant..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-sm"
             />
           </div>
 
           {/* Liste */}
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {filteredParticipants.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Aucun participant trouvé</p>
+              <div className="text-center py-8 sm:py-12 text-gray-500">
+                <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 opacity-50" />
+                <p className="text-sm sm:text-base">Aucun participant trouvé</p>
               </div>
             ) : (
               filteredParticipants.map((participant) => (
                 <div
                   key={participant.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-2 sm:gap-0"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-semibold">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+                      <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 text-blue-700 font-semibold text-xs sm:text-sm shrink-0">
                         {participant.prenom?.charAt(0)}
                         {participant.nom?.charAt(0)}
                       </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{participant.nomComplet}</p>
-                        <p className="text-sm text-gray-600">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{participant.nomComplet}</p>
+                        <p className="text-xs sm:text-sm text-gray-600">
                           {participant.type === "enfant" ? "Enfant" : "Moniteur"}
                           {participant.heureArrivee && ` • Arrivé à ${participant.heureArrivee}`}
                           {participant.ajouteVia && (
@@ -508,17 +509,17 @@ export function UnifiedParticipantsView({
                       </div>
                     </div>
                     {activiteType === "payante" && participant.montantPaye !== undefined && (
-                      <div className="ml-13 text-sm text-gray-600">
+                      <div className="ml-10 sm:ml-13 text-xs sm:text-sm text-gray-600">
                         Payé : {formatCurrency(participant.montantPaye)} / {formatCurrency(participant.montantRequis || 0)}
                         {participant.statutPaiement === "partial" && (
-                          <span className="text-orange-600 ml-2">
+                          <span className="text-orange-600 ml-1 sm:ml-2 block sm:inline">
                             (Reste : {formatCurrency((participant.montantRequis || 0) - participant.montantPaye)})
                           </span>
                         )}
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-end sm:justify-center gap-2 sm:gap-3 mt-1 sm:mt-0">
                     {getStatutBadge(participant)}
                   </div>
                 </div>
