@@ -16,16 +16,17 @@ import { toast } from "sonner"
 interface MonitorListProps {
   searchQuery: string
   onGenerateQR: (monitorId: string) => void
+  refreshTrigger?: number
 }
 
-export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
+export function MonitorList({ searchQuery, onGenerateQR, refreshTrigger = 0 }: MonitorListProps) {
   const router = useRouter()
   const [monitors, setMonitors] = useState<Monitor[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingMonitor, setEditingMonitor] = useState<Monitor | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  
+
   // État pour la pagination
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -42,15 +43,15 @@ export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
         page,
         per_page: pagination.perPage
       })
-      
+
       console.log('Réponse du service:', response)
-      
+
       // La réponse de Laravel contient directement les données et les métadonnées de pagination
       // Vérifions la structure de la réponse
       if (response.data && Array.isArray(response.data)) {
         // Si la réponse contient un tableau data et des métadonnées
         setMonitors(response.data)
-        
+
         setPagination(prev => ({
           ...prev,
           currentPage: response.current_page || page,
@@ -76,10 +77,10 @@ export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
     }
   }
 
-  // Chargement initial
+  // Chargement initial et au refresh
   useEffect(() => {
     fetchMonitors(1)
-  }, [])
+  }, [refreshTrigger])
 
   const handleEdit = (monitor: Monitor) => {
     setEditingMonitor(monitor)
@@ -145,120 +146,120 @@ export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
           Affichage de {monitors.length} sur {pagination.total} moniteurs (Page {pagination.currentPage}/{pagination.totalPages})
         </p>
       </div>
-      
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredMonitors.map((monitor) => (
-          <Card 
-            key={monitor.id} 
+          <Card
+            key={monitor.id}
             className="p-4 cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => router.push(`/monitors/${monitor.id}`)}
           >
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3">
-              <Avatar className="h-12 w-12 border">
-                <AvatarImage src={monitor.photo || undefined} alt={`${monitor.prenom} ${monitor.nom}`} />
-                <AvatarFallback>
-                  {monitor.prenom?.[0]}{monitor.nom?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-medium">{monitor.prenom} {monitor.nom}</h3>
-                  <Badge
-                    variant={monitor.etat_civil === 'Marié(e)' ? 'default' : 'secondary'}
-                    className="text-xs"
-                  >
-                    {monitor.etat_civil || 'Non spécifié'}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">{monitor.role_actuel} • {monitor.salle_actuelle_nom}</p>
-                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="flex items-center">
-                    <Mail className="mr-1 h-3 w-3" />
-                    {monitor.email || 'Non spécifié'}
-                  </span>
-                </div>
-                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="flex items-center">
-                    <Phone className="mr-1 h-3 w-3" />
-                    {monitor.telephone || 'Non spécifié'}
-                  </span>
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <Avatar className="h-12 w-12 border">
+                  <AvatarImage src={monitor.photo || undefined} alt={`${monitor.prenom} ${monitor.nom}`} />
+                  <AvatarFallback>
+                    {monitor.prenom?.[0]}{monitor.nom?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium">{monitor.prenom} {monitor.nom}</h3>
+                    <Badge
+                      variant={monitor.etat_civil === 'Marié(e)' ? 'default' : 'secondary'}
+                      className="text-xs"
+                    >
+                      {monitor.etat_civil || 'Non spécifié'}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{monitor.role_actuel} • {monitor.salle_actuelle_nom}</p>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="flex items-center">
+                      <Mail className="mr-1 h-3 w-3" />
+                      {monitor.email || 'Non spécifié'}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="flex items-center">
+                      <Phone className="mr-1 h-3 w-3" />
+                      {monitor.telephone || 'Non spécifié'}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={(e) => {
-                  e.stopPropagation()
-                  router.push(`/monitors/${monitor.id}`)
-                }}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  Voir détails
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => {
-                  e.stopPropagation()
-                  handleEdit(monitor)
-                }}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Modifier
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => {
-                  e.stopPropagation()
-                  onGenerateQR(monitor.id)
-                }}>
-                  <QrCode className="mr-2 h-4 w-4" />
-                  Générer QR Code
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="text-destructive"
-                  onClick={(e) => {
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={(e) => {
                     e.stopPropagation()
-                    handleDelete(monitor.id, monitor.name)
-                  }}
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Supprimer
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                    router.push(`/monitors/${monitor.id}`)
+                  }}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Voir détails
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation()
+                    handleEdit(monitor)
+                  }}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Modifier
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation()
+                    onGenerateQR(monitor.id)
+                  }}>
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Générer QR Code
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(monitor.id, monitor.name)
+                    }}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Supprimer
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-          <div className="mt-4 space-y-2 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Mail className="h-3 w-3" />
-              <span className="truncate">{monitor.email}</span>
+            <div className="mt-4 space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Mail className="h-3 w-3" />
+                <span className="truncate">{monitor.email}</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Phone className="h-3 w-3" />
+                <span>{monitor.phone}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Phone className="h-3 w-3" />
-              <span>{monitor.phone}</span>
-            </div>
-          </div>
 
-          <div className="mt-4 flex items-center justify-between border-t pt-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Département</p>
-              <p className="text-sm font-medium">{monitor.department}</p>
+            <div className="mt-4 flex items-center justify-between border-t pt-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Département</p>
+                <p className="text-sm font-medium">{monitor.department}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Dernier pointage</p>
+                <p className="text-sm font-medium">{monitor.lastAttendance}</p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground">Dernier pointage</p>
-              <p className="text-sm font-medium">{monitor.lastAttendance}</p>
-            </div>
-          </div>
           </Card>
         ))}
       </div>
 
-      <EditMonitorDialog 
-        open={isEditDialogOpen} 
+      <EditMonitorDialog
+        open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         monitor={editingMonitor}
       />
-      
+
       {/* Pagination */}
       {pagination.totalPages > 1 && (
         <div className="flex justify-center mt-6">
@@ -270,7 +271,7 @@ export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
             >
               Précédent
             </button>
-            
+
             <div className="flex items-center gap-1">
               {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
                 // Afficher les numéros de page autour de la page courante
@@ -279,26 +280,25 @@ export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
                   pageNum = pagination.currentPage - 2 + i;
                   if (pageNum > pagination.totalPages) return null;
                 }
-                
+
                 return (
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    className={`w-8 h-8 rounded ${
-                      pagination.currentPage === pageNum 
-                        ? 'bg-primary text-white' 
-                        : 'hover:bg-gray-100'
-                    }`}
+                    className={`w-8 h-8 rounded ${pagination.currentPage === pageNum
+                      ? 'bg-primary text-white'
+                      : 'hover:bg-gray-100'
+                      }`}
                   >
                     {pageNum}
                   </button>
                 );
               })}
-              
+
               {pagination.totalPages > 5 && pagination.currentPage < pagination.totalPages - 2 && (
                 <span className="px-2">...</span>
               )}
-              
+
               {pagination.totalPages > 5 && pagination.currentPage < pagination.totalPages - 2 && (
                 <button
                   onClick={() => handlePageChange(pagination.totalPages)}
@@ -308,7 +308,7 @@ export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
                 </button>
               )}
             </div>
-            
+
             <button
               onClick={() => handlePageChange(pagination.currentPage + 1)}
               disabled={pagination.currentPage === pagination.totalPages}
@@ -316,7 +316,7 @@ export function MonitorList({ searchQuery, onGenerateQR }: MonitorListProps) {
             >
               Suivant
             </button>
-            
+
             <span className="ml-4 text-sm text-muted-foreground">
               {monitors.length} sur {pagination.total} moniteurs
             </span>

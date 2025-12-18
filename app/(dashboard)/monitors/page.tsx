@@ -14,6 +14,7 @@ export default function MonitorsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [selectedMonitorForQR, setSelectedMonitorForQR] = useState<string | null>(null)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   return (
     <div className="space-y-6">
@@ -53,7 +54,11 @@ export default function MonitorsPage() {
             </div>
           </div>
 
-          <MonitorList searchQuery={searchQuery} onGenerateQR={setSelectedMonitorForQR} />
+          <MonitorList
+            searchQuery={searchQuery}
+            onGenerateQR={setSelectedMonitorForQR}
+            refreshTrigger={refreshTrigger}
+          />
         </TabsContent>
 
         <TabsContent value="attendance">
@@ -61,7 +66,11 @@ export default function MonitorsPage() {
         </TabsContent>
       </Tabs>
 
-      <AddMonitorDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      <AddMonitorDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onMonitorAdded={() => setRefreshTrigger(prev => prev + 1)}
+      />
       <QRCodeDialog monitorId={selectedMonitorForQR} onOpenChange={() => setSelectedMonitorForQR(null)} />
     </div>
   )

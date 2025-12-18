@@ -193,21 +193,22 @@ export default function MonitorDetailsPage() {
   return (
     <div className="space-y-6">
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Button
           variant="outline"
           size="sm"
           onClick={() => router.push('/monitors')}
-          className="mb-4"
+          className="w-full sm:w-auto"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour à la liste
         </Button>
-        <div className="space-x-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsEditDialogOpen(true)}
+            className="flex-1 sm:flex-none"
           >
             <Edit className="mr-2 h-4 w-4" />
             Modifier
@@ -216,6 +217,7 @@ export default function MonitorDetailsPage() {
             variant="destructive"
             size="sm"
             onClick={handleDelete}
+            className="flex-1 sm:flex-none"
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Supprimer
@@ -419,8 +421,8 @@ export default function MonitorDetailsPage() {
                       <div
                         key={entry.id}
                         className={`p-4 rounded-lg border-l-4 ${entry.actif
-                            ? "bg-green-50 border-green-500"
-                            : "bg-gray-50 border-gray-300"
+                          ? "bg-green-50 border-green-500"
+                          : "bg-gray-50 border-gray-300"
                           }`}
                       >
                         <div className="flex items-start justify-between mb-2">
