@@ -236,7 +236,7 @@ export default function RoomReportPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-5 w-5" />
@@ -246,7 +246,7 @@ export default function RoomReportPage() {
             <p className="text-gray-600">Statistiques détaillées par salle</p>
           </div>
         </div>
-        <Button variant="outline" onClick={handleDownloadPDF}>
+        <Button variant="outline" onClick={handleDownloadPDF} className="w-full md:w-auto">
           <Download className="mr-2 h-4 w-4" />
           Télécharger PDF
         </Button>
