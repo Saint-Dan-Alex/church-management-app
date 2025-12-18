@@ -96,12 +96,19 @@ export async function resendTwoFactorCode(email: string) {
 async function createSession(user: User, token: string) {
   const cookieStore = await cookies()
 
+  // Calcul du temps restant jusqu'à minuit
+  const now = new Date()
+  const tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  tomorrow.setHours(0, 0, 0, 0)
+  const secondsUntilMidnight = Math.floor((tomorrow.getTime() - now.getTime()) / 1000)
+
   // Cookie de session sécurisé pour Next.js Middleware & Server Components
   cookieStore.set("auth-user", JSON.stringify({ ...user, token }), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: secondsUntilMidnight, // Expire à minuit
   })
 
   // Cookie accessible par JS pour les appels API client-side (Bearer Token)
@@ -109,7 +116,7 @@ async function createSession(user: User, token: string) {
     httpOnly: false, // Accesssible via JS for api.ts
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: secondsUntilMidnight,
   })
 }
 
