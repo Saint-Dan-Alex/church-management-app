@@ -28,9 +28,10 @@ interface EditBlogDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   blog: Blog | null
+  onSuccess?: () => void  // Callback appelé après mise à jour réussie
 }
 
-export function EditBlogDialog({ open, onOpenChange, blog }: EditBlogDialogProps) {
+export function EditBlogDialog({ open, onOpenChange, blog, onSuccess }: EditBlogDialogProps) {
   const { toast } = useToast()
 
   const [formData, setFormData] = useState({
@@ -161,7 +162,7 @@ export function EditBlogDialog({ open, onOpenChange, blog }: EditBlogDialogProps
       })
 
       onOpenChange(false)
-      window.location.reload()
+      if (onSuccess) onSuccess()  // Rafraîchir la liste au lieu de recharger la page
 
     } catch (error) {
       console.error("Erreur mise à jour:", error)

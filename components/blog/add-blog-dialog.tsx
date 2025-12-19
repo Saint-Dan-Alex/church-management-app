@@ -27,9 +27,10 @@ import { useToast } from "@/hooks/use-toast"
 interface AddBlogDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void  // Callback appelé après création réussie
 }
 
-export function AddBlogDialog({ open, onOpenChange }: AddBlogDialogProps) {
+export function AddBlogDialog({ open, onOpenChange, onSuccess }: AddBlogDialogProps) {
   const { toast } = useToast()
   const [formData, setFormData] = useState({
     title: "",
@@ -151,7 +152,7 @@ export function AddBlogDialog({ open, onOpenChange }: AddBlogDialogProps) {
       })
 
       onOpenChange(false)
-      window.location.reload()
+      if (onSuccess) onSuccess()  // Rafraîchir la liste au lieu de recharger la page
 
     } catch (error) {
       console.error("Erreur création article:", error)

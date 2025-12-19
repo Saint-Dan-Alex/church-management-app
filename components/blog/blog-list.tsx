@@ -15,21 +15,33 @@ import { toast } from "sonner"
 interface BlogListProps {
   searchQuery?: string
   status?: string
+  filter?: string  // Alias pour status, pour compatibilité
+  refreshKey?: number  // Permet de forcer le rechargement depuis le parent
 }
 
-export function BlogList({ searchQuery = "", status }: BlogListProps) {
+export function BlogList({ searchQuery = "", status, filter, refreshKey = 0 }: BlogListProps) {
   const [blogs, setBlogs] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null)
   const [isViewOpen, setIsViewOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [internalRefreshKey, setInternalRefreshKey] = useState(0)  // Pour rafraîchir après modification interne
 
+  // Fonction pour recharger la liste
+  const reloadBlogs = () => {
+    setInternalRefreshKey(prev => prev + 1)
+  }
+
+  // Utiliser filter comme fallback pour status
+  const effectiveStatus = status || (filter && filter !== "all" ? filter : undefined)
+
+  // Recharger quand refreshKey change (après création d'un article)
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
         setLoading(true)
-        const response: any = await blogsService.getAll({ status })
+        const response: any = await blogsService.getAll({ status: effectiveStatus })
         // L'API Laravel renvoie une réponse paginée { data: [...], ... }
         const data = response.data || response
         setBlogs(Array.isArray(data) ? data : [])
@@ -43,7 +55,7 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
     }
 
     fetchBlogs()
-  }, [status])
+  }, [effectiveStatus, refreshKey, internalRefreshKey])  // Inclure internalRefreshKey
 
   const filteredBlogs = Array.isArray(blogs) ? blogs.filter((blog) => {
     const title = blog.title || blog.titre || ""
@@ -199,7 +211,7 @@ export function BlogList({ searchQuery = "", status }: BlogListProps) {
         ))
       )}
       <ViewBlogDialog open={isViewOpen} onOpenChange={setIsViewOpen} blog={selectedBlog} />
-      <EditBlogDialog open={isEditOpen} onOpenChange={setIsEditOpen} blog={selectedBlog} />
+      <EditBlogDialog open={isEditOpen} onOpenChange={setIsEditOpen} blog={selectedBlog} onSuccess={reloadBlogs} />
     </div>
   )
 }
