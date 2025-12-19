@@ -44,6 +44,9 @@ export function UploadPhotoDialog({ open, onOpenChange, onSuccess }: UploadPhoto
   const [albumSearch, setAlbumSearch] = useState("")
   const [loading, setLoading] = useState(false)
 
+  const [uploadMode, setUploadMode] = useState<"file" | "url">("file")
+  const [externalUrl, setExternalUrl] = useState("")
+
   useEffect(() => {
     if (open) {
       loadAlbums()
@@ -81,8 +84,13 @@ export function UploadPhotoDialog({ open, onOpenChange, onSuccess }: UploadPhoto
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (selectedFiles.length === 0) {
+    if (uploadMode === "file" && selectedFiles.length === 0) {
       toast({ title: "Erreur", description: "Veuillez sélectionner au moins une photo", variant: "destructive" })
+      return
+    }
+
+    if (uploadMode === "url" && !externalUrl) {
+      toast({ title: "Erreur", description: "Veuillez entrer une URL valide", variant: "destructive" })
       return
     }
 
@@ -96,48 +104,66 @@ export function UploadPhotoDialog({ open, onOpenChange, onSuccess }: UploadPhoto
     let errors = 0
 
     try {
-      for (const file of selectedFiles) {
+      if (uploadMode === "file") {
+        for (const file of selectedFiles) {
+          try {
+            // 1. Upload file
+            const uploadData = new FormData()
+            uploadData.append("file", file)
+            const res = await blogsService.uploadImage(uploadData)
+            const finalUrl = res.url
+
+            // 2. Nettoyer le nom de fichier pour le titre par défaut
+            const cleanFileName = file.name
+              .replace(/\.[^/.]+$/, '')
+              .replace(/[()]/g, '')
+              .trim()
+
+            // 3. Create Photo entry
+            await photosService.create({
+              titre: formData.titre || cleanFileName || 'Sans titre',
+              description: formData.description || null,
+              album: formData.album,
+              auteur: formData.auteur || 'Admin',
+              date: formData.date || null,
+              url: finalUrl,
+            })
+
+            successCount++
+          } catch (err) {
+            console.error(`Erreur upload ${file.name}:`, err)
+            errors++
+          }
+        }
+      } else {
+        // Mode URL Externe
         try {
-          // 1. Upload file
-          const uploadData = new FormData()
-          uploadData.append("file", file)
-          const res = await blogsService.uploadImage(uploadData)
-          const finalUrl = res.url
-
-          // 2. Nettoyer le nom de fichier pour le titre par défaut
-          // Enlever l'extension et les caractères spéciaux
-          const cleanFileName = file.name
-            .replace(/\.[^/.]+$/, '') // Enlever l'extension
-            .replace(/[()]/g, '')    // Enlever les parenthèses
-            .trim()
-
-          // 3. Create Photo entry
           await photosService.create({
-            titre: formData.titre || cleanFileName || 'Sans titre',
+            titre: formData.titre || 'Image Externe',
             description: formData.description || null,
             album: formData.album,
             auteur: formData.auteur || 'Admin',
             date: formData.date || null,
-            url: finalUrl,
+            url: externalUrl,
           })
-
           successCount++
         } catch (err) {
-          console.error(`Erreur upload ${file.name}:`, err)
+          console.error("Erreur création lien:", err)
           errors++
         }
       }
 
       if (successCount > 0) {
-        toast({ title: "Succès", description: `${successCount} photo(s) uploadée(s) !` })
-        setFormData({ ...formData, titre: "", description: "" }) // Keep album ?
+        toast({ title: "Succès", description: `${successCount} photo(s) ajoutée(s) !` })
+        setFormData({ ...formData, titre: "", description: "" })
         setSelectedFiles([])
+        setExternalUrl("")
         onOpenChange(false)
-        if (onSuccess) onSuccess()  // Rafraîchir la liste au lieu de recharger la page
+        if (onSuccess) onSuccess()
       }
 
       if (errors > 0) {
-        toast({ title: "Attention", description: `${errors} échec(s) lors de l'upload.`, variant: "destructive" })
+        toast({ title: "Attention", description: `${errors} échec(s) lors de l'ajout.`, variant: "destructive" })
       }
 
     } catch (error) {
@@ -152,64 +178,112 @@ export function UploadPhotoDialog({ open, onOpenChange, onSuccess }: UploadPhoto
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Uploader des Photos</DialogTitle>
+          <DialogTitle>Ajouter des Photos</DialogTitle>
           <DialogDescription>
-            Ajoutez des photos à la photothèque
+            Ajoutez des photos à la photothèque via upload ou lien externe
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
-            {/* Upload de fichiers */}
-            <div className="grid gap-2">
-              <Label>Photos *</Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                <p className="text-sm text-gray-600 mb-2">
-                  Cliquez pour sélectionner des photos
-                </p>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="photo-upload"
-                  key="photo-upload-input" // Clé unique pour éviter erreur controlled/uncontrolled
-                />
-                <Label
-                  htmlFor="photo-upload"
-                  className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Parcourir
-                </Label>
-              </div>
 
-              {/* Prévisualisation */}
-              {selectedFiles.length > 0 && (
-                <div className="grid grid-cols-4 gap-2 mt-2">
-                  {selectedFiles.map((file, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={file.name}
-                        className="w-full aspect-square object-cover rounded border"
-                      />
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="destructive"
-                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleRemoveFile(index)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                      <p className="text-xs text-gray-600 truncate mt-1">{file.name}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="flex rounded-md bg-muted p-1">
+              <Button
+                type="button"
+                variant={uploadMode === "file" ? "default" : "ghost"}
+                className="w-1/2 text-sm"
+                onClick={() => setUploadMode("file")}
+              >
+                Uploader Fichiers
+              </Button>
+              <Button
+                type="button"
+                variant={uploadMode === "url" ? "default" : "ghost"}
+                className="w-1/2 text-sm"
+                onClick={() => setUploadMode("url")}
+              >
+                Lien Externe
+              </Button>
             </div>
+
+            {/* Mode Fichier */}
+            {uploadMode === "file" && (
+              <div className="grid gap-2">
+                <Label>Photos *</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                  <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600 mb-2">
+                    Cliquez pour sélectionner des photos
+                  </p>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="photo-upload"
+                    key="photo-upload-input"
+                  />
+                  <Label
+                    htmlFor="photo-upload"
+                    className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Parcourir
+                  </Label>
+                </div>
+
+                {/* Prévisualisation */}
+                {selectedFiles.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={file.name}
+                          className="w-full aspect-square object-cover rounded border"
+                        />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleRemoveFile(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                        <p className="text-xs text-gray-600 truncate mt-1">{file.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Mode Lien Externe */}
+            {uploadMode === "url" && (
+              <div className="grid gap-2">
+                <Label htmlFor="url">URL de l'image *</Label>
+                <Input
+                  id="url"
+                  placeholder="https://exemple.com/image.jpg"
+                  value={externalUrl}
+                  onChange={(e) => setExternalUrl(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Utilisez le lien direct de l'image (Clic droit {'>'} "Copier l'adresse de l'image")
+                </p>
+                {externalUrl && (
+                  <div className="mt-2 relative w-full h-40 bg-muted rounded-md overflow-hidden border">
+                    <img
+                      src={externalUrl}
+                      alt="Aperçu"
+                      className="w-full h-full object-contain"
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Image+Invalide' }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Album Dynamique */}
             <div className="grid gap-2">
@@ -276,12 +350,12 @@ export function UploadPhotoDialog({ open, onOpenChange, onSuccess }: UploadPhoto
 
             {/* Titre */}
             <div className="grid gap-2">
-              <Label htmlFor="titre">Titre (Défaut)</Label>
+              <Label htmlFor="titre">Titre {uploadMode === "file" ? "(Défaut)" : "* (Recommandé)"}</Label>
               <Input
                 id="titre"
                 value={formData.titre || ""}
                 onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
-                placeholder="Optionnel - nom de fichier par défaut"
+                placeholder={uploadMode === "file" ? "Optionnel - nom de fichier par défaut" : "Titre de la photo"}
               />
             </div>
 
@@ -324,8 +398,8 @@ export function UploadPhotoDialog({ open, onOpenChange, onSuccess }: UploadPhoto
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               Annuler
             </Button>
-            <Button type="submit" disabled={selectedFiles.length === 0 || loading || !formData.album}>
-              {loading ? "Upload en cours..." : `Uploader ${selectedFiles.length > 0 ? `(${selectedFiles.length})` : ""}`}
+            <Button type="submit" disabled={loading || !formData.album || (uploadMode === "file" ? selectedFiles.length === 0 : !externalUrl)}>
+              {loading ? "Traitement..." : "Ajouter"}
             </Button>
           </DialogFooter>
         </form>
