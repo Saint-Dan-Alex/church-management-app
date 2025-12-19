@@ -157,6 +157,31 @@ class ActivityController extends Controller
             ]
         );
 
+        // Enregistrement automatique des moniteurs si l'activité leur est dédiée
+        if ($activity->audience === 'moniteurs') {
+            $monitors = \App\Models\Monitor::all();
+            foreach ($monitors as $monitor) {
+                // Vérifier si le moniteur n'est pas déjà inscrit (par sécurité)
+                // Note: Ici c'est une nouvelle activité donc c'est clean, mais bonne pratique.
+                
+                $activity->participants()->create([
+                    'participant_id' => $monitor->id,
+                    'participant_type' => 'moniteur',
+                    'participant_nom' => $monitor->nom ?? 'Inconnu',
+                    'participant_prenom' => $monitor->prenom ?? '',
+                    'participant_nom_complet' => $monitor->nom_complet, // Assurez-vous que l'accessor existe ou construisez-le
+                    'ajoute_via' => 'automatique',
+                    'date_ajout' => now(),
+                    'est_present' => false,
+                    'statut_presence' => 'absent',
+                    'a_paye' => false,
+                    'statut_paiement' => 'pending',
+                ]);
+            }
+            // Mettre à jour le compteur de participants
+            $activity->update(['participants' => $monitors->count()]);
+        }
+
         return response()->json([
             'message' => 'Activité créée avec succès',
             'data' => $activity
@@ -411,5 +436,42 @@ class ActivityController extends Controller
         }
 
         return response()->json($participant, 201);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/activities/{id}/participants/{participantId}",
+     *     tags={"Activities"},
+     *     summary="Mettre à jour un participant",
+     *     description="Met à jour le statut (présence, paiement) d'un participant",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID de l'activité",
+     *         required=true,
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\Parameter(
+     *         name="participantId",
+     *         in="path",
+     *         description="ID du participant (Table de liaison)",
+     *         required=true,
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(required=true),
+     *     @OA\Response(response=200, description="Mise à jour réussie"),
+     *     @OA\Response(response=404, description="Non trouvé")
+     * )
+     */
+    public function updateParticipant(\Illuminate\Http\Request $request, Activity $activity, $participantId)
+    {
+        // On cherche le record dans la table pivot/liaison
+        $participant = \App\Models\ActivityParticipant::where('activity_id', $activity->id)
+            ->where('id', $participantId)
+            ->firstOrFail();
+
+        $participant->update($request->all());
+
+        return response()->json($participant);
     }
 }

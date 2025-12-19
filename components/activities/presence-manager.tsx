@@ -9,9 +9,19 @@ import { useToast } from "@/hooks/use-toast"
 
 interface PresenceManagerProps {
   activiteId: string
+  activiteNom: string
+  dateActivite: Date
+  heureFinActivite: string
+  onManualPresenceClick?: () => void
 }
 
-export function PresenceManager({ activiteId }: PresenceManagerProps) {
+export function PresenceManager({
+  activiteId,
+  activiteNom,
+  dateActivite,
+  heureFinActivite,
+  onManualPresenceClick
+}: PresenceManagerProps) {
   const { toast } = useToast()
   const [presences, setPresences] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -62,8 +72,13 @@ export function PresenceManager({ activiteId }: PresenceManagerProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Gestion des Présences</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-xl font-bold">Gestion des Présences</CardTitle>
+        {onManualPresenceClick && (
+          <Button onClick={onManualPresenceClick}>
+            Faire l'appel
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -99,8 +114,8 @@ export function PresenceManager({ activiteId }: PresenceManagerProps) {
                     <p className="text-sm text-gray-600">{presence.date_presence}</p>
                   </div>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${presence.statut === 'present' ? 'bg-green-100 text-green-800' :
-                      presence.statut === 'absent' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
+                    presence.statut === 'absent' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
                     }`}>
                     {presence.statut}
                   </span>

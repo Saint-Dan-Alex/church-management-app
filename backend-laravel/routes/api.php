@@ -67,6 +67,7 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('activities', ActivityController::class);
     Route::get('activities/{activity}/statistics', [ActivityController::class, 'statistics']);
     Route::post('activities/{activity}/participants', [ActivityController::class, 'addParticipant']);
+    Route::put('activities/{activity}/participants/{participant}', [ActivityController::class, 'updateParticipant']);
 
     // Teachings Routes
     Route::apiResource('teachings', TeachingController::class);

@@ -33,6 +33,8 @@ import { toast } from "sonner"
 
 import { AddPaymentDialog } from "@/components/activities/add-payment-dialog"
 import { AddExpenseDialog } from "@/components/activities/add-expense-dialog"
+import { ManualPresenceForm } from "@/components/activities/manual-presence-form"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Plus } from "lucide-react"
 
 export default function ActivityDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -43,6 +45,7 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
+  const [isPresenceDialogOpen, setIsPresenceDialogOpen] = useState(false)
   const [reportData, setReportData] = useState<{ payments: any[], expenses: any[] }>({ payments: [], expenses: [] })
   const [financeStats, setFinanceStats] = useState({ totalRecettes: 0, totalDepenses: 0 })
 
@@ -367,6 +370,7 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
                 activiteNom={activity.title}
                 dateActivite={new Date(activity.date)}
                 heureFinActivite={activity.time}
+                onManualPresenceClick={() => setIsPresenceDialogOpen(true)}
               />
             </TabsContent>
 
@@ -483,6 +487,22 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
           loadActivity()
         }}
       />
+
+      <Dialog open={isPresenceDialogOpen} onOpenChange={setIsPresenceDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] h-[80vh] flex flex-col p-0 gap-0">
+          <DialogTitle className="px-6 py-4 border-b">Faire l'appel - {activity.title}</DialogTitle>
+          <ManualPresenceForm
+            activiteId={activity.id}
+            activiteNom={activity.title}
+            participants={Array.isArray(activity.participants) ? activity.participants : []}
+            onClose={() => setIsPresenceDialogOpen(false)}
+            onSuccess={() => {
+              loadActivity()
+              // Optionnel: refresh presences if separated
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

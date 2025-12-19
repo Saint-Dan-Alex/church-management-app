@@ -96,6 +96,10 @@ export const activitiesService = {
     return await api.post(`/activities/${id}/participants`, data)
   },
 
+  async updateParticipant(activityId: string, participantId: string, data: any) {
+    return await api.put(`/activities/${activityId}/participants/${participantId}`, data)
+  },
+
   async addPayment(data: any) {
     return await api.post('/payments', data)
   },
