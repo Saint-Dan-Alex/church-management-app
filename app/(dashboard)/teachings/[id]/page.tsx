@@ -272,7 +272,7 @@ export default function TeachingDetailsPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
+    <div className="space-y-4 sm:space-y-6 min-w-0 w-full">
       {/* Header responsive */}
       <div className="flex flex-col gap-4">
         {/* Ligne du haut : Bouton retour + Actions */}
@@ -303,9 +303,9 @@ export default function TeachingDetailsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3 min-w-0">
         {/* Colonne gauche - Infos principales */}
-        <div className="lg:col-span-1 space-y-4 sm:space-y-6">
+        <div className="lg:col-span-1 space-y-4 sm:space-y-6 min-w-0">
           <Card className="shadow-sm">
             <CardContent className="pt-4 sm:pt-6">
               <div className="space-y-3 sm:space-y-4">
@@ -382,7 +382,7 @@ export default function TeachingDetailsPage() {
         </div>
 
         {/* Colonne droite - Contenu détaillé */}
-        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6 min-w-0">
           {/* Matériel et Révision */}
           {(teaching.materiel_didactique || teaching.sujet_revision) && (
             <Card className="shadow-sm">

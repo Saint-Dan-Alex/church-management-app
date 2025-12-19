@@ -171,7 +171,7 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
         {/* Ligne du haut : Bouton retour + Actions */}
