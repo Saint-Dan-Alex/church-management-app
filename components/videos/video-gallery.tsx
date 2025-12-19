@@ -11,6 +11,7 @@ import {
   Calendar,
   Play,
   Video as VideoIcon,
+  Edit,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -19,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { VideoDetailsDialog } from "./video-details-dialog"
+import { EditVideoDialog } from "./edit-video-dialog"
 import { videosService } from "@/lib/services/videos.service"
 import type { Video } from "@/lib/types/api"
 import { toast } from "sonner"
@@ -35,6 +37,13 @@ export function VideoGallery({ searchQuery = "", categorie, refreshKey = 0 }: Vi
   const [error, setError] = useState<string | null>(null)
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [internalRefreshKey, setInternalRefreshKey] = useState(0)
+
+  // Fonction pour recharger la liste après modification
+  const reloadVideos = () => {
+    setInternalRefreshKey(prev => prev + 1)
+  }
 
   // Recharger quand refreshKey change (après upload d'une vidéo)
   useEffect(() => {
@@ -58,7 +67,7 @@ export function VideoGallery({ searchQuery = "", categorie, refreshKey = 0 }: Vi
     }
 
     fetchVideos()
-  }, [categorie, refreshKey])
+  }, [categorie, refreshKey, internalRefreshKey])
 
   const filteredVideos = Array.isArray(videos) ? videos.filter((video) => {
     const title = video.titre || video.title || "";
@@ -87,6 +96,11 @@ export function VideoGallery({ searchQuery = "", categorie, refreshKey = 0 }: Vi
   const handleView = (video: Video) => {
     setSelectedVideo(video)
     setIsDetailsDialogOpen(true)
+  }
+
+  const handleEdit = (video: Video) => {
+    setSelectedVideo(video)
+    setIsEditDialogOpen(true)
   }
 
   const handleDelete = async (video: Video) => {
@@ -179,6 +193,10 @@ export function VideoGallery({ searchQuery = "", categorie, refreshKey = 0 }: Vi
                     <Eye className="mr-2 h-4 w-4" />
                     Détails
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleEdit(video)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Modifier
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-destructive"
                     onClick={() => handleDelete(video)}
@@ -227,6 +245,12 @@ export function VideoGallery({ searchQuery = "", categorie, refreshKey = 0 }: Vi
         open={isDetailsDialogOpen}
         onOpenChange={setIsDetailsDialogOpen}
         video={selectedVideo}
+      />
+      <EditVideoDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        video={selectedVideo}
+        onSuccess={reloadVideos}
       />
     </div>
   )
