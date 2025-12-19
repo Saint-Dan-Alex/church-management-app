@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -183,6 +184,12 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex gap-2">
+            <Link href={`/kiosk/activities/${activity.id}/scan`} target="_blank">
+              <Button variant="outline" size="sm" className="hidden sm:flex text-xs sm:text-sm">
+                <QrCode className="h-4 w-4 mr-2" />
+                Scanner
+              </Button>
+            </Link>
             <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)} className="text-xs sm:text-sm">
               <Edit className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Modifier</span>

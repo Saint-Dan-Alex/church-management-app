@@ -474,4 +474,75 @@ class ActivityController extends Controller
 
         return response()->json($participant);
     }
+
+    /**
+     * @OA\Post(
+     *     path="/activities/{id}/scan",
+     *     tags={"Activities"},
+     *     summary="Scanner un QR Code",
+     *     description="Enregistre la présence via scan QR Code",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID de l'activité",
+     *         required=true,
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="qr_code", type="string", description="Le code scanné (ID du participant)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Scan réussi",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="participant", ref="#/components/schemas/ActivityParticipant")
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Participant non trouvé ou non inscrit")
+     * )
+     */
+    public function scan(Request $request, Activity $activity)
+    {
+        $request->validate([
+            'qr_code' => 'required|string',
+        ]);
+
+        $qrCode = $request->qr_code;
+
+        // Rechercher le participant dans cette activité
+        // On suppose que le QR Code contient l'ID du moniteur ou participant
+        $participant = \App\Models\ActivityParticipant::where('activity_id', $activity->id)
+            ->where('participant_id', $qrCode)
+            ->first();
+
+        if (!$participant) {
+            return response()->json([
+                'message' => 'Ce participant n\'est pas inscrit à cette activité.',
+                'error' => 'not_found'
+            ], 404);
+        }
+
+        // Marquer comme présent
+        if (!$participant->est_present) {
+            $participant->update([
+                'est_present' => true,
+                'statut_presence' => 'present',
+                'heure_arrivee' => now()->format('H:i'), // Format H:i pour l'affichage
+                'ajoute_via' => $participant->ajoute_via === 'automatique' ? 'automatique' : 'manuel' // On garde l'origine, ou on pourrait mettre 'scan'
+            ]);
+            $message = "Bienvenue, " . $participant->participant_nom_complet . " !";
+        } else {
+             $message = "Déjà scanné : " . $participant->participant_nom_complet;
+        }
+
+        return response()->json([
+            'message' => $message,
+            'participant' => $participant,
+            'status' => 'success'
+        ]);
+    }
 }
