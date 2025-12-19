@@ -17,8 +17,12 @@ import { TrendingUp, TrendingDown, DollarSign, Calendar, Download, Printer, Load
 import { cotisationsService, sortiesService } from "@/lib/services"
 import { useToast } from "@/hooks/use-toast"
 
+import { ReportHeader } from "../reports/report-header"
+
 export function BilanFinancier() {
   const { toast } = useToast()
+  // ... (rest of the state and logic remains the same)
+
   // Initialisation avec le mois en cours
   const getDatesMoisEncours = () => {
     const now = new Date()
@@ -52,13 +56,12 @@ export function BilanFinancier() {
       if (dateFin) params.date_fin = dateFin
 
       // Charger les entrées (cotisations) et sorties en parallèle avec pagination large pour tout récupérer
-      // Note: Idéalement, l'API devrait avoir un endpoint dédié pour le bilan global sans pagination forcée
       const [entreesResponse, sortiesResponse]: [any, any] = await Promise.all([
         cotisationsService.getAll({ ...params, per_page: 1000 }),
         sortiesService.getAll({ ...params, per_page: 1000 })
       ])
 
-      // Gestion de la réponse paginée (Laravel retourne { data: [...] })
+      // Gestion de la réponse paginée
       const entreesData = entreesResponse.data || entreesResponse
       const sortiesData = sortiesResponse.data || sortiesResponse
 
@@ -92,36 +95,8 @@ export function BilanFinancier() {
   const soldeCDF = totalEntreesCDF - totalSortiesCDF
   const soldeUSD = totalEntreesUSD - totalSortiesUSD
 
-  const nombreEntrees = entrees.length
-  const nombreSorties = sorties.length
-
-  // Statistiques par catégorie de sorties (Global ou par devise si besoin, ici global pour simplifier l'affichage graphique)
-  const sortiesParCategorie = sorties.reduce((acc, s) => {
-    const categorieName = s.category?.name || s.categorie || 'Autre'
-    const devise = s.devise || 'CDF'
-
-    // On convertit tout en string pour l'affichage : "Transport (CDF)"
-    const key = `${categorieName} (${devise})`
-
-    if (!acc[key]) {
-      acc[key] = { montant: 0, nombre: 0, devise }
-    }
-    acc[key].montant += Number(s.montant || 0)
-    acc[key].nombre++
-    return acc
-  }, {} as Record<string, { montant: number; nombre: number, devise: string }>)
-
-  const handleExport = () => {
-    toast({
-      title: "Export en cours",
-      description: "Le bilan sera téléchargé en format Excel/PDF",
-    })
-    console.log("Export bilan")
-  }
-
   const handlePrint = () => {
     window.print()
-    console.log("Impression du bilan")
   }
 
   if (loading) {
@@ -146,8 +121,16 @@ export function BilanFinancier() {
 
   return (
     <div className="space-y-6">
-      {/* Filtres de période */}
-      <Card>
+      {/* Header d'impression uniquement */}
+      <div className="hidden print:block">
+        <ReportHeader
+          title="Bilan Financier Global"
+          subtitle={`Période du ${new Date(dateDebut).toLocaleDateString("fr-FR")} au ${new Date(dateFin).toLocaleDateString("fr-FR")}`}
+        />
+      </div>
+
+      {/* Filtres de période - Masqué à l'impression */}
+      <Card className="print:hidden">
         <CardHeader>
           <CardTitle>Période du bilan</CardTitle>
           <CardDescription>Sélectionnez une période pour générer le bilan</CardDescription>
@@ -185,43 +168,43 @@ export function BilanFinancier() {
       </Card>
 
       {/* Vue d'ensemble DOUBLE (CDF et USD) */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 print:grid-cols-2 print:gap-8">
         {/* Colonne CDF */}
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-blue-900 border-b pb-2">Bilan CDF (Franc Congolais)</h3>
+          <h3 className="text-lg font-bold text-blue-900 border-b pb-2 print:text-black print:border-black">Bilan CDF (Franc Congolais)</h3>
           <div className="grid gap-4">
-            <Card>
-              <CardContent className="p-6">
+            <Card className="print:shadow-none print:border-black">
+              <CardContent className="p-6 print:py-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Entrées</p>
-                    <p className="text-2xl font-bold text-green-600">+{totalEntreesCDF.toLocaleString()} CDF</p>
+                    <p className="text-sm font-medium text-gray-500 print:text-black">Entrées</p>
+                    <p className="text-2xl font-bold text-green-600 print:text-black">+{totalEntreesCDF.toLocaleString()} CDF</p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-green-100 bg-green-600 rounded-full p-1.5" />
+                  <TrendingUp className="h-8 w-8 text-green-100 bg-green-600 rounded-full p-1.5 print:hidden" />
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-6">
+            <Card className="print:shadow-none print:border-black">
+              <CardContent className="p-6 print:py-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Sorties</p>
-                    <p className="text-2xl font-bold text-red-600">-{totalSortiesCDF.toLocaleString()} CDF</p>
+                    <p className="text-sm font-medium text-gray-500 print:text-black">Sorties</p>
+                    <p className="text-2xl font-bold text-red-600 print:text-black">-{totalSortiesCDF.toLocaleString()} CDF</p>
                   </div>
-                  <TrendingDown className="h-8 w-8 text-red-100 bg-red-600 rounded-full p-1.5" />
+                  <TrendingDown className="h-8 w-8 text-red-100 bg-red-600 rounded-full p-1.5 print:hidden" />
                 </div>
               </CardContent>
             </Card>
-            <Card className={soldeCDF >= 0 ? "bg-blue-50 border-blue-200" : "bg-orange-50 border-orange-200"}>
-              <CardContent className="p-6">
+            <Card className={`${soldeCDF >= 0 ? "bg-blue-50 border-blue-200" : "bg-orange-50 border-orange-200"} print:bg-white print:border-black print:shadow-none`}>
+              <CardContent className="p-6 print:py-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Solde CDF</p>
-                    <p className={`text-3xl font-bold ${soldeCDF >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+                    <p className="text-sm font-medium text-gray-600 print:text-black">Solde CDF</p>
+                    <p className={`text-3xl font-bold ${soldeCDF >= 0 ? 'text-blue-700' : 'text-orange-700'} print:text-black`}>
                       {soldeCDF >= 0 ? '+' : ''}{soldeCDF.toLocaleString()} CDF
                     </p>
                   </div>
-                  <DollarSign className={`h-10 w-10 ${soldeCDF >= 0 ? 'text-blue-500' : 'text-orange-500'}`} />
+                  <DollarSign className={`h-10 w-10 ${soldeCDF >= 0 ? 'text-blue-500' : 'text-orange-500'} print:hidden`} />
                 </div>
               </CardContent>
             </Card>
@@ -230,40 +213,40 @@ export function BilanFinancier() {
 
         {/* Colonne USD */}
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-green-900 border-b pb-2">Bilan USD (Dollar Américain)</h3>
+          <h3 className="text-lg font-bold text-green-900 border-b pb-2 print:text-black print:border-black">Bilan USD (Dollar Américain)</h3>
           <div className="grid gap-4">
-            <Card>
-              <CardContent className="p-6">
+            <Card className="print:shadow-none print:border-black">
+              <CardContent className="p-6 print:py-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Entrées</p>
-                    <p className="text-2xl font-bold text-green-600">+{totalEntreesUSD.toLocaleString()} USD</p>
+                    <p className="text-sm font-medium text-gray-500 print:text-black">Entrées</p>
+                    <p className="text-2xl font-bold text-green-600 print:text-black">+{totalEntreesUSD.toLocaleString()} USD</p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-green-100 bg-green-600 rounded-full p-1.5" />
+                  <TrendingUp className="h-8 w-8 text-green-100 bg-green-600 rounded-full p-1.5 print:hidden" />
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-6">
+            <Card className="print:shadow-none print:border-black">
+              <CardContent className="p-6 print:py-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Sorties</p>
-                    <p className="text-2xl font-bold text-red-600">-{totalSortiesUSD.toLocaleString()} USD</p>
+                    <p className="text-sm font-medium text-gray-500 print:text-black">Sorties</p>
+                    <p className="text-2xl font-bold text-red-600 print:text-black">-{totalSortiesUSD.toLocaleString()} USD</p>
                   </div>
-                  <TrendingDown className="h-8 w-8 text-red-100 bg-red-600 rounded-full p-1.5" />
+                  <TrendingDown className="h-8 w-8 text-red-100 bg-red-600 rounded-full p-1.5 print:hidden" />
                 </div>
               </CardContent>
             </Card>
-            <Card className={soldeUSD >= 0 ? "bg-green-50 border-green-200" : "bg-orange-50 border-orange-200"}>
-              <CardContent className="p-6">
+            <Card className={`${soldeUSD >= 0 ? "bg-green-50 border-green-200" : "bg-orange-50 border-orange-200"} print:bg-white print:border-black print:shadow-none`}>
+              <CardContent className="p-6 print:py-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Solde USD</p>
-                    <p className={`text-3xl font-bold ${soldeUSD >= 0 ? 'text-green-700' : 'text-orange-700'}`}>
+                    <p className="text-sm font-medium text-gray-600 print:text-black">Solde USD</p>
+                    <p className={`text-3xl font-bold ${soldeUSD >= 0 ? 'text-green-700' : 'text-orange-700'} print:text-black`}>
                       {soldeUSD >= 0 ? '+' : ''}{soldeUSD.toLocaleString()} USD
                     </p>
                   </div>
-                  <DollarSign className={`h-10 w-10 ${soldeUSD >= 0 ? 'text-green-500' : 'text-orange-500'}`} />
+                  <DollarSign className={`h-10 w-10 ${soldeUSD >= 0 ? 'text-green-500' : 'text-orange-500'} print:hidden`} />
                 </div>
               </CardContent>
             </Card>
@@ -271,8 +254,8 @@ export function BilanFinancier() {
         </div>
       </div>
 
-      {/* Résumé Imprimable */}
-      <Card>
+      {/* Résumé Imprimable (Actions) - Masqué à l'impression */}
+      <Card className="print:hidden">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
             <CardTitle className="text-lg sm:text-xl">Actions</CardTitle>
@@ -281,14 +264,22 @@ export function BilanFinancier() {
                 <Printer className="mr-2 h-4 w-4" />
                 Imprimer le rapport
               </Button>
-              <Button variant="outline" size="sm" onClick={handleExport} className="w-full sm:w-auto">
-                <Download className="mr-2 h-4 w-4" />
-                Exporter
-              </Button>
             </div>
           </div>
         </CardHeader>
       </Card>
+
+      {/* Pied de page signatures - Visible uniquement à l'impression */}
+      <div className="hidden print:flex justify-between mt-12 pt-8">
+        <div className="text-center w-1/3">
+          <p className="font-bold mb-16">Le Caissier</p>
+          <div className="border-t border-black w-3/4 mx-auto"></div>
+        </div>
+        <div className="text-center w-1/3">
+          <p className="font-bold mb-16">Le Coordinateur</p>
+          <div className="border-t border-black w-3/4 mx-auto"></div>
+        </div>
+      </div>
     </div>
   )
 }
