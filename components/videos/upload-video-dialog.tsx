@@ -26,9 +26,10 @@ import { useToast } from "@/hooks/use-toast"
 interface UploadVideoDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void  // Callback appelé après upload réussi
 }
 
-export function UploadVideoDialog({ open, onOpenChange }: UploadVideoDialogProps) {
+export function UploadVideoDialog({ open, onOpenChange, onSuccess }: UploadVideoDialogProps) {
   const { toast } = useToast()
 
   const [uploadType, setUploadType] = useState<"upload" | "youtube">("youtube")
@@ -125,7 +126,7 @@ export function UploadVideoDialog({ open, onOpenChange }: UploadVideoDialogProps
 
       toast({ title: "Succès", description: "Vidéo ajoutée avec succès !" })
       onOpenChange(false)
-      window.location.reload()
+      if (onSuccess) onSuccess()  // Rafraîchir la liste au lieu de recharger la page
 
     } catch (error) {
       console.error("Erreur création vidéo:", error)

@@ -26,15 +26,17 @@ import { toast } from "sonner"
 interface VideoGalleryProps {
   searchQuery?: string
   categorie?: string
+  refreshKey?: number  // Permet de forcer le rechargement depuis le parent
 }
 
-export function VideoGallery({ searchQuery = "", categorie }: VideoGalleryProps) {
+export function VideoGallery({ searchQuery = "", categorie, refreshKey = 0 }: VideoGalleryProps) {
   const [videos, setVideos] = useState<Video[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
 
+  // Recharger quand refreshKey change (après upload d'une vidéo)
   useEffect(() => {
     const fetchVideos = async () => {
       try {
@@ -56,7 +58,7 @@ export function VideoGallery({ searchQuery = "", categorie }: VideoGalleryProps)
     }
 
     fetchVideos()
-  }, [categorie])
+  }, [categorie, refreshKey])
 
   const filteredVideos = Array.isArray(videos) ? videos.filter((video) => {
     const title = video.titre || video.title || "";
