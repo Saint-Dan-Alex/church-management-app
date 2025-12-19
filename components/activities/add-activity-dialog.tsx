@@ -17,13 +17,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
-import { Check, ChevronsUpDown, X } from "lucide-react"
+
+import { Check, ChevronsUpDown, X, Plus } from "lucide-react"
 import { activitiesService } from "@/lib/services/activities.service"
 import { commissionsService } from "@/lib/services/commissions.service"
 import { childrenService } from "@/lib/services/children.service"
 import { monitorsService } from "@/lib/services/monitors.service"
 import { toast } from "sonner"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 
 interface AddActivityDialogProps {
   open: boolean
@@ -52,6 +53,8 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
   const [commissions, setCommissions] = useState<Array<{ id: string, nom: string }>>([])
   const [people, setPeople] = useState<Array<{ nom: string, type: string }>>([])
   const [isOrganizerOpen, setIsOrganizerOpen] = useState(false)
+  const [openCategory, setOpenCategory] = useState(false)
+  const [categorySearch, setCategorySearch] = useState("")
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
@@ -183,7 +186,7 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
         devise: "CDF",
       })
     } catch (error: any) {
-      console.error("Erreur lors de la création:", error)
+      console.error("Erreur lors du création:", error)
       toast.error(error.message || "Impossible de créer l'activité")
     } finally {
       setIsSaving(false)
@@ -290,21 +293,61 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
 
             <div className="grid gap-2">
               <Label htmlFor="category">Catégorie *</Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={openCategory} onOpenChange={setOpenCategory}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between"
+                  >
+                    {formData.category
+                      ? formData.category
+                      : "Sélectionner une catégorie"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Rechercher une catégorie..." onValueChange={setCategorySearch} />
+                    <CommandList>
+                      <CommandEmpty>
+                        <div className="p-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full justify-start text-sm"
+                            onClick={() => {
+                              setFormData({ ...formData, category: categorySearch });
+                              setOpenCategory(false);
+                            }}
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Ajouter "{categorySearch}"
+                          </Button>
+                        </div>
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {categories.map((cat) => (
+                          <CommandItem
+                            key={cat.id}
+                            value={cat.name}
+                            onSelect={() => {
+                              setFormData({ ...formData, category: cat.name })
+                              setOpenCategory(false)
+                            }}
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${formData.category === cat.name ? "opacity-100" : "opacity-0"
+                                }`}
+                            />
+                            {cat.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

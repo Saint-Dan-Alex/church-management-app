@@ -125,6 +125,17 @@ class ActivityController extends Controller
      */
     public function store(StoreActivityRequest $request): JsonResponse
     {
+        // Gérer la création automatique de la catégorie si elle n'existe pas
+        if ($request->filled('category')) {
+            \App\Models\ActivityCategory::firstOrCreate(
+                ['name' => $request->category],
+                [
+                    'color' => '#64748B', // Default safe color (slate-500)
+                    'order' => \App\Models\ActivityCategory::max('order') + 1
+                ]
+            );
+        }
+
         $activity = Activity::create($request->validated());
 
         // Créer une notification
@@ -132,8 +143,8 @@ class ActivityController extends Controller
             auth()->id() ?? 1,
             [
                 'id' => $activity->id,
-                'nom' => $activity->nom,
-                'date_debut' => $activity->date_debut,
+                'nom' => $activity->title ?? $activity->nom, // Fallback if title is used
+                'date_debut' => $activity->date ?? $activity->date_debut,
                 'type' => $activity->type,
             ]
         );
@@ -203,6 +214,17 @@ class ActivityController extends Controller
      */
     public function update(UpdateActivityRequest $request, Activity $activity): JsonResponse
     {
+        // Gérer la création automatique de la catégorie si elle n'existe pas
+        if ($request->filled('category')) {
+            \App\Models\ActivityCategory::firstOrCreate(
+                ['name' => $request->category],
+                [
+                    'color' => '#64748B', // Default safe color (slate-500)
+                    'order' => \App\Models\ActivityCategory::max('order') + 1
+                ]
+            );
+        }
+
         $activity->update($request->validated());
 
         return response()->json([
