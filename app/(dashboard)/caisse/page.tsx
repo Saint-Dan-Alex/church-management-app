@@ -20,6 +20,11 @@ export default function CaissePage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isAddSortieDialogOpen, setIsAddSortieDialogOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("entrees")
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const refreshCotisations = () => {
+    setRefreshKey(prev => prev + 1)
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -79,7 +84,7 @@ export default function CaissePage() {
               className="pl-9 text-sm"
             />
           </div>
-          <CotisationsList searchQuery={searchQuery} statutFilter={statutFilter} />
+          <CotisationsList searchQuery={searchQuery} statutFilter={statutFilter} refreshKey={refreshKey} />
         </TabsContent>
 
         <TabsContent value="sorties" className="space-y-4">
@@ -112,7 +117,7 @@ export default function CaissePage() {
         </TabsContent>
       </Tabs>
 
-      <AddCotisationDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      <AddCotisationDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onSuccess={refreshCotisations} />
       <AddSortieDialog open={isAddSortieDialogOpen} onOpenChange={setIsAddSortieDialogOpen} />
     </div>
   )

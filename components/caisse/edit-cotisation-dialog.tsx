@@ -33,9 +33,10 @@ interface EditCotisationDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   cotisation: Cotisation | null
+  onSuccess?: () => void
 }
 
-export function EditCotisationDialog({ open, onOpenChange, cotisation }: EditCotisationDialogProps) {
+export function EditCotisationDialog({ open, onOpenChange, cotisation, onSuccess }: EditCotisationDialogProps) {
   const { toast } = useToast()
 
   const [formData, setFormData] = useState({
@@ -130,7 +131,7 @@ export function EditCotisationDialog({ open, onOpenChange, cotisation }: EditCot
 
       toast({ title: "Succès", description: "Cotisation modifiée avec succès !" })
       onOpenChange(false)
-      window.location.reload()
+      if (onSuccess) onSuccess()
     } catch (error) {
       console.error("Erreur:", error)
       toast({ title: "Erreur", description: "Échec de la modification", variant: "destructive" })

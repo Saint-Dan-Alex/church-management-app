@@ -18,14 +18,16 @@ import { toast } from "sonner"
 interface CotisationsListProps {
   searchQuery?: string
   typeFilter?: string
+  refreshKey?: number
 }
 
-export function CotisationsList({ searchQuery = "", typeFilter }: CotisationsListProps) {
+export function CotisationsList({ searchQuery = "", typeFilter, refreshKey }: CotisationsListProps) {
   const [cotisations, setCotisations] = useState<Cotisation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedCotisation, setSelectedCotisation] = useState<Cotisation | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [internalRefreshKey, setInternalRefreshKey] = useState(0)
 
   useEffect(() => {
     const fetchCotisations = async () => {
@@ -44,7 +46,11 @@ export function CotisationsList({ searchQuery = "", typeFilter }: CotisationsLis
     }
 
     fetchCotisations()
-  }, [typeFilter])
+  }, [typeFilter, refreshKey, internalRefreshKey])
+
+  const reloadCotisations = () => {
+    setInternalRefreshKey(prev => prev + 1)
+  }
 
   const filteredCotisations = Array.isArray(cotisations) ? cotisations.filter((cotisation) => {
     const matchesSearch =
@@ -227,6 +233,7 @@ export function CotisationsList({ searchQuery = "", typeFilter }: CotisationsLis
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         cotisation={selectedCotisation}
+        onSuccess={reloadCotisations}
       />
     </div>
   )

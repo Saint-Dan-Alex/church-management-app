@@ -32,9 +32,10 @@ interface Monitor {
 interface AddCotisationDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
-export function AddCotisationDialog({ open, onOpenChange }: AddCotisationDialogProps) {
+export function AddCotisationDialog({ open, onOpenChange, onSuccess }: AddCotisationDialogProps) {
   const { toast } = useToast()
 
   const [formData, setFormData] = useState({
@@ -158,7 +159,7 @@ export function AddCotisationDialog({ open, onOpenChange }: AddCotisationDialogP
         enregistre_par_nom: "Admin",
       })
       onOpenChange(false)
-      window.location.reload()
+      if (onSuccess) onSuccess()
     } catch (error) {
       console.error("Erreur:", error)
       toast({ title: "Erreur", description: "Échec de l'enregistrement", variant: "destructive" })
