@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search } from "lucide-react"
@@ -11,6 +11,7 @@ import { RapportCotisations } from "@/components/caisse/rapport-cotisations"
 import { SortiesList } from "@/components/caisse/sorties-list"
 import { AddSortieDialog } from "@/components/caisse/add-sortie-dialog"
 import { BilanFinancier } from "@/components/caisse/bilan-financier"
+import { sortiesService, type SortieCategory } from "@/lib/services/sorties.service"
 
 export default function CaissePage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -21,6 +22,20 @@ export default function CaissePage() {
   const [isAddSortieDialogOpen, setIsAddSortieDialogOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("entrees")
   const [refreshKey, setRefreshKey] = useState(0)
+  const [categories, setCategories] = useState<SortieCategory[]>([])
+
+  useEffect(() => {
+    loadCategories()
+  }, [])
+
+  const loadCategories = async () => {
+    try {
+      const data = await sortiesService.getCategories()
+      setCategories(Array.isArray(data) ? data : [])
+    } catch (error) {
+      console.error("Erreur chargement catégories:", error)
+    }
+  }
 
   const refreshCotisations = () => {
     setRefreshKey(prev => prev + 1)
@@ -90,10 +105,23 @@ export default function CaissePage() {
         <TabsContent value="sorties" className="space-y-4">
           <div className="overflow-x-auto pb-2 -mx-1 px-1">
             <div className="flex gap-2 min-w-max">
-              <Button size="sm" variant={categorieFilter === "all" ? "default" : "outline"} onClick={() => setCategorieFilter("all")}>Toutes</Button>
-              <Button size="sm" variant={categorieFilter === "Matériel" ? "default" : "outline"} onClick={() => setCategorieFilter("Matériel")}>Matériel</Button>
-              <Button size="sm" variant={categorieFilter === "Transport" ? "default" : "outline"} onClick={() => setCategorieFilter("Transport")}>Transport</Button>
-              <Button size="sm" variant={categorieFilter === "Événement" ? "default" : "outline"} onClick={() => setCategorieFilter("Événement")}>Événement</Button>
+              <Button
+                size="sm"
+                variant={categorieFilter === "all" ? "default" : "outline"}
+                onClick={() => setCategorieFilter("all")}
+              >
+                Toutes
+              </Button>
+              {categories.map((category) => (
+                <Button
+                  key={category.id}
+                  size="sm"
+                  variant={categorieFilter === category.id ? "default" : "outline"}
+                  onClick={() => setCategorieFilter(category.id)}
+                >
+                  {category.name}
+                </Button>
+              ))}
             </div>
           </div>
           <div className="relative">
@@ -105,7 +133,7 @@ export default function CaissePage() {
               className="pl-9 text-sm"
             />
           </div>
-          <SortiesList searchQuery={searchQuerySorties} categorieFilter={categorieFilter} />
+          <SortiesList searchQuery={searchQuerySorties} categorieFilter={categorieFilter} refreshKey={refreshKey} />
         </TabsContent>
 
         <TabsContent value="bilan">
@@ -118,7 +146,7 @@ export default function CaissePage() {
       </Tabs>
 
       <AddCotisationDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onSuccess={refreshCotisations} />
-      <AddSortieDialog open={isAddSortieDialogOpen} onOpenChange={setIsAddSortieDialogOpen} />
+      <AddSortieDialog open={isAddSortieDialogOpen} onOpenChange={setIsAddSortieDialogOpen} onSuccess={refreshCotisations} />
     </div>
   )
 }

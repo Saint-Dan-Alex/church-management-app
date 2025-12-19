@@ -17,24 +17,26 @@ import { useToast } from "@/hooks/use-toast"
 interface SortiesListProps {
   searchQuery: string
   categorieFilter: string
+  refreshKey?: number
 }
 
-export function SortiesList({ searchQuery, categorieFilter }: SortiesListProps) {
+export function SortiesList({ searchQuery, categorieFilter, refreshKey }: SortiesListProps) {
   const { toast } = useToast()
   const [sorties, setSorties] = useState<Sortie[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [internalRefreshKey, setInternalRefreshKey] = useState(0)
 
   useEffect(() => {
     loadSorties()
-  }, [categorieFilter])
+  }, [categorieFilter, refreshKey, internalRefreshKey])
 
   const loadSorties = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response: any = await sortiesService.getAll({ 
-        categorie: categorieFilter !== "all" ? categorieFilter : undefined 
+      const response: any = await sortiesService.getAll({
+        categorie: categorieFilter !== "all" ? categorieFilter : undefined
       })
       const data = response.data || response
       setSorties(Array.isArray(data) ? data : [])
@@ -220,7 +222,7 @@ export function SortiesList({ searchQuery, categorieFilter }: SortiesListProps) 
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         <span>
-                          {sortie.date_sortie 
+                          {sortie.date_sortie
                             ? new Date(sortie.date_sortie).toLocaleDateString("fr-FR")
                             : '-'}
                         </span>

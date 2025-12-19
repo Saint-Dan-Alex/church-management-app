@@ -24,9 +24,10 @@ import { useToast } from "@/hooks/use-toast"
 interface AddSortieDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
-export function AddSortieDialog({ open, onOpenChange }: AddSortieDialogProps) {
+export function AddSortieDialog({ open, onOpenChange, onSuccess }: AddSortieDialogProps) {
   const { toast } = useToast()
 
   const [formData, setFormData] = useState({
@@ -94,7 +95,7 @@ export function AddSortieDialog({ open, onOpenChange }: AddSortieDialogProps) {
         enregistre_par_nom: "Admin",
       })
       onOpenChange(false)
-      window.location.reload()
+      if (onSuccess) onSuccess()
     } catch (error) {
       console.error("Erreur:", error)
       toast({ title: "Erreur", description: "Échec de l'enregistrement", variant: "destructive" })
