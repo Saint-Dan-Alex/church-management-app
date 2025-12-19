@@ -24,13 +24,15 @@ import { toast } from "sonner"
 interface PhotoGalleryProps {
   searchQuery?: string
   album?: string
+  refreshKey?: number  // Permet de forcer le rechargement depuis le parent
 }
 
-export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
+export function PhotoGallery({ searchQuery = "", album, refreshKey = 0 }: PhotoGalleryProps) {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Recharger quand refreshKey change (après upload d'une photo)
   useEffect(() => {
     const fetchPhotos = async () => {
       try {
@@ -48,7 +50,7 @@ export function PhotoGallery({ searchQuery = "", album }: PhotoGalleryProps) {
     }
 
     fetchPhotos()
-  }, [album])
+  }, [album, refreshKey])
 
   const filteredPhotos = Array.isArray(photos) ? photos.filter((photo) => {
     const matchesSearch =

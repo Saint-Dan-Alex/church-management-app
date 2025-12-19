@@ -24,9 +24,10 @@ import { useToast } from "@/hooks/use-toast"
 interface UploadPhotoDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void  // Callback appelé après upload réussi
 }
 
-export function UploadPhotoDialog({ open, onOpenChange }: UploadPhotoDialogProps) {
+export function UploadPhotoDialog({ open, onOpenChange, onSuccess }: UploadPhotoDialogProps) {
   const { toast } = useToast()
 
   const [formData, setFormData] = useState({
@@ -103,12 +104,21 @@ export function UploadPhotoDialog({ open, onOpenChange }: UploadPhotoDialogProps
           const res = await blogsService.uploadImage(uploadData)
           const finalUrl = res.url
 
-          // 2. Create Photo entry
+          // 2. Nettoyer le nom de fichier pour le titre par défaut
+          // Enlever l'extension et les caractères spéciaux
+          const cleanFileName = file.name
+            .replace(/\.[^/.]+$/, '') // Enlever l'extension
+            .replace(/[()]/g, '')    // Enlever les parenthèses
+            .trim()
+
+          // 3. Create Photo entry
           await photosService.create({
-            ...formData,
-            titre: formData.titre || file.name,
+            titre: formData.titre || cleanFileName || 'Sans titre',
+            description: formData.description || null,
+            album: formData.album,
+            auteur: formData.auteur || 'Admin',
+            date: formData.date || null,
             url: finalUrl,
-            album: formData.album // Envoie l'ID ou le nom (géré par le controller)
           })
 
           successCount++
@@ -123,7 +133,7 @@ export function UploadPhotoDialog({ open, onOpenChange }: UploadPhotoDialogProps
         setFormData({ ...formData, titre: "", description: "" }) // Keep album ?
         setSelectedFiles([])
         onOpenChange(false)
-        window.location.reload()
+        if (onSuccess) onSuccess()  // Rafraîchir la liste au lieu de recharger la page
       }
 
       if (errors > 0) {
