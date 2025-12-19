@@ -107,7 +107,7 @@ export function AppSidebar() {
   const pathname = usePathname()
 
   return (
-    <Sidebar className="bg-blue-600 border-r border-blue-500">
+    <Sidebar className="bg-blue-600 border-r border-blue-500 print:hidden">
       <SidebarHeader className="border-b border-blue-500 bg-blue-600">
         <div className="flex items-center gap-2 px-4 py-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-blue-600">

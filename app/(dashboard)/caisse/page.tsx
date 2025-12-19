@@ -43,7 +43,7 @@ export default function CaissePage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Caisse</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Gestion des entrées, sorties et bilan financier</p>
@@ -65,7 +65,7 @@ export default function CaissePage() {
       </div>
 
       <Tabs defaultValue="entrees" className="space-y-4" onValueChange={setActiveTab}>
-        <div className="overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+        <div className="overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide print:hidden">
           <TabsList className="inline-flex min-w-max">
             <TabsTrigger value="entrees" className="text-xs sm:text-sm px-2 sm:px-3">
               Entrées (Cotisations)

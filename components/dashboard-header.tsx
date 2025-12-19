@@ -7,7 +7,7 @@ import { NotificationBell } from "@/components/notifications/notification-bell"
 
 export function DashboardHeader() {
   return (
-    <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-4 border-b border-gray-200 bg-white shadow-sm">
+    <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-4 border-b border-gray-200 bg-white shadow-sm print:hidden">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="md:hidden" />
         <h1 className="text-xl md:text-2xl font-bold text-gray-900">Tableau de bord</h1>

@@ -17,11 +17,11 @@ import { toast } from "sonner"
 
 interface CotisationsListProps {
   searchQuery?: string
-  typeFilter?: string
+  statutFilter?: string
   refreshKey?: number
 }
 
-export function CotisationsList({ searchQuery = "", typeFilter, refreshKey }: CotisationsListProps) {
+export function CotisationsList({ searchQuery = "", statutFilter = "all", refreshKey }: CotisationsListProps) {
   const [cotisations, setCotisations] = useState<Cotisation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +33,8 @@ export function CotisationsList({ searchQuery = "", typeFilter, refreshKey }: Co
     const fetchCotisations = async () => {
       try {
         setLoading(true)
-        const response: any = await cotisationsService.getAll({ type_cotisation: typeFilter })
+        // On récupère tout et on filtre côté client pour l'instant
+        const response: any = await cotisationsService.getAll()
         const data = response.data || response
         setCotisations(Array.isArray(data) ? data : [])
       } catch (err) {
@@ -46,7 +47,7 @@ export function CotisationsList({ searchQuery = "", typeFilter, refreshKey }: Co
     }
 
     fetchCotisations()
-  }, [typeFilter, refreshKey, internalRefreshKey])
+  }, [refreshKey, internalRefreshKey])
 
   const reloadCotisations = () => {
     setInternalRefreshKey(prev => prev + 1)
@@ -58,7 +59,11 @@ export function CotisationsList({ searchQuery = "", typeFilter, refreshKey }: Co
       (cotisation.mois || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (cotisation.type?.name || "").toLowerCase().includes(searchQuery.toLowerCase())
 
-    return matchesSearch
+    const matchesStatut = statutFilter === "all" ||
+      (statutFilter === "Payé" && (cotisation.statut === "Payé" || cotisation.statut === "Paid" || !cotisation.statut)) || // Assume paid if no status? Or check specific logic
+      (statutFilter === "En attente" && (cotisation.statut === "En attente" || cotisation.statut === "Pending"))
+
+    return matchesSearch && matchesStatut
   }) : []
 
   const handleEdit = (cotisation: Cotisation) => {
