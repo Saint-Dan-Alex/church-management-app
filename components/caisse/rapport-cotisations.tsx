@@ -397,9 +397,9 @@ export function RapportCotisations() {
         </Card>
       )}
 
-      {/* Tableau détaillé */}
-      <Card className="print:shadow-none print:border-none">
-        <CardHeader className="print:hidden">
+      {/* Tableau détaillé - Masqué à l'impression pour gagner de la place */}
+      <Card className="print:hidden">
+        <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
             <div>
               <CardTitle>Détails des cotisations</CardTitle>
@@ -417,10 +417,6 @@ export function RapportCotisations() {
             </div>
           </div>
         </CardHeader>
-        {/* On force l'affichage du titre de section à l'impression */}
-        <div className="hidden print:block mb-4 mt-8">
-          <h3 className="text-xl font-bold uppercase underline">Détails des Transactions</h3>
-        </div>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
