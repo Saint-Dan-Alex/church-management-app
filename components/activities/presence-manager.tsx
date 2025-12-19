@@ -1,17 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
-import { presencesService } from "@/lib/services"
-import { useToast } from "@/hooks/use-toast"
 
 interface PresenceManagerProps {
   activiteId: string
   activiteNom: string
   dateActivite: Date
   heureFinActivite: string
+  participants?: any[]
   onManualPresenceClick?: () => void
 }
 
@@ -20,55 +17,18 @@ export function PresenceManager({
   activiteNom,
   dateActivite,
   heureFinActivite,
+  participants = [],
   onManualPresenceClick
 }: PresenceManagerProps) {
-  const { toast } = useToast()
-  const [presences, setPresences] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadPresences()
-  }, [activiteId])
+  // participants contient déjà les données à jour
+  const presents = participants.filter(p => p.est_present || p.statut_presence === 'present').length
+  const absents = participants.filter(p => (!p.est_present && p.statut_presence === 'absent') || (!p.est_present && !p.statut_presence)).length
+  const retards = participants.filter(p => p.statut_presence === 'retard').length
 
-  const loadPresences = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await presencesService.getAll({ activity_id: activiteId })
-      setPresences(Array.isArray(data) ? data : [])
-    } catch (err: any) {
-      const errorMessage = err.message || 'Erreur de chargement des présences'
-      setError(errorMessage)
-      toast({
-        title: "Erreur",
-        description: errorMessage,
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Chargement des présences...</span>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-destructive mb-4">{error}</p>
-        <Button onClick={loadPresences} variant="outline">
-          Réessayer
-        </Button>
-      </div>
-    )
-  }
+  // Note: 'absent' est souvent le défaut si !est_present. 
+  // Ici on compte explicitement ceux marqués 'absent' ou juste pas là.
+  // Ajustez la logique selon vos besoins métiers exacts.
 
   return (
     <Card>
@@ -86,41 +46,58 @@ export function PresenceManager({
             <div className="p-4 bg-green-50 rounded-lg">
               <p className="text-sm text-green-700">Présents</p>
               <p className="text-2xl font-bold text-green-900">
-                {presences.filter(p => p.statut === 'present').length}
+                {presents}
               </p>
             </div>
             <div className="p-4 bg-red-50 rounded-lg">
               <p className="text-sm text-red-700">Absents</p>
               <p className="text-2xl font-bold text-red-900">
-                {presences.filter(p => p.statut === 'absent').length}
+                {absents}
               </p>
             </div>
             <div className="p-4 bg-yellow-50 rounded-lg">
               <p className="text-sm text-yellow-700">Retards</p>
               <p className="text-2xl font-bold text-yellow-900">
-                {presences.filter(p => p.statut === 'retard').length}
+                {retards}
               </p>
             </div>
           </div>
 
-          {presences.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">Aucune présence enregistrée</p>
+          {participants.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">Aucun participant inscrit</p>
           ) : (
             <div className="space-y-2">
-              {presences.map((presence) => (
-                <div key={presence.id} className="p-3 bg-gray-50 rounded-lg flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">{presence.moniteur_nom}</p>
-                    <p className="text-sm text-gray-600">{presence.date_presence}</p>
+              {participants.map((participant) => {
+                const nom = participant.participant_nom_complet || `${participant.participant_nom} ${participant.participant_prenom || ''}`.trim()
+                const statut = participant.statut_presence || (participant.est_present ? 'present' : 'absent')
+
+                // Si filtre d'affichage nécessaire, le faire ici
+
+                return (
+                  <div key={participant.id} className="p-3 bg-gray-50 rounded-lg flex justify-between items-center">
+                    <div>
+                      <p className="font-medium text-gray-900">{nom}</p>
+                      <p className="text-sm text-gray-500 capitalize">{participant.participant_type}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {participant.heure_arrivee && (
+                        <span className="text-xs text-gray-500 mr-2">
+                          {participant.heure_arrivee}
+                        </span>
+                      )}
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${statut === 'present' ? 'bg-green-100 text-green-800' :
+                          statut === 'retard' ? 'bg-yellow-100 text-yellow-800' :
+                            statut === 'excuse' ? 'bg-gray-100 text-gray-800' :
+                              'bg-red-100 text-red-800'
+                        }`}>
+                        {statut === 'present' ? 'Présent' :
+                          statut === 'retard' ? 'En retard' :
+                            statut === 'excuse' ? 'Excusé' : 'Absent'}
+                      </span>
+                    </div>
                   </div>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${presence.statut === 'present' ? 'bg-green-100 text-green-800' :
-                    presence.statut === 'absent' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                    {presence.statut}
-                  </span>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

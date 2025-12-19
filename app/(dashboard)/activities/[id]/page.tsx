@@ -370,6 +370,7 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
                 activiteNom={activity.title}
                 dateActivite={new Date(activity.date)}
                 heureFinActivite={activity.time}
+                participants={Array.isArray(activity.participants) ? activity.participants : []}
                 onManualPresenceClick={() => setIsPresenceDialogOpen(true)}
               />
             </TabsContent>
