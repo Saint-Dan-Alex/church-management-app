@@ -233,6 +233,67 @@ export function UnifiedParticipantsView({
     nonPayes: participants.filter((p) => !p.aPaye).length,
   }
 
+  const handleExport = () => {
+    try {
+      // Définition des en-têtes
+      const headers = [
+        "Nom Complet",
+        "Type",
+        "Statut Présence",
+        "Heure Arrivée",
+        "Statut Paiement",
+        "Montant Payé",
+        "Montant Requis",
+        "Reste à payer"
+      ]
+
+      // Conversion des données
+      const csvData = filteredParticipants.map(p => {
+        const reste = (p.montantRequis || 0) - (p.montantPaye || 0)
+        return [
+          `"${p.nomComplet}"`,
+          p.type,
+          p.estPresent ? "Présent" : "Absent",
+          p.heureArrivee || "-",
+          p.statutPaiement === 'paid' ? "Payé" : p.statutPaiement === 'partial' ? "Partiel" : "Non payé",
+          p.montantPaye || 0,
+          p.montantRequis || 0,
+          reste > 0 ? reste : 0
+        ].join(",")
+      })
+
+      // Construction du fichier CSV
+      const csvContent = [
+        headers.join(","),
+        ...csvData
+      ].join("\n")
+
+      // Création du blob et téléchargement
+      const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" })
+      const link = document.createElement("a")
+      const url = URL.createObjectURL(blob)
+
+      link.setAttribute("href", url)
+      link.setAttribute("download", `participants_${activiteNom.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = "hidden"
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      toast({
+        title: "Export réussi",
+        description: "La liste des participants a été téléchargée.",
+      })
+    } catch (error) {
+      console.error("Erreur export:", error)
+      toast({
+        title: "Erreur",
+        description: "Impossible d'exporter le fichier.",
+        variant: "destructive"
+      })
+    }
+  }
+
   const formatCurrency = (montant: number) => {
     return `${montant.toLocaleString("fr-FR")} ${devise}`
   }
@@ -457,7 +518,7 @@ export function UnifiedParticipantsView({
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              <Button size="sm" variant="outline" className="flex-1 sm:flex-none text-xs sm:text-sm">
+              <Button size="sm" variant="outline" onClick={handleExport} className="flex-1 sm:flex-none text-xs sm:text-sm">
                 <Download className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Exporter
               </Button>
