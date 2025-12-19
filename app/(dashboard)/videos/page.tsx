@@ -1,17 +1,37 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search } from "lucide-react"
+import { Plus, Search, Loader2 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { VideoGallery } from "@/components/videos/video-gallery"
 import { UploadVideoDialog } from "@/components/videos/upload-video-dialog"
+import { videosService } from "@/lib/services/videos.service"
+import type { VideoCategory } from "@/lib/types/api"
 
 export default function VideosPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [categories, setCategories] = useState<VideoCategory[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
+
+  // Charger les catégories depuis l'API
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true)
+        const data = await videosService.getCategories()
+        setCategories(data)
+      } catch (error) {
+        console.error("Erreur chargement catégories:", error)
+      } finally {
+        setLoadingCategories(false)
+      }
+    }
+    loadCategories()
+  }, [])
 
   const handleVideoUploaded = () => {
     setRefreshKey(prev => prev + 1)
@@ -37,23 +57,30 @@ export default function VideosPage() {
       </div>
 
       <Tabs defaultValue="all" className="space-y-4">
-        {/* Onglets avec scroll horizontal sur mobile */}
+        {/* Onglets avec scroll horizontal sur mobile - Catégories dynamiques */}
         <div className="overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-          <TabsList className="inline-flex min-w-max">
-            <TabsTrigger value="all" className="text-xs sm:text-sm px-2 sm:px-3">
-              <span className="hidden sm:inline">Toutes les Vidéos</span>
-              <span className="sm:hidden">Toutes</span>
-            </TabsTrigger>
-            <TabsTrigger value="Cultes" className="text-xs sm:text-sm px-2 sm:px-3">Cultes</TabsTrigger>
-            <TabsTrigger value="Témoignages" className="text-xs sm:text-sm px-2 sm:px-3">
-              <span className="hidden xs:inline">Témoignages</span>
-              <span className="xs:hidden">Témoig.</span>
-            </TabsTrigger>
-            <TabsTrigger value="Formations" className="text-xs sm:text-sm px-2 sm:px-3">
-              <span className="hidden xs:inline">Formations</span>
-              <span className="xs:hidden">Format.</span>
-            </TabsTrigger>
-          </TabsList>
+          {loadingCategories ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Chargement...</span>
+            </div>
+          ) : (
+            <TabsList className="inline-flex min-w-max">
+              <TabsTrigger value="all" className="text-xs sm:text-sm px-2 sm:px-3">
+                <span className="hidden sm:inline">Toutes les Vidéos</span>
+                <span className="sm:hidden">Toutes</span>
+              </TabsTrigger>
+              {categories.map((category) => (
+                <TabsTrigger
+                  key={category.id}
+                  value={category.id}
+                  className="text-xs sm:text-sm px-2 sm:px-3"
+                >
+                  {category.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          )}
         </div>
 
         {/* Barre de recherche */}
@@ -67,21 +94,21 @@ export default function VideosPage() {
           />
         </div>
 
+        {/* Contenu de l'onglet "Toutes" */}
         <TabsContent value="all">
           <VideoGallery searchQuery={searchQuery} refreshKey={refreshKey} />
         </TabsContent>
 
-        <TabsContent value="Cultes">
-          <VideoGallery searchQuery={searchQuery} categorie="Cultes" refreshKey={refreshKey} />
-        </TabsContent>
-
-        <TabsContent value="Témoignages">
-          <VideoGallery searchQuery={searchQuery} categorie="Témoignages" refreshKey={refreshKey} />
-        </TabsContent>
-
-        <TabsContent value="Formations">
-          <VideoGallery searchQuery={searchQuery} categorie="Formations" refreshKey={refreshKey} />
-        </TabsContent>
+        {/* Contenu des onglets de catégories dynamiques */}
+        {categories.map((category) => (
+          <TabsContent key={category.id} value={category.id}>
+            <VideoGallery
+              searchQuery={searchQuery}
+              categorie={category.id}
+              refreshKey={refreshKey}
+            />
+          </TabsContent>
+        ))}
       </Tabs>
 
       <UploadVideoDialog
