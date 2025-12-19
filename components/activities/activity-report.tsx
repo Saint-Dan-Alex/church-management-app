@@ -114,6 +114,8 @@ export function ActivityReport({
     }
   }
 
+  const isPayante = activite.type !== 'libre'
+
   return (
     <div className="space-y-4 sm:space-y-6" id="activity-report">
       {/* Logo et informations de l'église */}
@@ -139,12 +141,22 @@ export function ActivityReport({
                 </Badge>
                 <Badge
                   variant="outline"
-                  className={`text-xs sm:text-sm ${activite.statut === "termine"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-blue-100 text-blue-700"
+                  className={`text-xs sm:text-sm ${(activite.statut === "termine" || activite.statut === "completed") ? "bg-green-100 text-green-700" :
+                      activite.statut === "upcoming" ? "bg-yellow-100 text-yellow-800" :
+                        activite.statut === "cancelled" ? "bg-red-100 text-red-700" :
+                          "bg-blue-100 text-blue-700"
                     }`}
                 >
-                  {activite.statut}
+                  {(() => {
+                    const statusLabels: Record<string, string> = {
+                      upcoming: "Planifié",
+                      ongoing: "En cours",
+                      completed: "Terminée",
+                      cancelled: "Annulée",
+                      termine: "Terminée"
+                    }
+                    return statusLabels[activite.statut] || activite.statut
+                  })()}
                 </Badge>
               </div>
             </div>
@@ -239,8 +251,8 @@ export function ActivityReport({
           </CardContent>
         </Card>
 
-        {/* Paiements collectés */}
-        {paymentStats && (
+        {/* Paiements collectés - Seulement si payante */}
+        {isPayante && paymentStats && (
           <>
             <Card className="shadow-sm">
               <CardContent className="pt-4 sm:pt-6">
@@ -279,8 +291,8 @@ export function ActivityReport({
         )}
       </div>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-        {/* Rapport de présence */}
+      <div className={`grid gap-4 sm:gap-6 ${isPayante ? 'lg:grid-cols-2' : ''}`}>
+        {/* Rapport de présence - Prend toute la largeur si gratuit */}
         <Card className="shadow-sm">
           <CardHeader className="pb-2 sm:pb-4">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -337,8 +349,8 @@ export function ActivityReport({
           </CardContent>
         </Card>
 
-        {/* Rapport financier */}
-        {paymentStats && paymentConfig && (
+        {/* Rapport financier - Seulement si payante */}
+        {isPayante && paymentStats && paymentConfig && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -431,8 +443,8 @@ export function ActivityReport({
         )}
       </div>
 
-      {/* Bilan financier */}
-      {(expenses.length > 0 || (paymentStats && paymentStats.totalPaye > 0)) && paymentConfig && (
+      {/* Bilan financier - Seulement si payante */}
+      {isPayante && (expenses.length > 0 || (paymentStats && paymentStats.totalPaye > 0)) && paymentConfig && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -522,8 +534,8 @@ export function ActivityReport({
       <ReportAnalysis
         metrics={[
           { label: "Taux de Présence", value: tauxPresence, unit: "%", target: 80 },
-          ...(paymentStats ? [{ label: "Taux de Recouvrement", value: paymentStats.tauxPaiement, unit: "%", target: 90 }] : []),
-          ...(expenses.length > 0 ? [{ label: "Taux de Couverture", value: tauxCouverture, unit: "%", target: 100 }] : [])
+          ...(isPayante && paymentStats ? [{ label: "Taux de Recouvrement", value: paymentStats.tauxPaiement, unit: "%", target: 90 }] : []),
+          ...(isPayante && expenses.length > 0 ? [{ label: "Taux de Couverture", value: tauxCouverture, unit: "%", target: 100 }] : [])
         ]}
         customComment={
           tauxPresence < 50 ? "La participation est inférieure à la moyenne attendue. Il serait judicieux de renforcer la mobilisation." :

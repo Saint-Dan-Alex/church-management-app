@@ -418,11 +418,27 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
                   statut: activity.status,
                   responsable: activity.organizer
                 }}
-                presences={[]} // TODO: Mapper depuis activity.participants si dispo
+                presences={(Array.isArray(activity.participants) ? activity.participants : []).map((p: any) => ({
+                  id: p.id,
+                  activiteId: activity.id,
+                  activiteNom: activity.title,
+                  moniteurId: p.participant_id || p.id,
+                  moniteurNom: p.participant_nom || "",
+                  moniteurPrenom: p.participant_prenom || "",
+                  moniteurNomComplet: p.participant_nom_complet || `${p.participant_nom || ''} ${p.participant_prenom || ''}`.trim(),
+                  datePresence: new Date(), // Date approximative (date du rapport)
+                  heureArrivee: p.heure_arrivee || "",
+                  statut: (p.statut_presence || (p.est_present ? 'present' : 'absent')) as any,
+                  modeEnregistrement: (p.ajoute_via === 'automatique' ? 'auto' : 'manuel') as any,
+                  createdAt: new Date(),
+                  updatedAt: new Date()
+                }))}
                 payments={reportData.payments}
                 expenses={reportData.expenses}
                 paymentStats={{
+                  totalParticipants: activity.participants?.length || 0,
                   totalPaye: financeStats.totalRecettes,
+                  totalAttendus: (activity.participants?.length || 0) * (Number(activity.price) || 0),
                   totalRestant: Math.max(0, (activity.participants?.length || 0) * (Number(activity.price) || 0) - financeStats.totalRecettes),
                   nombrePaiesComplet: (activity.participants as any[] || []).filter((p: any) =>
                     p.statut_paiement === 'paid' || parseFloat(String(p.montant_paye || 0)) >= (Number(activity.price) || 0)

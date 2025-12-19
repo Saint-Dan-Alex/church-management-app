@@ -13,7 +13,7 @@ export interface Activity {
   type: string
   price?: number
   currency?: string
-  participants: number
+  participants: number | any[]
   maxParticipants: number
   status: string
   organizer: string
@@ -88,7 +88,7 @@ export const activitiesService = {
   },
 
   async getParticipants(id: string) {
-    const activity = await this.getById(id)
+    const activity = await this.getById(id) as Activity
     return activity.participants || []
   },
 
