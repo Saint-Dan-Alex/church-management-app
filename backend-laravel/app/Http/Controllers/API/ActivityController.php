@@ -84,6 +84,14 @@ class ActivityController extends Controller
     {
         $query = Activity::query();
 
+        // Filtrage par audience selon le rôle de l'utilisateur
+        $user = $request->user();
+        if ($user && !$user->isMonitor()) {
+            // Les non-moniteurs ne voient que les activités publiques
+            $query->where('audience', 'public');
+        }
+        // Les moniteurs voient tout (public + moniteurs) par défaut
+
         if ($request->has('type')) {
             $query->where('type', $request->type);
         }

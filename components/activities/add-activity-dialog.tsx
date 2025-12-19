@@ -47,6 +47,7 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
     organizers: [] as string[],
     montantRequis: "",
     devise: "CDF" as "CDF" | "USD",
+    audience: "public" as "public" | "moniteurs",
   })
 
   const [categories, setCategories] = useState<Array<{ id: number, name: string }>>([])
@@ -163,6 +164,7 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
         // @ts-ignore
         price: formData.type === "payante" ? parseFloat(formData.montantRequis) : undefined,
         currency: formData.type === "payante" ? formData.devise : undefined,
+        audience: formData.audience,
       })
 
       toast.success("Activité créée avec succès")
@@ -184,6 +186,7 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
         organizers: [],
         montantRequis: "",
         devise: "CDF",
+        audience: "public",
       })
     } catch (error: any) {
       console.error("Erreur lors du création:", error)
@@ -231,6 +234,28 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
                 placeholder="Description de l'activité..."
                 rows={3}
               />
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Audience (Visibilité) *</Label>
+              <RadioGroup
+                value={formData.audience}
+                onValueChange={(value: "public" | "moniteurs") => setFormData({ ...formData, audience: value })}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="public" id="public" />
+                  <Label htmlFor="public" className="font-normal cursor-pointer">
+                    <span className="flex items-center gap-2">Public (Tout le monde)</span>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="moniteurs" id="moniteurs" />
+                  <Label htmlFor="moniteurs" className="font-normal cursor-pointer">
+                    <span className="flex items-center gap-2">Moniteurs Uniquement</span>
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
 
             <div className="grid gap-2">

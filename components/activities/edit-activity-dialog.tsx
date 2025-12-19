@@ -49,7 +49,9 @@ export function EditActivityDialog({ open, onOpenChange, activity, onSuccess }: 
     organizers: [] as string[],
     montantRequis: "",
     devise: "CDF" as "CDF" | "USD",
+
     responsable: "", // Garde pour compatibilité si besoin, mais on utilise organizers
+    audience: "public" as "public" | "moniteurs",
   })
 
   const [categories, setCategories] = useState<Array<{ id: number, name: string }>>([])
@@ -85,6 +87,7 @@ export function EditActivityDialog({ open, onOpenChange, activity, onSuccess }: 
         responsable: activity.organizer, // Fallback
         montantRequis: activity.price ? activity.price.toString() : "",
         devise: (activity.currency as "CDF" | "USD") || "CDF",
+        audience: activity.audience || "public",
       })
     }
   }, [activity, open])
@@ -169,6 +172,7 @@ export function EditActivityDialog({ open, onOpenChange, activity, onSuccess }: 
         organizer: formData.organizers.join(", ") || formData.responsable || "Non spécifié",
         price: formData.type === "payante" ? parseFloat(formData.montantRequis) : null,
         currency: formData.type === "payante" ? formData.devise : null,
+        audience: formData.audience,
       }
 
       // Ajouter la durée si calculée
@@ -230,6 +234,31 @@ export function EditActivityDialog({ open, onOpenChange, activity, onSuccess }: 
                 rows={2}
               />
             </div>
+
+            {/* Audience */}
+            <div className="grid gap-2">
+              <Label>Audience (Visibilité) *</Label>
+              <RadioGroup
+                value={formData.audience}
+                onValueChange={(value: "public" | "moniteurs") => setFormData({ ...formData, audience: value })}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="public" id="public_edit" />
+                  <Label htmlFor="public_edit" className="font-normal cursor-pointer">
+                    <span className="flex items-center gap-2">Public (Tout le monde)</span>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="moniteurs" id="moniteurs_edit" />
+                  <Label htmlFor="moniteurs_edit" className="font-normal cursor-pointer">
+                    <span className="flex items-center gap-2">Moniteurs Uniquement</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Description */}
 
             {/* Type */}
             <div className="grid gap-2">

@@ -27,6 +27,7 @@ class Activity extends Model
         'maxParticipants',
         'status',
         'organizer',
+        'audience',
     ];
 
     protected $casts = [

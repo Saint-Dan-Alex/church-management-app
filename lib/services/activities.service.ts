@@ -17,8 +17,8 @@ export interface Activity {
   maxParticipants: number
   status: string
   organizer: string
-  created_at?: string
   updated_at?: string
+  audience?: "public" | "moniteurs"
 }
 
 export interface CreateActivityData {
@@ -36,6 +36,7 @@ export interface CreateActivityData {
   organizer: string
   price?: number
   currency?: string
+  audience?: "public" | "moniteurs"
 }
 
 export const activitiesService = {

@@ -29,6 +29,7 @@ class StoreActivityRequest extends FormRequest
             'maxParticipants' => 'nullable|integer',
             'status' => 'required|in:upcoming,ongoing,completed',
             'organizer' => 'required|string|max:255',
+            'audience' => 'nullable|in:public,moniteurs',
         ];
     }
 }

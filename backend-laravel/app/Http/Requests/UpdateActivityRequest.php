@@ -30,6 +30,7 @@ class UpdateActivityRequest extends FormRequest
             'price' => 'sometimes|nullable|numeric|min:0',
             'currency' => 'sometimes|nullable|in:CDF,USD',
             'status' => 'sometimes|nullable|in:upcoming,ongoing,completed,cancelled,planifiee,en_cours,terminee,annulee',
+            'audience' => 'sometimes|nullable|in:public,moniteurs',
         ];
     }
 }
