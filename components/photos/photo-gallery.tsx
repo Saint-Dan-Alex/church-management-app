@@ -124,7 +124,18 @@ export function PhotoGallery({ searchQuery = "", album, refreshKey = 0 }: PhotoG
                 src={photo.url}
                 alt={photo.titre}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                  e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.add('flex');
+                }}
               />
+              {/* Fallback Icon (Link) */}
+              <div className="fallback-icon hidden absolute inset-0 items-center justify-center bg-muted text-muted-foreground flex-col p-4 text-center">
+                <span className="text-4xl mb-2">🔗</span>
+                <span className="text-sm font-medium">Publication Externe</span>
+              </div>
+
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                 <Button
                   size="icon"
@@ -133,13 +144,27 @@ export function PhotoGallery({ searchQuery = "", album, refreshKey = 0 }: PhotoG
                 >
                   <Eye className="h-4 w-4" />
                 </Button>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  onClick={() => handleDownload(photo)}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
+                {/* Bouton Lien Externe si c'est une URL externe */}
+                {photo.url.startsWith('http') && !photo.url.includes('/storage/') && (
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    onClick={() => window.open(photo.url, '_blank')}
+                    title="Ouvrir le lien"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                )}
+                {/* Bouton Download (seulement si c'est une image interne ou affichable) */}
+                {(!photo.url.startsWith('http') || photo.url.includes('/storage/')) && (
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    onClick={() => handleDownload(photo)}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -194,7 +219,8 @@ export function PhotoGallery({ searchQuery = "", album, refreshKey = 0 }: PhotoG
             </CardContent>
           </Card>
         ))
-      )}
-    </div>
+      )
+      }
+    </div >
   )
 }

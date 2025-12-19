@@ -139,7 +139,7 @@ export function UploadPhotoDialog({ open, onOpenChange, onSuccess }: UploadPhoto
         // Mode URL Externe
         try {
           await photosService.create({
-            titre: formData.titre || 'Image Externe',
+            titre: formData.titre || 'Publication Externe',
             description: formData.description || null,
             album: formData.album,
             auteur: formData.auteur || 'Admin',
@@ -262,24 +262,35 @@ export function UploadPhotoDialog({ open, onOpenChange, onSuccess }: UploadPhoto
             {/* Mode Lien Externe */}
             {uploadMode === "url" && (
               <div className="grid gap-2">
-                <Label htmlFor="url">URL de l'image *</Label>
+                <Label htmlFor="url">Lien de la publication ou de l'image *</Label>
                 <Input
                   id="url"
-                  placeholder="https://exemple.com/image.jpg"
+                  placeholder="https://facebook.com/..."
                   value={externalUrl}
                   onChange={(e) => setExternalUrl(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Utilisez le lien direct de l'image (Clic droit {'>'} "Copier l'adresse de l'image")
-                </p>
+
+                {/* Aperçu ou Fallback */}
                 {externalUrl && (
-                  <div className="mt-2 relative w-full h-40 bg-muted rounded-md overflow-hidden border">
+                  <div className="mt-2 relative w-full h-40 bg-muted rounded-md overflow-hidden border flex items-center justify-center">
                     <img
                       src={externalUrl}
                       alt="Aperçu"
                       className="w-full h-full object-contain"
-                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Image+Invalide' }}
+                      onError={(e) => {
+                        // Image cachée si erreur (lien de publication)
+                        e.currentTarget.style.display = 'none';
+                        // Afficher le fallback
+                        const fallback = document.getElementById('url-fallback');
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
                     />
+                    {/* Fallback - invisible par défaut, affiché si img onError */}
+                    <div id="url-fallback" className="hidden flex-col items-center justify-center text-muted-foreground p-4 text-center absolute inset-0">
+                      <span className="mb-2 text-2xl">🔗</span>
+                      <p className="text-sm font-medium">Lien vers publication</p>
+                      <p className="text-xs">L'image ne peut pas être affichée directement, mais le lien fonctionnera.</p>
+                    </div>
                   </div>
                 )}
               </div>
