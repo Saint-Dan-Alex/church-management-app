@@ -274,14 +274,14 @@ export function BilanFinancier() {
       {/* Résumé Imprimable */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Actions</CardTitle>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handlePrint}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
+            <CardTitle className="text-lg sm:text-xl">Actions</CardTitle>
+            <div className="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
+              <Button variant="outline" size="sm" onClick={handlePrint} className="w-full sm:w-auto">
                 <Printer className="mr-2 h-4 w-4" />
                 Imprimer le rapport
               </Button>
-              <Button variant="outline" size="sm" onClick={handleExport}>
+              <Button variant="outline" size="sm" onClick={handleExport} className="w-full sm:w-auto">
                 <Download className="mr-2 h-4 w-4" />
                 Exporter
               </Button>

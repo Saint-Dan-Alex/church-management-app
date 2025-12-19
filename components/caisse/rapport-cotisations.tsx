@@ -364,33 +364,35 @@ export function RapportCotisations() {
             <CardDescription>Performance individuelle de recouvrement</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Moniteur</TableHead>
-                  <TableHead className="text-right">Nombre</TableHead>
-                  <TableHead className="text-right">Total CDF</TableHead>
-                  <TableHead className="text-right">Total USD</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Object.entries(statsParMoniteur)
-                  .sort(([, a], [, b]) => b.totalCDF - a.totalCDF)
-                  // Limiter à top 10 pour l'impression si trop long ? Non, on met tout.
-                  .map(([moniteur, stats]) => (
-                    <TableRow key={moniteur}>
-                      <TableCell className="font-medium">{moniteur}</TableCell>
-                      <TableCell className="text-right">{stats.nombre}</TableCell>
-                      <TableCell className="text-right font-semibold text-green-600">
-                        {stats.totalCDF > 0 ? `${stats.totalCDF.toLocaleString()} CDF` : '-'}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-green-700">
-                        {stats.totalUSD > 0 ? `${stats.totalUSD.toLocaleString()} USD` : '-'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Moniteur</TableHead>
+                    <TableHead className="text-right">Nombre</TableHead>
+                    <TableHead className="text-right">Total CDF</TableHead>
+                    <TableHead className="text-right">Total USD</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(statsParMoniteur)
+                    .sort(([, a], [, b]) => b.totalCDF - a.totalCDF)
+                    // Limiter à top 10 pour l'impression si trop long ? Non, on met tout.
+                    .map(([moniteur, stats]) => (
+                      <TableRow key={moniteur}>
+                        <TableCell className="font-medium whitespace-nowrap">{moniteur}</TableCell>
+                        <TableCell className="text-right">{stats.nombre}</TableCell>
+                        <TableCell className="text-right font-semibold text-green-600 whitespace-nowrap">
+                          {stats.totalCDF > 0 ? `${stats.totalCDF.toLocaleString()} CDF` : '-'}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-green-700 whitespace-nowrap">
+                          {stats.totalUSD > 0 ? `${stats.totalUSD.toLocaleString()} USD` : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -398,17 +400,17 @@ export function RapportCotisations() {
       {/* Tableau détaillé */}
       <Card className="print:shadow-none print:border-none">
         <CardHeader className="print:hidden">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
             <div>
               <CardTitle>Détails des cotisations</CardTitle>
               <CardDescription>Liste détaillée des cotisations trouvées</CardDescription>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handlePrint}>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button variant="outline" size="sm" onClick={handlePrint} className="w-full sm:w-auto">
                 <Printer className="mr-2 h-4 w-4" />
                 Imprimer
               </Button>
-              <Button variant="outline" size="sm" onClick={handleExport}>
+              <Button variant="outline" size="sm" onClick={handleExport} className="w-full sm:w-auto">
                 <Download className="mr-2 h-4 w-4" />
                 Exporter
               </Button>
@@ -420,44 +422,46 @@ export function RapportCotisations() {
           <h3 className="text-xl font-bold uppercase underline">Détails des Transactions</h3>
         </div>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Moniteur</TableHead>
-                <TableHead>Période</TableHead>
-                <TableHead className="text-right">Montant</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Mode</TableHead>
-                <TableHead>N° Reçu</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredData.length === 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    Aucune cotisation trouvée pour cette période.
-                  </TableCell>
+                  <TableHead className="whitespace-nowrap">Moniteur</TableHead>
+                  <TableHead className="whitespace-nowrap">Période</TableHead>
+                  <TableHead className="text-right whitespace-nowrap">Montant</TableHead>
+                  <TableHead className="whitespace-nowrap">Date</TableHead>
+                  <TableHead className="whitespace-nowrap">Mode</TableHead>
+                  <TableHead className="whitespace-nowrap">N° Reçu</TableHead>
                 </TableRow>
-              ) : (
-                filteredData.map((cotisation) => (
-                  <TableRow key={cotisation.id}>
-                    <TableCell className="font-medium">{cotisation.membre_nom || cotisation.moniteur}</TableCell>
-                    <TableCell>{cotisation.mois && cotisation.annee ? `${cotisation.mois} ${cotisation.annee}` : cotisation.periode}</TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {Number(cotisation.montant).toLocaleString()} {cotisation.devise}
+              </TableHeader>
+              <TableBody>
+                {filteredData.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      Aucune cotisation trouvée pour cette période.
                     </TableCell>
-                    <TableCell>
-                      {cotisation.date_cotisation
-                        ? new Date(cotisation.date_cotisation).toLocaleDateString("fr-FR")
-                        : "-"}
-                    </TableCell>
-                    <TableCell>{cotisation.mode_paiement || "-"}</TableCell>
-                    <TableCell>{cotisation.numero_recu || "-"}</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredData.map((cotisation) => (
+                    <TableRow key={cotisation.id}>
+                      <TableCell className="font-medium whitespace-nowrap">{cotisation.membre_nom || cotisation.moniteur}</TableCell>
+                      <TableCell className="whitespace-nowrap">{cotisation.mois && cotisation.annee ? `${cotisation.mois} ${cotisation.annee}` : cotisation.periode}</TableCell>
+                      <TableCell className="text-right font-semibold whitespace-nowrap">
+                        {Number(cotisation.montant).toLocaleString()} {cotisation.devise}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {cotisation.date_cotisation
+                          ? new Date(cotisation.date_cotisation).toLocaleDateString("fr-FR")
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">{cotisation.mode_paiement || "-"}</TableCell>
+                      <TableCell className="whitespace-nowrap">{cotisation.numero_recu || "-"}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
