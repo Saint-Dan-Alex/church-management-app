@@ -145,10 +145,62 @@ export function RapportCotisations() {
   }
 
   const handleExport = () => {
-    toast({
-      title: "Export en cours",
-      description: "Le rapport sera téléchargé en format Excel/PDF",
-    })
+    if (filteredData.length === 0) {
+      toast({
+        title: "Aucune donnée",
+        description: "Il n'y a aucune donnée à exporter pour cette période.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      // En-têtes CSV
+      const headers = ["Moniteur", "Période", "Montant", "Devise", "Date", "Mode Paiement", "Numéro Reçu", "Statut"]
+
+      // Contenu CSV
+      const csvRows = [
+        headers.join(","), // Ligne d'en-tête
+        ...filteredData.map(row => {
+          const date = row.date_cotisation ? new Date(row.date_cotisation).toLocaleDateString("fr-FR") : "-"
+          const periode = row.mois && row.annee ? `${row.mois} ${row.annee}` : (row.periode || "-")
+          const moniteur = (row.membre_nom || row.moniteur || "").replace(/,/g, " ") // Éviter les virgules dans le CSV
+
+          return [
+            `"${moniteur}"`,
+            `"${periode}"`,
+            row.montant,
+            row.devise,
+            `"${date}"`,
+            `"${row.mode_paiement || "-"}"`,
+            `"${row.numero_recu || "-"}"`,
+            `"${row.statut || "Payé"}"`
+          ].join(",")
+        })
+      ]
+
+      const csvContent = "\uFEFF" + csvRows.join("\n") // \uFEFF pour l'encodage UTF-8 correct dans Excel
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.setAttribute("href", url)
+      link.setAttribute("download", `rapport_cotisations_${new Date().toISOString().split('T')[0]}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      toast({
+        title: "Succès",
+        description: "Le fichier CSV a été généré et téléchargé.",
+      })
+    } catch (error) {
+      console.error("Erreur export:", error)
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'export.",
+        variant: "destructive"
+      })
+    }
   }
 
   const handlePrint = () => {
