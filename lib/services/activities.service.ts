@@ -107,4 +107,44 @@ export const activitiesService = {
   async addExpense(data: any) {
     return await api.post('/expenses', data)
   },
+
+  // Gestion des présences multi-jours
+  async getPresences(params: {
+    activity_id?: string
+    moniteur_id?: string
+    participant_id?: string
+    date_presence?: string
+    date_debut?: string
+    date_fin?: string
+    statut?: string
+  }) {
+    let url = '/presences'
+    const queryParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, String(value))
+      }
+    })
+    const queryString = queryParams.toString()
+    if (queryString) {
+      url += `?${queryString}`
+    }
+    return await api.get(url)
+  },
+
+  async markPresence(data: {
+    activity_id: string
+    participant_id: string
+    participant_type: string
+    date_presence: string
+    statut: "present" | "absent" | "retard" | "excuse"
+    check_only?: boolean // Si on veut juste checker sans créer (pas implémenté back mais utile pour la logique)
+    heure_arrivee?: string
+    remarque?: string
+    mode_enregistrement?: string
+    moniteur_nom?: string // Legacy/Fallback
+    activity_nom?: string
+  }) {
+    return await api.post('/presences', data)
+  },
 }

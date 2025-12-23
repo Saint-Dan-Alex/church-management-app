@@ -71,7 +71,71 @@ class PresenceController extends Controller
     {
         $data = $request->validated();
 
-        // Normalisation pour le polymorphisme
+        // Map simple types to full class names
+        $typeMap = [
+            'child' => \App\Models\Child::class,
+            'enfant' => \App\Models\Child::class, 
+            'monitor' => \App\Models\Monitor::class,
+            'moniteur' => \App\Models\Monitor::class,
+            // 'visiteur' => NO MODEL
+        ];
+
+        $isVisitor = false;
+        if (isset($data['participant_type']) && isset($typeMap[strtolower($data['participant_type'])])) {
+            $data['participant_type'] = $typeMap[strtolower($data['participant_type'])];
+        } elseif (isset($data['participant_type']) && strtolower($data['participant_type']) === 'visiteur') {
+            $isVisitor = true;
+        }
+
+        // Populate legacy fields if missing to satisfy DB constraints
+        if (empty($data['moniteur_nom']) || empty($data['moniteur_prenom']) || empty($data['moniteur_nom_complet'])) {
+             $nom = 'Inconnu';
+             $prenom = '';
+             $nomComplet = 'Inconnu';
+
+             if (!empty($data['participant_id'])) {
+                 // 1. Try to find via ActivityParticipant (Source of truth for current activity)
+                 // This handles Visitors who exist in activity_participants but have no own table
+                 $accPart = \App\Models\ActivityParticipant::where('activity_id', $data['activity_id'])
+                     ->where('participant_id', $data['participant_id'])
+                     ->first();
+                 
+                 if ($accPart) {
+                     $nom = $accPart->participant_nom;
+                     $prenom = $accPart->participant_prenom;
+                     $nomComplet = $accPart->participant_nom_complet;
+                 } 
+                 // 2. If not found or if we want standard Model data (for Child/Monitor)
+                 elseif (!empty($data['participant_type']) && !$isVisitor) {
+                     try {
+                         $participantClass = $data['participant_type'];
+                         if (class_exists($participantClass)) {
+                             $participant = $participantClass::find($data['participant_id']);
+                             if ($participant) {
+                                 $nom = $participant->nom ?? 'Inconnu';
+                                 $prenom = $participant->prenom ?? $participant->postnom ?? ''; 
+                                 $nomComplet = $participant->nom_complet ?? trim("$nom $prenom");
+                             }
+                         }
+                     } catch (\Exception $e) {}
+                 }
+             }
+             
+             $data['moniteur_nom'] = $data['moniteur_nom'] ?? $nom;
+             $data['moniteur_prenom'] = $data['moniteur_prenom'] ?? $prenom;
+             $data['moniteur_nom_complet'] = $data['moniteur_nom_complet'] ?? $nomComplet;
+        }
+
+        // Handle Visitor / Invalid Type Case:
+        // If it's a visitor or the class doesn't exist, we CANNOT store the polymorphic relation
+        // because it would break $presence->participant access or validation.
+        // We just store the name (done above) and NULL the polymorphic fields.
+        if ($isVisitor || (isset($data['participant_type']) && !class_exists($data['participant_type']))) {
+            $data['participant_id'] = null;
+            $data['participant_type'] = null;
+        }
+
+        // Normalisation pour le polymorphisme (Legacy fallback)
         if (empty($data['participant_id']) && !empty($data['moniteur_id'])) {
             $data['participant_id'] = $data['moniteur_id'];
             $data['participant_type'] = \App\Models\Monitor::class;
@@ -136,10 +200,22 @@ class PresenceController extends Controller
     {
         $data = $request->validated();
         
-        // Normalisation pour update aussi
+        // Map simple types to full class names
+        $typeMap = [
+            'child' => \App\Models\Child::class,
+            'enfant' => \App\Models\Child::class, 
+            'monitor' => \App\Models\Monitor::class,
+            'moniteur' => \App\Models\Monitor::class,
+        ];
+
+        if (isset($data['participant_type']) && isset($typeMap[strtolower($data['participant_type'])])) {
+            $data['participant_type'] = $typeMap[strtolower($data['participant_type'])];
+        }
+
+        // Normalisation pour le polymorphisme (Legacy fallback)
         if (empty($data['participant_id']) && !empty($data['moniteur_id'])) {
-             $data['participant_id'] = $data['moniteur_id'];
-             $data['participant_type'] = \App\Models\Monitor::class;
+            $data['participant_id'] = $data['moniteur_id'];
+            $data['participant_type'] = \App\Models\Monitor::class;
         }
 
         $presence->update($data);
