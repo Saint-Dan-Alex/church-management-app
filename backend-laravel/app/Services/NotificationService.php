@@ -30,11 +30,13 @@ class NotificationService
      */
     public static function notifyPresence($userId, $presenceData)
     {
+        $nom_complet = $presenceData['moniteur_nom'] ?? $presenceData['participant_nom'] ?? 'Un participant';
+
         return Notification::create([
             'user_id' => $userId,
             'type' => 'presence',
             'title' => 'Nouvelle présence enregistrée',
-            'message' => "{$presenceData['moniteur_nom']} est présent à l'activité {$presenceData['activity_nom']}",
+            'message' => "{$nom_complet} est présent à l'activité {$presenceData['activity_nom']}",
             'data' => [
                 'presence_id' => $presenceData['id'],
                 'activity_id' => $presenceData['activity_id'],

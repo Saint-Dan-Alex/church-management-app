@@ -93,7 +93,7 @@ class Monitor extends Model
 
     public function presences()
     {
-        return $this->hasMany(Presence::class, 'moniteur_id');
+        return $this->morphMany(Presence::class, 'participant');
     }
 
     /**

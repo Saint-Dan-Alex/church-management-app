@@ -14,6 +14,8 @@ class Presence extends Model
     protected $fillable = [
         'activity_id',
         'activity_nom',
+        'participant_id',
+        'participant_type',
         'moniteur_id',
         'moniteur_nom',
         'moniteur_prenom',
@@ -39,6 +41,11 @@ class Presence extends Model
     public function moniteur()
     {
         return $this->belongsTo(Monitor::class, 'moniteur_id');
+    }
+
+    public function participant()
+    {
+        return $this->morphTo();
     }
 
     // Scopes

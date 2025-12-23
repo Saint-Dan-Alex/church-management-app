@@ -35,6 +35,10 @@ class PresenceController extends Controller
             $query->where('moniteur_id', $request->moniteur_id);
         }
 
+        if ($request->has('participant_id')) {
+            $query->where('participant_id', $request->participant_id);
+        }
+
         if ($request->has('statut')) {
             $query->where('statut', $request->statut);
         }
@@ -65,14 +69,29 @@ class PresenceController extends Controller
      */
     public function store(StorePresenceRequest $request): JsonResponse
     {
-        $presence = Presence::create($request->validated());
+        $data = $request->validated();
+
+        // Normalisation pour le polymorphisme
+        if (empty($data['participant_id']) && !empty($data['moniteur_id'])) {
+            $data['participant_id'] = $data['moniteur_id'];
+            $data['participant_type'] = \App\Models\Monitor::class;
+        }
+
+        $presence = Presence::create($data);
+
+        // Récupérer le nom pour la notification
+        $nomNotification = $presence->moniteur_nom_complet ?? 'Un participant';
+        if ($presence->participant) {
+            $nomNotification = $presence->participant->nom_complet ?? $nomNotification;
+        }
 
         // Créer une notification
         NotificationService::notifyPresence(
             auth()->id() ?? 1,
             [
                 'id' => $presence->id,
-                'moniteur_nom' => $presence->moniteur_nom,
+                'moniteur_nom' => $presence->moniteur_nom, // Legacy
+                'participant_nom' => $nomNotification,
                 'activity_nom' => $presence->activity_nom ?? 'Activité',
                 'activity_id' => $presence->activity_id,
                 'statut' => $presence->statut,
@@ -115,7 +134,15 @@ class PresenceController extends Controller
      */
     public function update(StorePresenceRequest $request, Presence $presence): JsonResponse
     {
-        $presence->update($request->validated());
+        $data = $request->validated();
+        
+        // Normalisation pour update aussi
+        if (empty($data['participant_id']) && !empty($data['moniteur_id'])) {
+             $data['participant_id'] = $data['moniteur_id'];
+             $data['participant_type'] = \App\Models\Monitor::class;
+        }
+
+        $presence->update($data);
 
         return response()->json([
             'message' => 'Présence mise à jour avec succès',

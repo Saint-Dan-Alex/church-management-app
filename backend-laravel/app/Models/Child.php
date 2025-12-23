@@ -79,6 +79,11 @@ class Child extends Model
         return $this->morphMany(ActivityParticipant::class, 'participant');
     }
 
+    public function presences()
+    {
+        return $this->morphMany(Presence::class, 'participant');
+    }
+
     /**
      * Obtenir le User associé à l'enfant
      */

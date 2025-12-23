@@ -3,7 +3,7 @@
 import { useRef } from "react"
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/ui/button"
-import { CHURCH_INFO } from "@/lib/config/church-info"
+import { ReportHeader } from "@/components/reports/report-header"
 import {
   Dialog,
   DialogContent,
@@ -194,7 +194,7 @@ export function ReceiptGenerator({
     `)
 
     printWindow.document.close()
-    
+
     // Attendre le chargement puis imprimer
     printWindow.onload = () => {
       setTimeout(() => {
@@ -374,7 +374,7 @@ export function ReceiptGenerator({
     `)
 
     printWindow.document.close()
-    
+
     // Attendre le chargement puis ouvrir le dialogue d'impression
     printWindow.onload = () => {
       setTimeout(() => {
@@ -425,9 +425,8 @@ export function ReceiptGenerator({
     return num.toString() // Pour les très grands nombres
   }
 
-  const montantEnLettres = `${numberToWords(payment.montantPaye, payment.devise)} ${
-    payment.devise === "CDF" ? "francs congolais" : "dollars américains"
-  }`
+  const montantEnLettres = `${numberToWords(payment.montantPaye, payment.devise)} ${payment.devise === "CDF" ? "francs congolais" : "dollars américains"
+    }`
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -445,25 +444,13 @@ export function ReceiptGenerator({
           className="bg-white p-8 border-2 border-gray-300 rounded-lg print:border-0"
           id="receipt-to-print"
         >
-          {/* En-tête avec logo */}
-          <div className="text-center border-b-2 border-gray-800 pb-6 mb-6">
-            <div className="flex flex-col items-center gap-3 mb-4">
-              <div className="w-32 h-32 flex items-center justify-center">
-                <img
-                  src={CHURCH_INFO.logo}
-                  alt={CHURCH_INFO.logoAlt}
-                  className="max-w-full max-h-full object-contain"
-                  style={{ width: '128px', height: '128px' }}
-                />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-blue-900">{CHURCH_INFO.name}</h2>
-                <p className="text-base text-blue-700">{CHURCH_INFO.ministry}</p>
-              </div>
+          {/* En-tête standardisé */}
+          <div className="mb-6">
+            <ReportHeader title="REÇU DE PAIEMENT" />
+            <div className="text-center mt-2">
+              <p className="text-sm text-gray-600">{CHURCH_INFO.address}</p>
+              {CHURCH_INFO.phone && <p className="text-sm text-gray-600">{CHURCH_INFO.phone}</p>}
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mt-4">REÇU DE PAIEMENT</h1>
-            <p className="text-sm text-gray-600 mt-2">{CHURCH_INFO.address}</p>
-            {CHURCH_INFO.phone && <p className="text-sm text-gray-600">{CHURCH_INFO.phone}</p>}
           </div>
 
           {/* Numéro de reçu */}
@@ -538,12 +525,12 @@ export function ReceiptGenerator({
                 {payment.methodePaiement === "cash"
                   ? "Espèces"
                   : payment.methodePaiement === "mobile_money"
-                  ? "Mobile Money"
-                  : payment.methodePaiement === "bank_transfer"
-                  ? "Virement bancaire"
-                  : payment.methodePaiement === "card"
-                  ? "Carte bancaire"
-                  : "Autre"}
+                    ? "Mobile Money"
+                    : payment.methodePaiement === "bank_transfer"
+                      ? "Virement bancaire"
+                      : payment.methodePaiement === "card"
+                        ? "Carte bancaire"
+                        : "Autre"}
               </p>
             </div>
           )}
