@@ -43,6 +43,10 @@ class PresenceController extends Controller
             $query->where('statut', $request->statut);
         }
 
+        if ($request->has('date_presence')) {
+            $query->whereDate('date_presence', $request->date_presence);
+        }
+
         if ($request->has('date_debut')) {
             $query->whereDate('date_presence', '>=', $request->date_debut);
         }
