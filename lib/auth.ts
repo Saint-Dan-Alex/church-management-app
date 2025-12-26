@@ -19,6 +19,14 @@ export type LoginResult =
 
 export async function login(email: string, password: string): Promise<LoginResult> {
   try {
+    console.log("DEBUG LOGIN ATTEMPT:", email, "URL:", `${API_URL}/auth/login`);
+
+    // Log to file for agent inspection
+    try {
+      const fs = require('fs');
+      fs.appendFileSync('auth_debug_frontend.log', `[${new Date().toISOString()}] Attempt: ${email} to ${API_URL}/auth/login\n`);
+    } catch (e) { }
+
     const response = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
@@ -27,6 +35,11 @@ export async function login(email: string, password: string): Promise<LoginResul
     })
 
     const data = await response.json()
+
+    try {
+      const fs = require('fs');
+      fs.appendFileSync('auth_debug_frontend.log', `[${new Date().toISOString()}] Response: ${response.status} ${JSON.stringify(data)}\n`);
+    } catch (e) { }
 
     if (!response.ok) {
       // Validation error or other
@@ -48,6 +61,10 @@ export async function login(email: string, password: string): Promise<LoginResul
 
   } catch (error) {
     console.error("Login error:", error)
+    try {
+      const fs = require('fs');
+      fs.appendFileSync('auth_debug_frontend.log', `[${new Date().toISOString()}] ERROR: ${error}\n`);
+    } catch (e) { }
     return { success: false, error: "Erreur de connexion au serveur" }
   }
 }

@@ -1,0 +1,6 @@
+[2025-12-26T07:21:56.614Z] Attempt: kabuyadan5@gmail.com to http://127.0.0.1:8000/api/v1/auth/login
+[2025-12-26T07:21:57.400Z] Response: 422 {"message":"DEBUG: Controller IS reachable but forcing error.","errors":{"email":["DEBUG: Controller IS reachable but forcing error."]}}
+[2025-12-26T07:22:16.414Z] Attempt: kabuyadan5@gmail.com to http://127.0.0.1:8000/api/v1/auth/login
+[2025-12-26T07:22:16.876Z] Response: 422 {"message":"DEBUG: Controller IS reachable but forcing error.","errors":{"email":["DEBUG: Controller IS reachable but forcing error."]}}
+[2025-12-26T07:29:17.525Z] Attempt: kabuyadan5@gmail.com to http://127.0.0.1:8000/api/v1/auth/login
+[2025-12-26T07:29:29.131Z] Response: 200 {"message":"Code de vérification envoyé à votre email.","two_factor_required":true,"email":"kabuyadan5@gmail.com"}
