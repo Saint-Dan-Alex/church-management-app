@@ -418,6 +418,7 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
                   titre: activity.title,
                   description: activity.description || "",
                   date: activity.date,
+                  dateFin: activity.end_date,
                   heureDebut: activity.time.split(' - ')[0] || activity.time,
                   heureFin: activity.time.split(' - ')[1] || "",
                   lieu: activity.location,

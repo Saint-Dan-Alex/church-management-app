@@ -33,6 +33,7 @@ interface ActivityReportProps {
     titre: string
     description: string
     date: Date | string
+    dateFin?: Date | string
     heureDebut: string
     heureFin: string
     lieu: string
@@ -67,6 +68,19 @@ export function ActivityReport({
       month: "long",
       year: "numeric",
     })
+  }
+
+  const formatDateRange = (startDate: Date | string, endDate?: Date | string) => {
+    const start = formatDate(startDate)
+    if (endDate && new Date(endDate).getTime() !== new Date(startDate).getTime()) {
+      const end = new Date(endDate).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+      return `${start} → ${end}`
+    }
+    return start
   }
 
   const formatCurrency = (montant: number, devise: string) => {
@@ -122,7 +136,7 @@ export function ActivityReport({
       {/* En-tête du rapport standardisé */}
       <ReportHeader
         title="Rapport d'Activité"
-        subtitle={`${activite.titre} - ${new Date(activite.date).toLocaleDateString("fr-FR", { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`}
+        subtitle={`${activite.titre} - ${formatDateRange(activite.date, activite.dateFin)}`}
       />
 
       {/* En-tête du rapport */}
@@ -142,9 +156,9 @@ export function ActivityReport({
                 <Badge
                   variant="outline"
                   className={`text-xs sm:text-sm ${(activite.statut === "termine" || activite.statut === "completed") ? "bg-green-100 text-green-700" :
-                      activite.statut === "upcoming" ? "bg-yellow-100 text-yellow-800" :
-                        activite.statut === "cancelled" ? "bg-red-100 text-red-700" :
-                          "bg-blue-100 text-blue-700"
+                    activite.statut === "upcoming" ? "bg-yellow-100 text-yellow-800" :
+                      activite.statut === "cancelled" ? "bg-red-100 text-red-700" :
+                        "bg-blue-100 text-blue-700"
                     }`}
                 >
                   {(() => {
@@ -186,7 +200,7 @@ export function ActivityReport({
               <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 mt-0.5 shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm text-gray-600">Date</p>
-                <p className="text-xs sm:text-sm font-medium break-words">{formatDate(activite.date)}</p>
+                <p className="text-xs sm:text-sm font-medium break-words">{formatDateRange(activite.date, activite.dateFin)}</p>
               </div>
             </div>
             <div className="flex items-start gap-2 sm:gap-3">
