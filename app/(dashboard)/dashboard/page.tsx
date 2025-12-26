@@ -21,11 +21,10 @@ export default async function DashboardPage() {
   const monitorsActifs = dashboardStats?.monitors?.actifs ?? 0
   const enfantsInscrits = dashboardStats?.children?.total ?? 0
 
-  // Calcul du % de présence moyenne (Effectif moyen / Total inscrits)
-  let presenceMoyenne = "0%"
-  if (dashboardStats?.worship?.moyenne_effectif && enfantsInscrits > 0) {
-    const pourcentage = (dashboardStats.worship.moyenne_effectif / enfantsInscrits) * 100
-    presenceMoyenne = `${Math.round(pourcentage)}%`
+  // Effectif moyen au culte (remplace le % qui n'avait pas de sens)
+  let presenceMoyenne = "0"
+  if (dashboardStats?.worship?.moyenne_effectif) {
+    presenceMoyenne = String(dashboardStats.worship.moyenne_effectif)
   }
 
   const cultesTotal = dashboardStats?.worship?.total_cultes ?? 0
@@ -51,7 +50,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard title="Moniteurs Actifs" value={String(monitorsActifs)} description="" icon={Users} trend="neutral" color="blue" />
         <StatsCard title="Enfants Inscrits" value={String(enfantsInscrits)} description="" icon={Baby} trend="neutral" color="green" />
-        <StatsCard title="Présence Moyenne" value={presenceMoyenne} description="" icon={UserCheck} trend="neutral" color="orange" />
+        <StatsCard title="Effectif Moyen" value={presenceMoyenne} description="par culte" icon={UserCheck} trend="neutral" color="orange" />
         <StatsCard title="Cultes (total)" value={String(cultesTotal)} description="" icon={Church} trend="neutral" color="purple" />
       </div>
 

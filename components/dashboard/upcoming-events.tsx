@@ -5,6 +5,7 @@ interface EventItem {
   id: string | number
   title: string
   date: string
+  endDate?: string
   time: string
   location: string
   type: string
@@ -19,14 +20,22 @@ export function UpcomingEvents({ data = [] }: UpcomingEventsProps) {
     return <div className="text-sm text-gray-500 py-4">Aucun événement à venir.</div>
   }
 
-  // Formatage de la date
-  const formatDate = (dateStr: string) => {
+  // Formatage de la date (avec support plage de dates)
+  const formatDate = (startDate: string, endDate?: string) => {
     try {
-      if (!dateStr) return "";
-      const date = new Date(dateStr);
-      return new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' }).format(date);
+      if (!startDate) return "";
+      const start = new Date(startDate);
+      const startFormatted = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' }).format(start);
+
+      if (endDate && endDate !== startDate) {
+        const end = new Date(endDate);
+        const endFormatted = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(end);
+        return `${startFormatted} → ${endFormatted}`;
+      }
+
+      return startFormatted;
     } catch (e) {
-      return dateStr;
+      return startDate;
     }
   }
 
@@ -49,7 +58,7 @@ export function UpcomingEvents({ data = [] }: UpcomingEventsProps) {
           <div className="space-y-1 text-xs text-gray-600">
             <div className="flex items-center gap-2">
               <Calendar className="h-3 w-3" />
-              <span className="capitalize">{formatDate(event.date)}</span>
+              <span className="capitalize">{formatDate(event.date, event.endDate)}</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-3 w-3" />

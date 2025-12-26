@@ -45,18 +45,25 @@ class DashboardController extends Controller
 
         $sallesActives = Salle::where('actif', true)->count();
 
-        // Récupération des événements à venir
-        $upcomingEvents = Activity::where('date', '>=', now())
+        // Récupération des événements à venir (inclut activités en cours: end_date >= now OU date >= now)
+        $upcomingEvents = Activity::where(function ($query) {
+                $query->where('end_date', '>=', now()->toDateString())
+                      ->orWhere(function ($q) {
+                          $q->whereNull('end_date')
+                            ->where('date', '>=', now()->toDateString());
+                      });
+            })
             ->orderBy('date')
             ->take(5)
             ->get()
             ->map(function ($activity) {
                 return [
                     'id' => $activity->id,
-                    'title' => $activity->titre,
+                    'title' => $activity->title,
                     'date' => $activity->date,
-                    'time' => $activity->heure_debut,
-                    'location' => $activity->lieu,
+                    'endDate' => $activity->end_date,
+                    'time' => $activity->time,
+                    'location' => $activity->location,
                     'type' => 'activity'
                 ];
             });
