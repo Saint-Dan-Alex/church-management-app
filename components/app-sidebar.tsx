@@ -106,6 +106,29 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
+
+  useEffect(() => {
+    // Lire les infos utilisateur depuis le cookie auth-user
+    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=')
+      acc[key] = value
+      return acc
+    }, {} as Record<string, string>)
+
+    if (cookies['auth-user']) {
+      try {
+        const userData = JSON.parse(decodeURIComponent(cookies['auth-user']))
+        setUser({ name: userData.name || 'Utilisateur', email: userData.email || '' })
+      } catch (e) {
+        console.error('Error parsing auth-user cookie', e)
+      }
+    }
+  }, [])
+
+  const displayName = user?.name || 'Admin'
+  const displayEmail = user?.email || 'admin@eglise.com'
+  const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'A'
 
   return (
     <Sidebar className="bg-blue-600 border-r border-blue-500 print:hidden">
@@ -149,11 +172,11 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="w-full text-white hover:bg-blue-700">
                   <Avatar className="h-7 w-7">
-                    <AvatarFallback className="bg-white text-blue-600 text-xs font-semibold">N</AvatarFallback>
+                    <AvatarFallback className="bg-white text-blue-600 text-xs font-semibold">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start text-left">
-                    <span className="text-sm font-medium text-white">Admin</span>
-                    <span className="text-xs text-blue-200">admin@eglise.com</span>
+                    <span className="text-sm font-medium text-white">{displayName}</span>
+                    <span className="text-xs text-blue-200">{displayEmail}</span>
                   </div>
                   <ChevronDown className="ml-auto h-4 w-4" />
                 </SidebarMenuButton>

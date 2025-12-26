@@ -39,11 +39,6 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        \Illuminate\Support\Facades\Log::info('LOGIN ATTEMPT', [
-            'input' => $request->all(),
-            'ip' => $request->ip()
-        ]);
-
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -51,23 +46,11 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        \Illuminate\Support\Facades\Log::info('USER LOOKUP', [
-            'email_searched' => $request->email,
-            'user_found' => $user ? $user->id : 'NULL',
-        ]);
-
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            \Illuminate\Support\Facades\Log::warning('LOGIN FAILED', [
-                'user_exists' => (bool)$user,
-                'hash_check' => $user ? Hash::check($request->password, $user->password) : 'N/A'
-            ]);
-            
             throw ValidationException::withMessages([
                 'email' => ['Les identifiants fournis sont incorrects.'],
             ]);
         }
-        
-        \Illuminate\Support\Facades\Log::info('LOGIN SUCCESS - 2FA Generation');
 
         // Logic 2FA : Toujours activé
         $this->twoFactorService->generateCode($user);
