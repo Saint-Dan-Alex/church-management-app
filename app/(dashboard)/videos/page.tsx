@@ -9,6 +9,7 @@ import { VideoGallery } from "@/components/videos/video-gallery"
 import { UploadVideoDialog } from "@/components/videos/upload-video-dialog"
 import { videosService } from "@/lib/services/videos.service"
 import type { VideoCategory } from "@/lib/types/api"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function VideosPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -45,15 +46,17 @@ export default function VideosPage() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Vidéothèque</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Gérez vos vidéos et enregistrements</p>
         </div>
-        <Button
-          onClick={() => setIsUploadDialogOpen(true)}
-          size="sm"
-          className="w-full sm:w-auto text-xs sm:text-sm"
-        >
-          <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-          <span className="hidden sm:inline">Ajouter Vidéo</span>
-          <span className="sm:hidden">Ajouter</span>
-        </Button>
+        <PermissionGuard permission="videos.create">
+          <Button
+            onClick={() => setIsUploadDialogOpen(true)}
+            size="sm"
+            className="w-full sm:w-auto text-xs sm:text-sm"
+          >
+            <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Ajouter Vidéo</span>
+            <span className="sm:hidden">Ajouter</span>
+          </Button>
+        </PermissionGuard>
       </div>
 
       <Tabs defaultValue="all" className="space-y-4">

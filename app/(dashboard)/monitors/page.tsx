@@ -9,6 +9,7 @@ import { AddMonitorDialog } from "@/components/monitors/add-monitor-dialog"
 import { QRCodeDialog } from "@/components/monitors/qr-code-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AttendanceHistory } from "@/components/monitors/attendance-history"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function MonitorsPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -28,10 +29,12 @@ export default function MonitorsPage() {
             <Download className="mr-2 h-4 w-4" />
             Exporter
           </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="flex-1 md:flex-none">
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter un Moniteur
-          </Button>
+          <PermissionGuard permission="moniteurs.create">
+            <Button onClick={() => setIsAddDialogOpen(true)} className="flex-1 md:flex-none">
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter un Moniteur
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 

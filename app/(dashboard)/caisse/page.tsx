@@ -12,6 +12,7 @@ import { SortiesList } from "@/components/caisse/sorties-list"
 import { AddSortieDialog } from "@/components/caisse/add-sortie-dialog"
 import { BilanFinancier } from "@/components/caisse/bilan-financier"
 import { sortiesService, type SortieCategory } from "@/lib/services/sorties.service"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function CaissePage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -49,18 +50,22 @@ export default function CaissePage() {
           <p className="text-sm sm:text-base text-muted-foreground">Gestion des entrées, sorties et bilan financier</p>
         </div>
         {activeTab === "entrees" && (
-          <Button onClick={() => setIsAddDialogOpen(true)} className="w-full sm:w-auto text-xs sm:text-sm">
-            <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Nouvelle Cotisation</span>
-            <span className="sm:hidden">Ajouter Cotisation</span>
-          </Button>
+          <PermissionGuard permission="paiements.create">
+            <Button onClick={() => setIsAddDialogOpen(true)} className="w-full sm:w-auto text-xs sm:text-sm">
+              <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Nouvelle Cotisation</span>
+              <span className="sm:hidden">Ajouter Cotisation</span>
+            </Button>
+          </PermissionGuard>
         )}
         {activeTab === "sorties" && (
-          <Button onClick={() => setIsAddSortieDialogOpen(true)} variant="destructive" className="w-full sm:w-auto text-xs sm:text-sm">
-            <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Nouvelle Sortie</span>
-            <span className="sm:hidden">Ajouter Sortie</span>
-          </Button>
+          <PermissionGuard permission="depenses.create">
+            <Button onClick={() => setIsAddSortieDialogOpen(true)} variant="destructive" className="w-full sm:w-auto text-xs sm:text-sm">
+              <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Nouvelle Sortie</span>
+              <span className="sm:hidden">Ajouter Sortie</span>
+            </Button>
+          </PermissionGuard>
         )}
       </div>
 

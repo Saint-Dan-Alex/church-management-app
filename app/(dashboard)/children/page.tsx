@@ -8,6 +8,7 @@ import { ChildrenList } from "@/components/children/children-list"
 import { AddChildDialog } from "@/components/children/add-child-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChildrenStats } from "@/components/children/children-stats"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function ChildrenPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -28,10 +29,12 @@ export default function ChildrenPage() {
               <Download className="mr-2 h-4 w-4" />
               Exporter
             </Button>
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Ajouter un Enfant
-            </Button>
+            <PermissionGuard permission="enfants.create">
+              <Button onClick={() => setIsAddDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Ajouter un Enfant
+              </Button>
+            </PermissionGuard>
           </div>
         </div>
 

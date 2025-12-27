@@ -9,6 +9,7 @@ import { UsersList } from "@/components/users/users-list"
 import { RolesPermissions } from "@/components/users/roles-permissions"
 import { AddUserDialog } from "@/components/users/add-user-dialog"
 import { UserRole, getRoleLabel } from "@/lib/permissions"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -22,10 +23,12 @@ export default function UsersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Utilisateurs</h1>
           <p className="text-muted-foreground">Gérez les utilisateurs et leurs permissions</p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nouvel Utilisateur
-        </Button>
+        <PermissionGuard permission="users.create">
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nouvel Utilisateur
+          </Button>
+        </PermissionGuard>
       </div>
 
       <Tabs defaultValue="users" className="space-y-4">

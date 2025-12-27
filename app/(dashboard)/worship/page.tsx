@@ -7,6 +7,7 @@ import { Plus, FileText, BarChart3 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { WorshipReportList } from "@/components/worship/worship-report-list"
 import { AddWorshipReportDialog } from "@/components/worship/add-worship-report-dialog"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function WorshipPage() {
   const router = useRouter()
@@ -25,10 +26,12 @@ export default function WorshipPage() {
           <h1 className="text-3xl font-bold tracking-tight text-blue-900">Rapports de Culte</h1>
           <p className="text-gray-600">Gestion des rapports dominicaux par salle</p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)} className="w-full md:w-auto">
-          <Plus className="mr-2 h-4 w-4" />
-          Nouveau Rapport
-        </Button>
+        <PermissionGuard permission="presences.create">
+          <Button onClick={() => setIsAddDialogOpen(true)} className="w-full md:w-auto">
+            <Plus className="mr-2 h-4 w-4" />
+            Nouveau Rapport
+          </Button>
+        </PermissionGuard>
       </div>
 
       {/* Statistiques rapides et navigation vers rapports */}

@@ -137,6 +137,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'telephone' => $user->telephone,
                 'role' => strtoupper($user->user_type ?? 'USER'),
+                'permissions' => $user->getAllPermissions()->pluck('name'),
             ]
         ]);
     }

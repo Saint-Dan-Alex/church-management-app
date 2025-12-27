@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ActivitiesList } from "@/components/activities/activities-list"
 import { CalendarView } from "@/components/activities/calendar-view"
 import { AddActivityDialog } from "@/components/activities/add-activity-dialog"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function ActivitiesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -23,10 +24,12 @@ export default function ActivitiesPage() {
           <h1 className="text-3xl font-bold tracking-tight">Activités</h1>
           <p className="text-muted-foreground">Gestion des activités et calendrier</p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)} className="w-full md:w-auto">
-          <Plus className="mr-2 h-4 w-4" />
-          Nouvelle Activité
-        </Button>
+        <PermissionGuard permission="activites.create">
+          <Button onClick={() => setIsAddDialogOpen(true)} className="w-full md:w-auto">
+            <Plus className="mr-2 h-4 w-4" />
+            Nouvelle Activité
+          </Button>
+        </PermissionGuard>
       </div>
 
       <Tabs defaultValue="calendar" className="space-y-4">

@@ -11,6 +11,7 @@ export interface User {
   name: string
   role: string
   token?: string
+  permissions?: string[]
 }
 
 export type LoginResult =

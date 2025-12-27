@@ -7,6 +7,7 @@ import { Plus, Search } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BlogList } from "@/components/blog/blog-list"
 import { AddBlogDialog } from "@/components/blog/add-blog-dialog"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function BlogPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -25,15 +26,17 @@ export default function BlogPage() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Blog</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Articles et communications</p>
         </div>
-        <Button
-          onClick={() => setIsAddDialogOpen(true)}
-          size="sm"
-          className="w-full sm:w-auto text-xs sm:text-sm"
-        >
-          <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-          <span className="hidden sm:inline">Nouvel Article</span>
-          <span className="sm:hidden">Nouveau</span>
-        </Button>
+        <PermissionGuard permission="blog.create">
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            size="sm"
+            className="w-full sm:w-auto text-xs sm:text-sm"
+          >
+            <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Nouvel Article</span>
+            <span className="sm:hidden">Nouveau</span>
+          </Button>
+        </PermissionGuard>
       </div>
 
       <Tabs defaultValue="all" className="space-y-4">

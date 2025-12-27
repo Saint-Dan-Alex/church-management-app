@@ -35,100 +35,109 @@ import {
 } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useUser } from "@/hooks/use-user"
 
-const menuItems = [
+type MenuItem = {
+  title: string
+  url: string
+  icon: any
+  permission?: string
+}
+
+const menuItems: MenuItem[] = [
   {
     title: "Tableau de Bord",
     url: "/dashboard",
     icon: LayoutDashboard,
+    permission: "dashboard.view",
   },
   {
     title: "Moniteurs",
     url: "/monitors",
     icon: Users,
+    permission: "moniteurs.read",
   },
   {
     title: "Enfants",
     url: "/children",
     icon: Baby,
+    permission: "enfants.read",
   },
   {
     title: "Cultes",
     url: "/worship",
     icon: Church,
+    permission: "presences.read", // Assuming Cultes relates to attendance/presences
   },
   {
     title: "Salles",
     url: "/salles",
     icon: Building2,
+    permission: "salles.read",
   },
   {
     title: "Activités",
     url: "/activities",
     icon: Calendar,
+    permission: "activites.read",
   },
   {
     title: "Enseignements",
     url: "/teachings",
     icon: BookOpen,
+    permission: "blog.read", // Using blog permission for teachings as fallback
   },
   {
     title: "Blog",
     url: "/blog",
     icon: FileText,
+    permission: "blog.read",
   },
   {
     title: "Vidéothèque",
     url: "/videos",
     icon: Video,
+    permission: "videos.read",
   },
   {
     title: "Photothèque",
     url: "/photos",
     icon: ImageIcon,
+    permission: "photos.read",
   },
   {
     title: "Caisse",
     url: "/caisse",
     icon: Wallet,
+    permission: "caisse.read",
   },
   {
     title: "Utilisateurs",
     url: "/users",
     icon: Shield,
+    permission: "users.read",
   },
   {
     title: "Paramètres",
     url: "/settings",
     icon: Settings,
+    permission: "roles.manage",
   },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
+  const { user, can } = useUser()
 
-  useEffect(() => {
-    // Lire les infos utilisateur depuis le cookie auth-user
-    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-      const [key, value] = cookie.trim().split('=')
-      acc[key] = value
-      return acc
-    }, {} as Record<string, string>)
-
-    if (cookies['auth-user']) {
-      try {
-        const userData = JSON.parse(decodeURIComponent(cookies['auth-user']))
-        setUser({ name: userData.name || 'Utilisateur', email: userData.email || '' })
-      } catch (e) {
-        console.error('Error parsing auth-user cookie', e)
-      }
-    }
-  }, [])
-
-  const displayName = user?.name || 'Admin'
-  const displayEmail = user?.email || 'admin@eglise.com'
+  const displayName = user?.name || 'Utilisateur'
+  const displayEmail = user?.email || ''
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'A'
+
+  const filteredMenuItems = menuItems.filter(item => {
+    // Items without permission are visible to everyone
+    if (!item.permission) return true
+    return can(item.permission)
+  })
 
   return (
     <Sidebar className="bg-blue-600 border-r border-blue-500 print:hidden">
@@ -147,7 +156,7 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-blue-200 uppercase text-[11px] font-semibold tracking-wider px-3">MENU</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

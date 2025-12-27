@@ -6,6 +6,7 @@ import { Plus, Download } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { SalleList } from "@/components/salles/salle-list"
 import { AddSalleDialog } from "@/components/salles/add-salle-dialog"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function SallesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -24,10 +25,12 @@ export default function SallesPage() {
             <Download className="mr-2 h-4 w-4" />
             Exporter
           </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nouvelle Salle
-          </Button>
+          <PermissionGuard permission="salles.create">
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nouvelle Salle
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Plus, Search, Download } from "lucide-react"
 import { AddTeachingDialog } from "@/components/teachings/add-teaching-dialog"
 import { TeachingList } from "@/components/teachings/teaching-list"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function TeachingsPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -31,11 +32,13 @@ export default function TeachingsPage() {
             <span className="hidden xs:inline">Exporter</span>
             <span className="xs:hidden">Export</span>
           </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
-            <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Nouvel Enseignement</span>
-            <span className="sm:hidden">Nouveau</span>
-          </Button>
+          <PermissionGuard permission="blog.create">
+            <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
+              <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Nouvel Enseignement</span>
+              <span className="sm:hidden">Nouveau</span>
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 

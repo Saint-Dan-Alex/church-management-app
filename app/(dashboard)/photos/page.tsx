@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { AlbumGrid } from "@/components/photos/album-grid"
 import { UploadPhotoDialog } from "@/components/photos/upload-photo-dialog"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function PhotosPage() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
@@ -22,15 +23,17 @@ export default function PhotosPage() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Photothèque</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Gérez vos photos et albums</p>
         </div>
-        <Button
-          onClick={() => setIsUploadDialogOpen(true)}
-          size="sm"
-          className="w-full sm:w-auto text-xs sm:text-sm"
-        >
-          <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-          <span className="hidden sm:inline">Uploader Photos</span>
-          <span className="sm:hidden">Uploader</span>
-        </Button>
+        <PermissionGuard permission="photos.create">
+          <Button
+            onClick={() => setIsUploadDialogOpen(true)}
+            size="sm"
+            className="w-full sm:w-auto text-xs sm:text-sm"
+          >
+            <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Uploader Photos</span>
+            <span className="sm:hidden">Uploader</span>
+          </Button>
+        </PermissionGuard>
       </div>
 
       {/* Grille des albums */}
