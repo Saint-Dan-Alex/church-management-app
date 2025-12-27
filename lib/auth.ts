@@ -7,6 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1
 export interface User {
   id: number
   email: string
+  telephone?: string
   name: string
   role: string
   token?: string
@@ -14,15 +15,15 @@ export interface User {
 
 export type LoginResult =
   | { success: true; user?: User; token?: string; two_factor_required?: false }
-  | { success: true; two_factor_required: true; email: string }
+  | { success: true; two_factor_required: true; identifier: string; channel: 'email' | 'sms' }
   | { success: false; error: string }
 
-export async function login(email: string, password: string): Promise<LoginResult> {
+export async function login(identifier: string, password: string): Promise<LoginResult> {
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
       cache: 'no-store'
     })
 
@@ -30,12 +31,17 @@ export async function login(email: string, password: string): Promise<LoginResul
 
     if (!response.ok) {
       // Validation error or other
-      const errorMessage = data.message || data.errors?.email?.[0] || "Erreur de connexion"
+      const errorMessage = data.message || data.errors?.identifier?.[0] || data.errors?.email?.[0] || "Erreur de connexion"
       return { success: false, error: errorMessage }
     }
 
     if (data.two_factor_required) {
-      return { success: true, two_factor_required: true, email: data.email }
+      return {
+        success: true,
+        two_factor_required: true,
+        identifier: data.identifier || data.email,
+        channel: data.channel || 'email'
+      }
     }
 
     // Should not happen with current backend logic (always 2FA), but consistent handling:
@@ -52,12 +58,12 @@ export async function login(email: string, password: string): Promise<LoginResul
   }
 }
 
-export async function verifyTwoFactor(email: string, code: string): Promise<LoginResult> {
+export async function verifyTwoFactor(identifier: string, code: string): Promise<LoginResult> {
   try {
     const response = await fetch(`${API_URL}/auth/verify-2fa`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({ email, code }),
+      body: JSON.stringify({ identifier, code }),
       cache: 'no-store'
     })
 

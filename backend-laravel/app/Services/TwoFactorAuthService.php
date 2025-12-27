@@ -8,20 +8,36 @@ use Illuminate\Support\Facades\Hash;
 
 class TwoFactorAuthService
 {
+    protected SmsService $smsService;
+
+    public function __construct(SmsService $smsService)
+    {
+        $this->smsService = $smsService;
+    }
+
     /**
      * Generate a new 2FA code for the user.
+     * @param User $user
+     * @param string $channel 'email' or 'sms'
+     * @param string|null $phoneNumber Phone number if channel is 'sms'
      */
-    public function generateCode(User $user): void
+    public function generateCode(User $user, string $channel = 'email', ?string $phoneNumber = null): void
     {
         $code = (string) mt_rand(100000, 999999);
 
         $user->forceFill([
             'two_factor_email_code' => Hash::make($code),
             'two_factor_expires_at' => now()->addMinutes(10),
+            'two_factor_channel' => $channel, // Stocker le canal utilisé
         ])->save();
 
-        // Send notification
-        $user->notify(new TwoFactorEmailCode($code));
+        // Envoyer selon le canal
+        if ($channel === 'sms' && $phoneNumber) {
+            $this->smsService->sendTwoFactorCode($phoneNumber, $code);
+        } else {
+            // Par défaut, envoyer par email
+            $user->notify(new TwoFactorEmailCode($code));
+        }
     }
 
     /**
@@ -52,6 +68,8 @@ class TwoFactorAuthService
         $user->forceFill([
             'two_factor_email_code' => null,
             'two_factor_expires_at' => null,
+            'two_factor_channel' => null,
         ])->save();
     }
 }
+

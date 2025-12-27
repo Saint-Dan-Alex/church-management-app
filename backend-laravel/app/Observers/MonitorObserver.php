@@ -4,36 +4,53 @@ namespace App\Observers;
 
 use App\Models\Monitor;
 use App\Models\User;
+use App\Services\SmsService;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class MonitorObserver
 {
+    protected SmsService $smsService;
+
+    public function __construct(SmsService $smsService)
+    {
+        $this->smsService = $smsService;
+    }
+
     /**
      * Handle the Monitor "created" event.
      */
     public function created(Monitor $monitor): void
     {
         // Créer automatiquement un User pour le moniteur
-        if ($monitor->email) {
+        if ($monitor->email || $monitor->telephone) {
             // Vérifier si un user avec cet email existe déjà
-            $existingUser = User::where('email', $monitor->email)->first();
+            $existingUser = null;
+            if ($monitor->email) {
+                $existingUser = User::where('email', $monitor->email)->first();
+            }
             
             if (!$existingUser) {
-                // Générer un mot de passe temporaire
-                $temporaryPassword = Str::random(12);
+                // Mot de passe par défaut
+                $defaultPassword = '11111111';
                 
                 User::create([
                     'name' => $monitor->nom_complet,
                     'email' => $monitor->email,
-                    'password' => Hash::make($temporaryPassword),
+                    'telephone' => $monitor->telephone,
+                    'password' => Hash::make($defaultPassword),
                     'user_type' => 'monitor',
                     'user_id' => $monitor->id,
-                    'temporary_password' => $temporaryPassword, // Pour l'envoyer par email
+                    'temporary_password' => $defaultPassword,
                 ]);
 
-                // TODO: Envoyer un email avec le mot de passe temporaire
-                // Mail::to($monitor->email)->send(new WelcomeMonitorMail($monitor, $temporaryPassword));
+                // Envoyer le mot de passe par SMS si téléphone disponible
+                if ($monitor->telephone) {
+                    $this->smsService->sendDefaultPassword(
+                        $monitor->telephone,
+                        $monitor->nom_complet ?? $monitor->prenom,
+                        $defaultPassword
+                    );
+                }
             }
         }
     }

@@ -13,9 +13,10 @@ import { toast } from "sonner"
 export function LoginForm() {
   const router = useRouter()
   const [step, setStep] = useState<'login' | '2fa'>('login')
-  const [email, setEmail] = useState("")
+  const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [twoFactorCode, setTwoFactorCode] = useState("")
+  const [channel, setChannel] = useState<'email' | 'sms'>('email')
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
@@ -28,12 +29,14 @@ export function LoginForm() {
     setError("")
     setLoading(true)
 
-    const result = await login(email, password)
+    const result = await login(identifier, password)
 
     if (result.success) {
       if (result.two_factor_required) {
+        setChannel(result.channel || 'email')
         setStep('2fa')
-        toast.success("Code de vérification envoyé")
+        const channelLabel = result.channel === 'sms' ? 'par SMS' : 'par email'
+        toast.success(`Code de vérification envoyé ${channelLabel}`)
       } else {
         // Direct login
         handleSuccess(result.user)
@@ -50,7 +53,7 @@ export function LoginForm() {
     setError("")
     setLoading(true)
 
-    const result = await verifyTwoFactor(email, twoFactorCode)
+    const result = await verifyTwoFactor(identifier, twoFactorCode)
 
     if (result.success) {
       handleSuccess(result.user)
@@ -70,7 +73,7 @@ export function LoginForm() {
 
   async function handleResendCode() {
     setResending(true)
-    const res = await resendTwoFactorCode(email)
+    const res = await resendTwoFactorCode(identifier)
     if (res.success) {
       toast.success("Nouveau code envoyé")
     } else {
@@ -121,16 +124,16 @@ export function LoginForm() {
         <CardContent>
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700">Email</Label>
+              <Label htmlFor="identifier" className="text-gray-700">Email ou Téléphone</Label>
               <div className="relative">
                 <Input
-                  id="email" type="email" placeholder="admin@eglise.com"
-                  value={email} onChange={(e) => setEmail(e.target.value)}
+                  id="identifier" type="text" placeholder="email@exemple.com ou +243..."
+                  value={identifier} onChange={(e) => setIdentifier(e.target.value)}
                   required
                   className="pl-10 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:ring-primary"
                 />
                 <div className="absolute left-3 top-2.5 text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                 </div>
               </div>
             </div>
@@ -177,7 +180,7 @@ export function LoginForm() {
           Vérification
         </CardTitle>
         <CardDescription className="text-gray-500">
-          Un code à 6 chiffres a été envoyé à <strong className="text-gray-900">{email}</strong>
+          Un code à 6 chiffres a été envoyé {channel === 'sms' ? 'par SMS à' : 'à'} <strong className="text-gray-900">{identifier}</strong>
         </CardDescription>
       </CardHeader>
       <CardContent>

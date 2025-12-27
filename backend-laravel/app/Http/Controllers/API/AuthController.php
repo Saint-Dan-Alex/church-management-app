@@ -22,48 +22,74 @@ class AuthController extends Controller
      * @OA\Post(
      *     path="/auth/login",
      *     tags={"Authentication"},
-     *     summary="Connexion utilisateur",
+     *     summary="Connexion utilisateur par email ou téléphone",
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"email", "password"},
-     *             @OA\Property(property="email", type="string", format="email"),
+     *             required={"identifier", "password"},
+     *             @OA\Property(property="identifier", type="string", description="Email ou numéro de téléphone"),
      *             @OA\Property(property="password", type="string", format="password")
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Connexion réussie ou 2FA requis", @OA\JsonContent(oneOf={
-     *         @OA\Schema(properties={@OA\Property(property="token", type="string")}),
-     *         @OA\Schema(properties={@OA\Property(property="two_factor_required", type="boolean"), @OA\Property(property="message", type="string")})
-     *     }))
+     *     @OA\Response(response=200, description="Connexion réussie ou 2FA requis")
      * )
      */
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'identifier' => 'required|string', // Email ou téléphone
             'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $identifier = $request->identifier;
+        
+        // Détecter si c'est un email ou un téléphone
+        $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL);
+        
+        if ($isEmail) {
+            $user = User::where('email', $identifier)->first();
+            $channel = 'email';
+            $contactInfo = $identifier;
+        } else {
+            // C'est un numéro de téléphone - chercher dans la table users ou via le moniteur/enfant lié
+            $user = User::where('telephone', $identifier)->first();
+            
+            // Si pas trouvé, chercher via le téléphone du moniteur
+            if (!$user) {
+                $monitor = \App\Models\Monitor::where('telephone', $identifier)->first();
+                if ($monitor) {
+                    $user = User::where('user_type', 'monitor')->where('user_id', $monitor->id)->first();
+                }
+            }
+            
+            $channel = 'sms';
+            $contactInfo = $identifier;
+        }
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['Les identifiants fournis sont incorrects.'],
+                'identifier' => ['Les identifiants fournis sont incorrects.'],
             ]);
         }
 
-        // Logic 2FA : Toujours activé
-        $this->twoFactorService->generateCode($user);
+        // Vérifier si le compte est actif
+        if (isset($user->active) && !$user->active) {
+            throw ValidationException::withMessages([
+                'identifier' => ['Ce compte est désactivé.'],
+            ]);
+        }
+
+        // Générer et envoyer le code 2FA selon le canal
+        $this->twoFactorService->generateCode($user, $channel, $channel === 'sms' ? $contactInfo : null);
+
+        $messageChannel = $channel === 'sms' ? 'votre téléphone' : 'votre email';
 
         return response()->json([
-            'message' => 'Code de vérification envoyé à votre email.',
+            'message' => "Code de vérification envoyé à {$messageChannel}.",
             'two_factor_required' => true,
-            'email' => $user->email // Utile pour le frontend
+            'channel' => $channel,
+            'identifier' => $isEmail ? $user->email : $contactInfo // Pour le frontend
         ]);
-        
-        // Note: Si on voulait désactiver la 2FA, on retournerait le token ici :
-        // $token = $user->createToken('auth-token')->plainTextToken;
-        // return response()->json(['token' => $token, 'user' => $user]);
     }
 
     /**
@@ -74,8 +100,8 @@ class AuthController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"email", "code"},
-     *             @OA\Property(property="email", type="string", format="email"),
+     *             required={"identifier", "code"},
+     *             @OA\Property(property="identifier", type="string", description="Email ou téléphone"),
      *             @OA\Property(property="code", type="string")
      *         )
      *     ),
@@ -85,13 +111,13 @@ class AuthController extends Controller
     public function verifyTwoFactor(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'identifier' => 'required|string',
             'code' => 'required|string|size:6',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = $this->findUserByIdentifier($request->identifier);
 
-        if (! $user || ! $this->twoFactorService->validateCode($user, $request->code)) {
+        if (!$user || !$this->twoFactorService->validateCode($user, $request->code)) {
             throw ValidationException::withMessages([
                 'code' => ['Le code est invalide ou a expiré.'],
             ]);
@@ -109,6 +135,7 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'telephone' => $user->telephone,
                 'role' => strtoupper($user->user_type ?? 'USER'),
             ]
         ]);
@@ -119,18 +146,52 @@ class AuthController extends Controller
      *     path="/auth/resend-code",
      *     tags={"Authentication"},
      *     summary="Renvoyer le code 2FA",
-     *     @OA\RequestBody(required=true, @OA\JsonContent(@OA\Property(property="email", type="string")))
+     *     @OA\RequestBody(required=true, @OA\JsonContent(@OA\Property(property="identifier", type="string")))
      * )
      */
     public function resendCode(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
+        $request->validate(['identifier' => 'required|string']);
         
-        $user = User::where('email', $request->email)->firstOrFail();
+        $identifier = $request->identifier;
+        $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL);
         
-        $this->twoFactorService->generateCode($user);
+        $user = $this->findUserByIdentifier($identifier);
+        
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'identifier' => ['Utilisateur non trouvé.'],
+            ]);
+        }
+        
+        $channel = $isEmail ? 'email' : 'sms';
+        $this->twoFactorService->generateCode($user, $channel, $channel === 'sms' ? $identifier : null);
         
         return response()->json(['message' => 'Nouveau code envoyé']);
+    }
+    
+    /**
+     * Trouver un utilisateur par email ou téléphone
+     */
+    protected function findUserByIdentifier(string $identifier): ?User
+    {
+        $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL);
+        
+        if ($isEmail) {
+            return User::where('email', $identifier)->first();
+        }
+        
+        // Chercher par téléphone
+        $user = User::where('telephone', $identifier)->first();
+        
+        if (!$user) {
+            $monitor = \App\Models\Monitor::where('telephone', $identifier)->first();
+            if ($monitor) {
+                $user = User::where('user_type', 'monitor')->where('user_id', $monitor->id)->first();
+            }
+        }
+        
+        return $user;
     }
 
     /**
