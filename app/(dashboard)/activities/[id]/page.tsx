@@ -31,6 +31,8 @@ import { activitiesService, type Activity } from "@/lib/services/activities.serv
 import { paymentsService } from "@/lib/services/payments.service"
 import { expensesService } from "@/lib/services"
 import { toast } from "sonner"
+import { useUser } from "@/hooks/use-user"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 import { AddPaymentDialog } from "@/components/activities/add-payment-dialog"
 import { AddExpenseDialog } from "@/components/activities/add-expense-dialog"
@@ -41,6 +43,7 @@ import { Plus } from "lucide-react"
 export default function ActivityDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { id } = use(params)
+  const { can } = useUser()
   const [activity, setActivity] = useState<Activity | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -58,45 +61,45 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
     loadActivity()
   }, [id])
 
-  // ... (loadActivity, handleDelete, formatDate, getTypeBadge, getStatutBadge, getStatusLabel unchanged)
-
   const loadActivity = async () => {
     try {
       setIsLoading(true)
       const data = await activitiesService.getById(id)
       setActivity(data)
 
-      // Charger les données connexes pour le rapport et les règles métiers
-      const [paymentsResp, expensesResp] = await Promise.all([
-        paymentsService.getAll(id),
-        expensesService.getAll({ activity_id: id })
-      ])
+      // Charger les données connexes si l'utilisateur a les droits de lecture (sinon ça plantera ou sera vide)
+      if (can('paiements.read') || can('depenses.read')) {
+        const [paymentsResp, expensesResp] = await Promise.all([
+          can('paiements.read') ? paymentsService.getAll(id) : Promise.resolve([]),
+          can('depenses.read') ? expensesService.getAll({ activity_id: id }) : Promise.resolve([])
+        ])
 
-      const rawPayments = Array.isArray(paymentsResp) ? paymentsResp : (paymentsResp as any).data || []
-      const rawExpenses = Array.isArray(expensesResp) ? expensesResp : (expensesResp as any).data || []
+        const rawPayments = Array.isArray(paymentsResp) ? paymentsResp : (paymentsResp as any).data || []
+        const rawExpenses = Array.isArray(expensesResp) ? expensesResp : (expensesResp as any).data || []
 
-      // Mapping pour ActivityReport (attend montantPaye, participantNomComplet, etc.)
-      const payments = rawPayments.map((p: any) => ({
-        ...p,
-        id: p.id,
-        montantPaye: parseFloat(String(p.montant || 0)),
-        devise: p.devise,
-        participantNomComplet: p.participant_nom_complet || p.participant_nom || "Inconnu",
-        statut: p.statut
-      }))
+        // Mapping pour ActivityReport
+        const payments = rawPayments.map((p: any) => ({
+          ...p,
+          id: p.id,
+          montantPaye: parseFloat(String(p.montant || 0)),
+          devise: p.devise,
+          participantNomComplet: p.participant_nom_complet || p.participant_nom || "Inconnu",
+          statut: p.statut
+        }))
 
-      const expenses = rawExpenses.map((e: any) => ({
-        ...e,
-        montant: parseFloat(String(e.montant || 0)),
-        date: e.date
-      }))
+        const expenses = rawExpenses.map((e: any) => ({
+          ...e,
+          montant: parseFloat(String(e.montant || 0)),
+          date: e.date
+        }))
 
-      setReportData({ payments, expenses })
+        setReportData({ payments, expenses })
 
-      // Calculer les totaux
-      const totalRecettes = payments.reduce((sum: number, p: any) => sum + p.montantPaye, 0)
-      const totalDepenses = expenses.reduce((sum: number, e: any) => sum + e.montant, 0)
-      setFinanceStats({ totalRecettes, totalDepenses })
+        // Calculer les totaux
+        const totalRecettes = payments.reduce((sum: number, p: any) => sum + p.montantPaye, 0)
+        const totalDepenses = expenses.reduce((sum: number, e: any) => sum + e.montant, 0)
+        setFinanceStats({ totalRecettes, totalDepenses })
+      }
 
     } catch (error) {
       console.error("Erreur lors du chargement de l'activité:", error)
@@ -130,7 +133,6 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
   }
 
   const getTypeBadge = (type: string) => {
-    // Mapping simplifié pour correspondre à votre logique actuelle
     if (type === 'libre') return "bg-green-100 text-green-700"
     if (type === 'payante') return "bg-blue-100 text-blue-700"
     return "bg-gray-100 text-gray-700"
@@ -184,20 +186,29 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex gap-2">
-            <Link href={`/kiosk/activities/${activity.id}/scan`} target="_blank">
-              <Button variant="outline" size="sm" className="hidden sm:flex text-xs sm:text-sm">
-                <QrCode className="h-4 w-4 mr-2" />
-                Scanner
+
+            {can('presences.create') && (
+              <Link href={`/kiosk/activities/${activity.id}/scan`} target="_blank">
+                <Button variant="outline" size="sm" className="hidden sm:flex text-xs sm:text-sm">
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Scanner
+                </Button>
+              </Link>
+            )}
+
+            {can('activites.update') && (
+              <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)} className="text-xs sm:text-sm">
+                <Edit className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Modifier</span>
               </Button>
-            </Link>
-            <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)} className="text-xs sm:text-sm">
-              <Edit className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Modifier</span>
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleDelete} className="text-xs sm:text-sm">
-              <Trash2 className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Supprimer</span>
-            </Button>
+            )}
+
+            {can('activites.delete') && (
+              <Button variant="destructive" size="sm" onClick={handleDelete} className="text-xs sm:text-sm">
+                <Trash2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Supprimer</span>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -322,6 +333,7 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
                   <Users className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Participants</span>
                 </TabsTrigger>
+
                 <TabsTrigger
                   value="presence"
                   className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
@@ -329,28 +341,40 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
                   <QrCode className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Présence</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="paiements"
-                  disabled={activity.type !== 'payante'}
-                  className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all disabled:opacity-50 whitespace-nowrap"
-                >
-                  <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Paiements</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="finances"
-                  className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
-                >
-                  <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Finances</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="rapport"
-                  className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
-                >
-                  <FileTextIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Rapport</span>
-                </TabsTrigger>
+
+                {/* Onglet Paiements - Visible seulement si payante et permission */}
+                {activity.type === 'payante' && can('paiements.read') && (
+                  <TabsTrigger
+                    value="paiements"
+                    className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
+                  >
+                    <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Paiements</span>
+                  </TabsTrigger>
+                )}
+
+                {/* Onglet Finances (Dépenses) - Visible seulement si permission */}
+                {can('depenses.read') && (
+                  <TabsTrigger
+                    value="finances"
+                    className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
+                  >
+                    <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Finances</span>
+                  </TabsTrigger>
+                )}
+
+                {/* Onglet Rapport - Visible seulement si permission view report */}
+                {can('reports.view') && (
+                  <TabsTrigger
+                    value="rapport"
+                    className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
+                  >
+                    <FileTextIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Rapport</span>
+                  </TabsTrigger>
+                )}
+
                 <TabsTrigger
                   value="details"
                   className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
@@ -382,90 +406,100 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
               />
             </TabsContent>
 
-            <TabsContent value="paiements">
-              <div className="flex justify-end mb-3 sm:mb-4">
-                <Button onClick={() => setIsPaymentDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm w-full sm:w-auto">
-                  <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  Encaisser un paiement
-                </Button>
-              </div>
-              <PaymentManager
-                activiteId={activity.id}
-                activiteNom={activity.title}
-                dateActivite={new Date(activity.date)}
-              />
-            </TabsContent>
+            {activity.type === 'payante' && can('paiements.read') && (
+              <TabsContent value="paiements">
+                <div className="flex justify-end mb-3 sm:mb-4">
+                  {can('paiements.create') && (
+                    <Button onClick={() => setIsPaymentDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm w-full sm:w-auto">
+                      <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      Encaisser un paiement
+                    </Button>
+                  )}
+                </div>
+                <PaymentManager
+                  activiteId={activity.id}
+                  activiteNom={activity.title}
+                  dateActivite={new Date(activity.date)}
+                />
+              </TabsContent>
+            )}
 
-            <TabsContent value="finances">
-              <div className="flex justify-end mb-3 sm:mb-4">
-                <Button onClick={() => setIsExpenseDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm w-full sm:w-auto">
-                  <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  Ajouter une dépense
-                </Button>
-              </div>
-              <ExpenseManager
-                activiteId={activity.id}
-                activiteNom={activity.title}
-                totalPaiementsCollectes={0} // TODO: relier pour de vrai si possible ou laisser le composant gérer
-                devisePaiements={activity.currency || "CDF"}
-              />
-            </TabsContent>
+            {can('depenses.read') && (
+              <TabsContent value="finances">
+                <div className="flex justify-end mb-3 sm:mb-4">
+                  {can('depenses.create') && (
+                    <Button onClick={() => setIsExpenseDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm w-full sm:w-auto">
+                      <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      Ajouter une dépense
+                    </Button>
+                  )}
+                </div>
+                <ExpenseManager
+                  activiteId={activity.id}
+                  activiteNom={activity.title}
+                  totalPaiementsCollectes={0}
+                  devisePaiements={activity.currency || "CDF"}
+                />
+              </TabsContent>
+            )}
 
-            <TabsContent value="rapport">
-              <ActivityReport
-                activite={{
-                  id: activity.id,
-                  titre: activity.title,
-                  description: activity.description || "",
-                  date: activity.date,
-                  dateFin: activity.end_date,
-                  heureDebut: activity.time.split(' - ')[0] || activity.time,
-                  heureFin: activity.time.split(' - ')[1] || "",
-                  lieu: activity.location,
-                  type: activity.type,
-                  statut: activity.status,
-                  responsable: activity.organizer
-                }}
-                presences={(Array.isArray(activity.participants) ? activity.participants : []).map((p: any) => ({
-                  id: p.id,
-                  activiteId: activity.id,
-                  activiteNom: activity.title,
-                  moniteurId: p.participant_id || p.id,
-                  moniteurNom: p.participant_nom || "",
-                  moniteurPrenom: p.participant_prenom || "",
-                  moniteurNomComplet: p.participant_nom_complet || `${p.participant_nom || ''} ${p.participant_prenom || ''}`.trim(),
-                  datePresence: new Date(), // Date approximative (date du rapport)
-                  heureArrivee: p.heure_arrivee || "",
-                  statut: (p.statut_presence || (p.est_present ? 'present' : 'absent')) as any,
-                  modeEnregistrement: (p.ajoute_via === 'automatique' ? 'auto' : 'manuel') as any,
-                  createdAt: new Date(),
-                  updatedAt: new Date()
-                }))}
-                payments={reportData.payments}
-                expenses={reportData.expenses}
-                paymentStats={{
-                  totalParticipants: activity.participants?.length || 0,
-                  totalPaye: financeStats.totalRecettes,
-                  totalAttendus: (activity.participants?.length || 0) * (Number(activity.price) || 0),
-                  totalRestant: Math.max(0, (activity.participants?.length || 0) * (Number(activity.price) || 0) - financeStats.totalRecettes),
-                  nombrePaiesComplet: (activity.participants as any[] || []).filter((p: any) =>
-                    p.statut_paiement === 'paid' || parseFloat(String(p.montant_paye || 0)) >= (Number(activity.price) || 0)
-                  ).length,
-                  nombrePaiesPartiel: (activity.participants as any[] || []).filter((p: any) =>
-                    p.statut_paiement === 'partial' || (parseFloat(String(p.montant_paye || 0)) > 0 && parseFloat(String(p.montant_paye || 0)) < (Number(activity.price) || 0))
-                  ).length,
-                  nombreEnAttente: (activity.participants as any[] || []).filter((p: any) =>
-                    !p.montant_paye || parseFloat(String(p.montant_paye || 0)) === 0
-                  ).length,
-                  nombreEnRetard: 0,
-                  tauxPaiement: activity.participants?.length ? Math.round(((activity.participants as any[]).filter((p: any) => parseFloat(String(p.montant_paye || 0)) > 0).length / activity.participants.length) * 100) : 0
-                }}
-                paymentConfig={{
-                  montantRequis: Number(activity.price) || 0,
-                  devise: activity.currency || "CDF"
-                }}
-              />
-            </TabsContent>
+            {can('reports.view') && (
+              <TabsContent value="rapport">
+                <ActivityReport
+                  activite={{
+                    id: activity.id,
+                    titre: activity.title,
+                    description: activity.description || "",
+                    date: activity.date,
+                    dateFin: activity.end_date,
+                    heureDebut: activity.time.split(' - ')[0] || activity.time,
+                    heureFin: activity.time.split(' - ')[1] || "",
+                    lieu: activity.location,
+                    type: activity.type,
+                    statut: activity.status,
+                    responsable: activity.organizer
+                  }}
+                  presences={(Array.isArray(activity.participants) ? activity.participants : []).map((p: any) => ({
+                    id: p.id,
+                    activiteId: activity.id,
+                    activiteNom: activity.title,
+                    moniteurId: p.participant_id || p.id,
+                    moniteurNom: p.participant_nom || "",
+                    moniteurPrenom: p.participant_prenom || "",
+                    moniteurNomComplet: p.participant_nom_complet || `${p.participant_nom || ''} ${p.participant_prenom || ''}`.trim(),
+                    datePresence: new Date(),
+                    heureArrivee: p.heure_arrivee || "",
+                    statut: (p.statut_presence || (p.est_present ? 'present' : 'absent')) as any,
+                    modeEnregistrement: (p.ajoute_via === 'automatique' ? 'auto' : 'manuel') as any,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                  }))}
+                  payments={reportData.payments}
+                  expenses={reportData.expenses}
+                  paymentStats={{
+                    totalParticipants: activity.participants?.length || 0,
+                    totalPaye: financeStats.totalRecettes,
+                    totalAttendus: (activity.participants?.length || 0) * (Number(activity.price) || 0),
+                    totalRestant: Math.max(0, (activity.participants?.length || 0) * (Number(activity.price) || 0) - financeStats.totalRecettes),
+                    nombrePaiesComplet: (activity.participants as any[] || []).filter((p: any) =>
+                      p.statut_paiement === 'paid' || parseFloat(String(p.montant_paye || 0)) >= (Number(activity.price) || 0)
+                    ).length,
+                    nombrePaiesPartiel: (activity.participants as any[] || []).filter((p: any) =>
+                      p.statut_paiement === 'partial' || (parseFloat(String(p.montant_paye || 0)) > 0 && parseFloat(String(p.montant_paye || 0)) < (Number(activity.price) || 0))
+                    ).length,
+                    nombreEnAttente: (activity.participants as any[] || []).filter((p: any) =>
+                      !p.montant_paye || parseFloat(String(p.montant_paye || 0)) === 0
+                    ).length,
+                    nombreEnRetard: 0,
+                    tauxPaiement: activity.participants?.length ? Math.round(((activity.participants as any[]).filter((p: any) => parseFloat(String(p.montant_paye || 0)) > 0).length / activity.participants.length) * 100) : 0
+                  }}
+                  paymentConfig={{
+                    montantRequis: Number(activity.price) || 0,
+                    devise: activity.currency || "CDF"
+                  }}
+                />
+              </TabsContent>
+            )}
 
             <TabsContent value="details">
               <Card>
@@ -497,8 +531,6 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
         defaultCurrency={activity.currency as "CDF" | "USD"}
         onSuccess={() => {
           loadActivity()
-          // Une amélioration serait de trigger un refresh du PaymentManager aussi 
-          // (souvent fait par un context ou un key change)
         }}
       />
 
@@ -523,7 +555,6 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
             onClose={() => setIsPresenceDialogOpen(false)}
             onSuccess={() => {
               loadActivity()
-              // Optionnel: refresh presences if separated
             }}
           />
         </DialogContent>

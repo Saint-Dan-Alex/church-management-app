@@ -9,6 +9,7 @@ import { Calendar, Clock, MapPin, Users, MoreVertical, Edit, Trash, Eye, Loader2
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { activitiesService, type Activity } from "@/lib/services/activities.service"
 import { toast } from "sonner"
+import { useUser } from "@/hooks/use-user"
 
 const categoryColors: Record<string, string> = {
   Enfants: "bg-blue-500",
@@ -21,6 +22,7 @@ const categoryColors: Record<string, string> = {
 
 export function ActivitiesList() {
   const router = useRouter()
+  const { can } = useUser()
   const [activities, setActivities] = useState<Activity[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -129,21 +131,28 @@ export function ActivitiesList() {
                       <Eye className="mr-2 h-4 w-4" />
                       Voir Détails
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation()
-                      router.push(`/activities/${activity.id}/edit`)
-                    }}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Modifier
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={(e) => handleDelete(activity.id, e)}
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Supprimer
-                    </DropdownMenuItem>
+
+                    {can("activites.update") && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/activities/${activity.id}/edit`)
+                        }}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Modifier
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    {can("activites.delete") && (
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={(e) => handleDelete(activity.id, e)}
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Supprimer
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
