@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
 
             AdminSeeder::class,
             RolesAndPermissionsSeeder::class,
+            UserSeeder::class,
             // 1. Salles (en premier - pas de dépendances)
             // SalleSeeder::class,
 

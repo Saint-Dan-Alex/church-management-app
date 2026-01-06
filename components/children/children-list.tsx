@@ -12,6 +12,7 @@ import { EditChildDialog } from "@/components/children/edit-child-dialog"
 import { childrenService } from "@/lib/services/children.service"
 import type { Child } from "@/lib/types/api"
 import { toast } from "sonner"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 interface ChildrenListProps {
   searchQuery?: string
@@ -137,23 +138,27 @@ export function ChildrenList({ searchQuery = "", group, onSelectChild, refreshTr
                     <Eye className="mr-2 h-4 w-4" />
                     Voir détails
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => {
-                    e.stopPropagation()
-                    handleEdit(child)
-                  }}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Modifier
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={(e) => {
+                  <PermissionGuard permission="enfants.update">
+                    <DropdownMenuItem onClick={(e) => {
                       e.stopPropagation()
-                      handleDelete(child.id, `${child.prenom} ${child.nom}`)
-                    }}
-                  >
-                    <Trash className="mr-2 h-4 w-4" />
-                    Supprimer
-                  </DropdownMenuItem>
+                      handleEdit(child)
+                    }}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Modifier
+                    </DropdownMenuItem>
+                  </PermissionGuard>
+                  <PermissionGuard permission="enfants.delete">
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(child.id, `${child.prenom} ${child.nom}`)
+                      }}
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  </PermissionGuard>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

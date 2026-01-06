@@ -13,6 +13,7 @@ import { monitorsService } from "@/lib/services/monitors.service"
 import type { Monitor } from "@/types/monitor"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 interface MonitorListProps {
   searchQuery: string
@@ -210,30 +211,36 @@ export function MonitorList({ searchQuery, onGenerateQR, refreshTrigger = 0 }: M
                     <Eye className="mr-2 h-4 w-4" />
                     Voir détails
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => {
-                    e.stopPropagation()
-                    handleEdit(monitor)
-                  }}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Modifier
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => {
-                    e.stopPropagation()
-                    onGenerateQR(monitor.id)
-                  }}>
-                    <QrCode className="mr-2 h-4 w-4" />
-                    Générer QR Code
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={(e) => {
+                  <PermissionGuard permission="moniteurs.update">
+                    <DropdownMenuItem onClick={(e) => {
                       e.stopPropagation()
-                      handleDelete(monitor.id, monitor.name)
-                    }}
-                  >
-                    <Trash className="mr-2 h-4 w-4" />
-                    Supprimer
-                  </DropdownMenuItem>
+                      handleEdit(monitor)
+                    }}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Modifier
+                    </DropdownMenuItem>
+                  </PermissionGuard>
+                  <PermissionGuard permission="moniteurs.create">
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation()
+                      onGenerateQR(monitor.id)
+                    }}>
+                      <QrCode className="mr-2 h-4 w-4" />
+                      Générer QR Code
+                    </DropdownMenuItem>
+                  </PermissionGuard>
+                  <PermissionGuard permission="moniteurs.delete">
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(monitor.id, monitor.name)
+                      }}
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  </PermissionGuard>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
