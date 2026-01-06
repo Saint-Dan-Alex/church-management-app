@@ -104,7 +104,8 @@ class RolesAndPermissionsSeeder extends Seeder
                 'videos.read',
             ],
 
-            'MONITEUR' => [
+            // Définition de base du Moniteur
+            'MONITEUR' => $moniteurPermissions = [
                 'dashboard.view',
                 'enfants.read',
                 'moniteurs.read',
@@ -116,19 +117,17 @@ class RolesAndPermissionsSeeder extends Seeder
                 'videos.read',
             ],
 
-            'FINANCIER' => [
-                'dashboard.view',
-                'enfants.read',
-                'moniteurs.read',
-                'activites.read',
-                'presences.create', 'presences.read', 'presences.update',
-                'salles.read',
+            // Le Financier EST un Moniteur + Droits financiers
+            'FINANCIER' => array_merge($moniteurPermissions, [
                 'paiements.create', 'paiements.read', 'paiements.update', 'paiements.delete',
                 'depenses.create', 'depenses.read', 'depenses.update',
-                'blog.read',
-                'photos.read',
-                'videos.read',
-            ],
+            ]),
+
+            // Le Com_Activites EST un Moniteur + Droits complets Activités
+            'COM_ACTIVITES' => array_merge($moniteurPermissions, [
+                'activites.create', 'activites.update', 'activites.delete',
+                'presences.delete',
+            ]),
 
             'PARENT' => [
                 'dashboard.view',
