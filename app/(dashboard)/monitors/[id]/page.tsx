@@ -60,13 +60,10 @@ export default function MonitorDetailsPage() {
         const monitorData = await monitorsService.getById(params.id as string)
         setMonitor(monitorData)
 
-        // Récupérer l'historique des affectations
-        // Remarque : Vous devrez peut-être implémenter cette méthode dans votre service
-        // const historiqueData = await monitorsService.getMonitorHistory(params.id as string)
-        // setHistorique(historiqueData)
-
-        // Pour l'instant, on initialise avec un tableau vide
-        setHistorique([])
+        // Récupérer l'historique des affectations depuis la réponse du moniteur
+        // Le backend charge déjà 'historiqueSalles' via la relation
+        const historiqueData = (monitorData as any).historique_salles || (monitorData as any).historiqueSalles || []
+        setHistorique(historiqueData)
       } catch (err) {
         console.error('Erreur lors du chargement des données du moniteur:', err)
         setError('Impossible de charger les données du moniteur')
@@ -152,13 +149,18 @@ export default function MonitorDetailsPage() {
   }
 
   // Filtrage de l'historique
-  const filteredHistorique = historique.filter((entry) => {
+  const filteredHistorique = historique.filter((entry: any) => {
+    if (!searchQuery) return true
     const searchLower = searchQuery.toLowerCase()
+    const salleNom = entry.salle_nom || entry.salleNom || ''
+    const role = entry.role || ''
+    const motif = entry.motif_changement || entry.motifChangement || ''
+    const dateDebut = entry.date_debut || entry.dateDebut || ''
     return (
-      entry.salleNom.toLowerCase().includes(searchLower) ||
-      entry.role.toLowerCase().includes(searchLower) ||
-      entry.motifChangement?.toLowerCase().includes(searchLower) ||
-      formatDate(entry.dateDebut).toLowerCase().includes(searchLower)
+      salleNom.toLowerCase().includes(searchLower) ||
+      role.toLowerCase().includes(searchLower) ||
+      motif.toLowerCase().includes(searchLower) ||
+      formatDate(dateDebut).toLowerCase().includes(searchLower)
     )
   })
 
@@ -431,7 +433,7 @@ export default function MonitorDetailsPage() {
               ) : (
                 <>
                   <div className="space-y-4">
-                    {paginatedHistorique.map((entry) => (
+                    {paginatedHistorique.map((entry: any) => (
                       <div
                         key={entry.id}
                         className={`p-4 rounded-lg border-l-4 ${entry.actif
@@ -441,15 +443,15 @@ export default function MonitorDetailsPage() {
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <p className="font-semibold text-gray-900">{entry.salleNom}</p>
+                            <p className="font-semibold text-gray-900">{entry.salle_nom || entry.salleNom}</p>
                             <p className="text-sm text-gray-600">
-                              {formatDate(entry.dateDebut)}
-                              {entry.dateFin ? ` - ${formatDate(entry.dateFin)}` : " - Aujourd'hui"}
+                              {formatDate(entry.date_debut || entry.dateDebut)}
+                              {(entry.date_fin || entry.dateFin) ? ` - ${formatDate(entry.date_fin || entry.dateFin)}` : " - Aujourd'hui"}
                             </p>
                           </div>
                           <div className="flex flex-col items-end gap-2">
                             <Badge variant="outline" className={getRoleBadge(entry.role)}>
-                              {entry.role.charAt(0).toUpperCase() + entry.role.slice(1)}
+                              {(entry.role || 'membre').charAt(0).toUpperCase() + (entry.role || 'membre').slice(1)}
                             </Badge>
                             {entry.actif && (
                               <Badge className="bg-green-600 text-white">Actif</Badge>
@@ -458,11 +460,11 @@ export default function MonitorDetailsPage() {
                         </div>
                         <div className="text-xs text-gray-600">
                           <Clock className="h-3 w-3 inline mr-1" />
-                          Durée: {calculateDuree(entry.dateDebut, entry.dateFin)}
+                          Durée: {calculateDuree(entry.date_debut || entry.dateDebut, entry.date_fin || entry.dateFin)}
                         </div>
-                        {entry.motifChangement && (
+                        {(entry.motif_changement || entry.motifChangement) && (
                           <div className="mt-2 text-sm text-gray-700 italic">
-                            Motif: {entry.motifChangement}
+                            Motif: {entry.motif_changement || entry.motifChangement}
                           </div>
                         )}
                       </div>

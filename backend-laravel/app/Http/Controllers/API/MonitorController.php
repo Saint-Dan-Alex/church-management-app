@@ -268,6 +268,40 @@ class MonitorController extends Controller
         if (array_key_exists('roleActuel', $data)) $monitorData['role_actuel'] = $data['roleActuel'];
         if (array_key_exists('dateAffectationActuelle', $data)) $monitorData['date_affectation_actuelle'] = $data['dateAffectationActuelle'];
 
+        // Vérifier si la salle change pour créer un historique
+        $ancienneSalleId = $monitor->salle_actuelle_id;
+        $nouvelleSalleId = $monitorData['salle_actuelle_id'] ?? $monitor->salle_actuelle_id;
+        $salleChange = array_key_exists('salleActuelleId', $data) && $ancienneSalleId !== $nouvelleSalleId;
+
+        if ($salleChange) {
+            // Fermer l'ancienne entrée d'historique
+            \App\Models\MoniteurSalleHistorique::where('moniteur_id', $monitor->id)
+                ->where('actif', true)
+                ->update([
+                    'actif' => false,
+                    'date_fin' => now(),
+                    'motif_changement' => 'Changement de salle via modification du profil',
+                ]);
+
+            // Créer une nouvelle entrée si une nouvelle salle est assignée
+            if ($nouvelleSalleId) {
+                $nouvelleSalle = \App\Models\Salle::find($nouvelleSalleId);
+                \App\Models\MoniteurSalleHistorique::create([
+                    'moniteur_id' => $monitor->id,
+                    'moniteur_nom' => $monitorData['nom'] ?? $monitor->nom,
+                    'moniteur_prenom' => $monitorData['prenom'] ?? $monitor->prenom,
+                    'moniteur_nom_complet' => ($monitorData['nom'] ?? $monitor->nom) . ' ' . ($monitorData['prenom'] ?? $monitor->prenom),
+                    'salle_id' => $nouvelleSalleId,
+                    'salle_nom' => $monitorData['salle_actuelle_nom'] ?? $nouvelleSalle?->nom ?? 'Inconnue',
+                    'role' => $monitorData['role_actuel'] ?? $monitor->role_actuel ?? 'membre',
+                    'date_debut' => now(),
+                    'date_fin' => null,
+                    'actif' => true,
+                    'motif_changement' => 'Affectation via modification du profil',
+                ]);
+            }
+        }
+
         $monitor->update($monitorData);
 
         // Synchroniser le rôle de l'utilisateur associé

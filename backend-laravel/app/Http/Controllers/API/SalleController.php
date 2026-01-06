@@ -174,6 +174,15 @@ class SalleController extends Controller
      */
     private function assignMonitorsToSalle(Salle $salle, array $moniteursIds)
     {
+        // 0. Fermer les anciennes entrées d'historique pour ces moniteurs
+        \App\Models\MoniteurSalleHistorique::whereIn('moniteur_id', $moniteursIds)
+            ->where('actif', true)
+            ->update([
+                'actif' => false,
+                'date_fin' => now(),
+                'motif_changement' => 'Réaffectation vers ' . $salle->nom,
+            ]);
+
         // 1. Détacher ces moniteurs de TOUTE autre salle (Pivot + Table Monitor)
         // Table pivot: on supprime toute entrée pour ces moniteurs, peu importe la salle
         \Illuminate\Support\Facades\DB::table('moniteur_salle')
@@ -226,6 +235,21 @@ class SalleController extends Controller
             
             // Sync User Role
             $this->syncUserRole($moniteur->email, $nouveauRoleSysteme);
+
+            // 5. Créer une entrée dans l'historique des affectations
+            \App\Models\MoniteurSalleHistorique::create([
+                'moniteur_id' => $moniteur->id,
+                'moniteur_nom' => $moniteur->nom,
+                'moniteur_prenom' => $moniteur->prenom,
+                'moniteur_nom_complet' => $moniteur->nom_complet,
+                'salle_id' => $salle->id,
+                'salle_nom' => $salle->nom,
+                'role' => $roleSalle,
+                'date_debut' => now(),
+                'date_fin' => null,
+                'actif' => true,
+                'motif_changement' => 'Affectation initiale',
+            ]);
         }
 
         // Insertion en masse dans le pivot

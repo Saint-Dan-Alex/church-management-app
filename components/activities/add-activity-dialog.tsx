@@ -52,7 +52,7 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
 
   const [categories, setCategories] = useState<Array<{ id: number, name: string }>>([])
   const [commissions, setCommissions] = useState<Array<{ id: string, nom: string }>>([])
-  const [people, setPeople] = useState<Array<{ nom: string, type: string }>>([])
+  const [people, setPeople] = useState<Array<{ id: string, nom: string, type: string }>>([])
   const [isOrganizerOpen, setIsOrganizerOpen] = useState(false)
   const [openCategory, setOpenCategory] = useState(false)
   const [categorySearch, setCategorySearch] = useState("")
@@ -81,8 +81,8 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
       const monitorsData = Array.isArray(monitors) ? monitors : monitors.data || []
 
       const allPeople = [
-        ...childrenData.map((c: any) => ({ nom: `${c.prenom} ${c.nom}`, type: 'Enfant' })),
-        ...monitorsData.map((m: any) => ({ nom: m.nom, type: 'Moniteur' }))
+        ...childrenData.map((c: any, index: number) => ({ id: c.id || `child-${index}`, nom: `${c.prenom} ${c.nom}`, type: 'Enfant' })),
+        ...monitorsData.map((m: any, index: number) => ({ id: m.id || `monitor-${index}`, nom: m.nom_complet || m.nomComplet || `${m.prenom} ${m.nom}`, type: 'Moniteur' }))
       ]
       setPeople(allPeople)
     } catch (error) {
@@ -473,7 +473,7 @@ export function AddActivityDialog({ open, onOpenChange, onSuccess }: AddActivity
                     <CommandGroup className="max-h-64 overflow-auto">
                       {people.map((person) => (
                         <CommandItem
-                          key={person.nom}
+                          key={person.id}
                           onSelect={() => toggleOrganizer(person.nom)}
                         >
                           <Check

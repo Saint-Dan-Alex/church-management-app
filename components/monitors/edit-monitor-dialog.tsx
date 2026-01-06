@@ -177,10 +177,13 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
       toast.success("Moniteur mis à jour avec succès")
       onOpenChange(false)
       handleStopCamera()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erreur lors de la mise à jour du moniteur:', err)
-      setError('Une erreur est survenue lors de la mise à jour du moniteur')
-      toast.error("Erreur lors de la mise à jour")
+      console.error('Détails erreur:', err.data) // Affiche les erreurs de validation
+      const validationErrors = err.data?.errors ? Object.values(err.data.errors).flat().join(', ') : ''
+      const errorMessage = validationErrors || err.data?.message || 'Une erreur est survenue'
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
