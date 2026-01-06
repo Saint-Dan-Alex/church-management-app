@@ -121,6 +121,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'FINANCIER' => array_merge($moniteurPermissions, [
                 'paiements.create', 'paiements.read', 'paiements.update', 'paiements.delete',
                 'depenses.create', 'depenses.read', 'depenses.update',
+                'caisse.create', 'caisse.read', 'caisse.update', 'caisse.delete',
             ]),
 
             // Le Com_Activites EST un Moniteur + Droits complets Activités
