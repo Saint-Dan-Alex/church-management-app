@@ -15,6 +15,8 @@ import {
 import type { WorshipReport } from "@/types/worship-report"
 import { worshipReportsService } from "@/lib/services"
 import { useToast } from "@/hooks/use-toast"
+import { PermissionGuard } from "@/components/auth/permission-guard"
+import { useUser } from "@/hooks/use-user"
 
 interface WorshipReportListProps {
   searchQuery: string
@@ -23,6 +25,7 @@ interface WorshipReportListProps {
 export function WorshipReportList({ searchQuery }: WorshipReportListProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const { can } = useUser()
   const [reports, setReports] = useState<WorshipReport[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -211,25 +214,29 @@ export function WorshipReportList({ searchQuery }: WorshipReportListProps) {
                   <Eye className="mr-2 h-4 w-4" />
                   Voir détails
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    // TODO: Ouvrir le dialog d'édition
-                  }}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Modifier
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDelete(report.id, report.salle)
-                  }}
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Supprimer
-                </DropdownMenuItem>
+                {can("presences.update") && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      // TODO: Ouvrir le dialog d'édition
+                    }}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Modifier
+                  </DropdownMenuItem>
+                )}
+                {can("presences.delete") && (
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(report.id, report.salle)
+                    }}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Supprimer
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -35,6 +35,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import type { Monitor } from "@/types/monitor"
 import type { MoniteurSalleHistorique } from "@/types/salle"
 import { monitorsService } from "@/lib/services/monitors.service"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default function MonitorDetailsPage() {
   const router = useRouter()
@@ -213,24 +214,28 @@ export default function MonitorDetailsPage() {
           Retour à la liste
         </Button>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditDialogOpen(true)}
-            className="flex-1 sm:flex-none"
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            Modifier
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDelete}
-            className="flex-1 sm:flex-none"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Supprimer
-          </Button>
+          <PermissionGuard permission="moniteurs.update">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditDialogOpen(true)}
+              className="flex-1 sm:flex-none"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Modifier
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard permission="moniteurs.delete">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+              className="flex-1 sm:flex-none"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Supprimer
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 

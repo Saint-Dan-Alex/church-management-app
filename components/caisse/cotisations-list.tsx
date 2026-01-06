@@ -14,6 +14,7 @@ import { MoreVertical, Edit, Trash, Calendar, User, DollarSign, Tag } from "luci
 import { EditCotisationDialog } from "./edit-cotisation-dialog"
 import { cotisationsService, type Cotisation } from "@/lib/services/cotisations.service"
 import { toast } from "sonner"
+import { useUser } from "@/hooks/use-user"
 
 interface CotisationsListProps {
   searchQuery?: string
@@ -22,6 +23,7 @@ interface CotisationsListProps {
 }
 
 export function CotisationsList({ searchQuery = "", statutFilter = "all", refreshKey }: CotisationsListProps) {
+  const { can } = useUser()
   const [cotisations, setCotisations] = useState<Cotisation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -214,17 +216,21 @@ export function CotisationsList({ searchQuery = "", statutFilter = "all", refres
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(cotisation)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Modifier
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => handleDelete(cotisation)}
-                      >
-                        <Trash className="mr-2 h-4 w-4" />
-                        Supprimer
-                      </DropdownMenuItem>
+                      {can("paiements.update") && (
+                        <DropdownMenuItem onClick={() => handleEdit(cotisation)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Modifier
+                        </DropdownMenuItem>
+                      )}
+                      {can("paiements.delete") && (
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => handleDelete(cotisation)}
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          Supprimer
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

@@ -13,6 +13,7 @@ import {
 import { MoreVertical, Edit, Trash, Calendar, TrendingDown, DollarSign, FileText, Loader2 } from "lucide-react"
 import { sortiesService, type Sortie } from "@/lib/services/sorties.service"
 import { useToast } from "@/hooks/use-toast"
+import { useUser } from "@/hooks/use-user"
 
 interface SortiesListProps {
   searchQuery: string
@@ -22,6 +23,7 @@ interface SortiesListProps {
 
 export function SortiesList({ searchQuery, categorieFilter, refreshKey }: SortiesListProps) {
   const { toast } = useToast()
+  const { can } = useUser()
   const [sorties, setSorties] = useState<Sortie[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -253,17 +255,21 @@ export function SortiesList({ searchQuery, categorieFilter, refreshKey }: Sortie
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(sortie)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Modifier
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => handleDelete(sortie)}
-                      >
-                        <Trash className="mr-2 h-4 w-4" />
-                        Supprimer
-                      </DropdownMenuItem>
+                      {can("depenses.update") && (
+                        <DropdownMenuItem onClick={() => handleEdit(sortie)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Modifier
+                        </DropdownMenuItem>
+                      )}
+                      {can("depenses.delete") && (
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => handleDelete(sortie)}
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          Supprimer
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
