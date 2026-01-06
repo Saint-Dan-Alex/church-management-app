@@ -22,19 +22,31 @@ const categoryColors: Record<string, string> = {
 
 export function ActivitiesList() {
   const router = useRouter()
-  const { can } = useUser()
+  const { can, user } = useUser()
   const [activities, setActivities] = useState<Activity[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  // Roles qui peuvent voir toutes les activités
+  const monitorRoles = ['ADMIN', 'SUPER_ADMIN', 'COORDINATION', 'CHEF_SALLE', 'MONITEUR', 'FINANCIER', 'COM_ACTIVITES']
+  const isMonitor = user?.role && monitorRoles.includes(user.role)
+
   useEffect(() => {
     loadActivities()
-  }, [])
+  }, [user, isMonitor])
 
   const loadActivities = async () => {
     try {
       setIsLoading(true)
       const response = await activitiesService.getAll()
-      const data = Array.isArray(response) ? response : response.data || []
+      let data = Array.isArray(response) ? response : (response as any).data || []
+
+      // Filtrage basé sur le rôle : les non-moniteurs voient seulement les activités "public"
+      if (!isMonitor) {
+        data = data.filter((activity: any) =>
+          activity.audience === 'public' || !activity.audience
+        )
+      }
+
       setActivities(data)
     } catch (error) {
       console.error("Erreur lors du chargement des activités:", error)
@@ -205,7 +217,7 @@ export function ActivitiesList() {
                 <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
                   <div
                     className="h-full bg-primary transition-all"
-                    style={{ width: `${(activity.participants / activity.maxParticipants) * 100}%` }}
+                    style={{ width: `${(Number(activity.participants) / Number(activity.maxParticipants)) * 100}%` }}
                   />
                 </div>
               </div>

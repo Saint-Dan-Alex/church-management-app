@@ -9,9 +9,11 @@ import { activitiesService, type Activity } from "@/lib/services/activities.serv
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { DayActivitiesDialog } from "./day-activities-dialog"
+import { useUser } from "@/hooks/use-user"
 
 export function CalendarView() {
   const router = useRouter()
+  const { user } = useUser()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [activities, setActivities] = useState<Activity[]>([])
   const [categories, setCategories] = useState<Array<{ id: number, name: string, color: string }>>([])
@@ -20,18 +22,22 @@ export function CalendarView() {
   const [selectedDayActivities, setSelectedDayActivities] = useState<Activity[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
+  // Roles qui peuvent voir toutes les activités (y compris celles réservées aux moniteurs)
+  const monitorRoles = ['ADMIN', 'SUPER_ADMIN', 'COORDINATION', 'CHEF_SALLE', 'MONITEUR', 'FINANCIER', 'COM_ACTIVITES']
+  const isMonitor = user?.role && monitorRoles.includes(user.role)
+
   useEffect(() => {
     loadCategories()
   }, [])
 
   useEffect(() => {
     loadActivities()
-  }, [currentDate])
+  }, [currentDate, isMonitor])
 
   const loadCategories = async () => {
     try {
       const data = await activitiesService.getCategories()
-      setCategories(data)
+      setCategories(data as any)
     } catch (error) {
       console.error("Erreur lors du chargement des catégories:", error)
     }
@@ -60,7 +66,15 @@ export function CalendarView() {
         per_page: 100 // On augmente la limite pour être sûr d'avoir tout le mois
       })
 
-      const data = Array.isArray(response) ? response : response.data || []
+      let data = Array.isArray(response) ? response : (response as any).data || []
+
+      // Filtrage basé sur le rôle : les non-moniteurs voient seulement les activités "public"
+      if (!isMonitor) {
+        data = data.filter((activity: any) =>
+          activity.audience === 'public' || !activity.audience
+        )
+      }
+
       setActivities(data)
     } catch (error) {
       console.error("Erreur lors du chargement des activités:", error)
