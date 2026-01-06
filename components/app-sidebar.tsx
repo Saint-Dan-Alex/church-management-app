@@ -133,7 +133,18 @@ export function AppSidebar() {
   const displayEmail = user?.email || ''
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'A'
 
-  const filteredMenuItems = menuItems.filter(item => {
+  const filteredMenuItems = menuItems.map(item => {
+    // Logic to rename "Moniteurs" to "Mon Compte" for non-admins
+    if (item.url === '/monitors') {
+      const isManager = user?.role === 'ADMIN' || user?.role === 'COORDINATION';
+      return {
+        ...item,
+        title: isManager ? 'Moniteurs' : 'Mon Compte',
+        icon: isManager ? Users : Users // We could change icon too if needed
+      };
+    }
+    return item;
+  }).filter(item => {
     // Items without permission are visible to everyone
     if (!item.permission) return true
     return can(item.permission)

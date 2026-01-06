@@ -14,6 +14,7 @@ import type { Monitor } from "@/types/monitor"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { PermissionGuard } from "@/components/auth/permission-guard"
+import { useUser } from "@/hooks/use-user"
 
 interface MonitorListProps {
   searchQuery: string
@@ -109,12 +110,27 @@ export function MonitorList({ searchQuery, onGenerateQR, refreshTrigger = 0 }: M
       setMonitorToDelete(null)
     }
   }
+
+  const { user } = useUser();
+
   const filteredMonitors = Array.isArray(monitors) ? monitors.filter(
-    (monitor) =>
-      monitor.nom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      monitor.prenom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      monitor.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      monitor.salle_actuelle_nom?.toLowerCase().includes(searchQuery.toLowerCase())
+    (monitor) => {
+      // 1. Filtrage par recherche textuelle (existant)
+      const matchesSearch =
+        monitor.nom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        monitor.prenom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        monitor.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        monitor.salle_actuelle_nom?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // 2. Filtrage par Role (Nouveau)
+      // Si Admin ou Coordination -> On voit tout le monde
+      // Sinon -> On ne voit que soi-même (basé sur l'email)
+      const isManager = user?.role === 'ADMIN' || user?.role === 'COORDINATION';
+      const isMe = monitor.email === user?.email;
+
+      if (isManager) return matchesSearch;
+      return matchesSearch && isMe;
+    }
   ) : [];
 
   if (loading) {
