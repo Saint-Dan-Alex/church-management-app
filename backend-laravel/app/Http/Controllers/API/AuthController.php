@@ -136,7 +136,8 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'telephone' => $user->telephone,
-                'role' => strtoupper($user->user_type ?? 'USER'),
+                // Utiliser le rôle Spatie (premier rôle s'il y en a plusieurs)
+                'role' => $user->getRoleNames()->first() ?? strtoupper($user->user_type ?? 'USER'),
                 'permissions' => $user->getAllPermissions()->pluck('name'),
             ]
         ]);
