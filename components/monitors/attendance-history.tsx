@@ -8,8 +8,10 @@ import { useState, useEffect } from "react"
 import { presencesService, type Presence } from "@/lib/services/presences.service"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
+import { useUser } from "@/hooks/use-user"
 
 export function AttendanceHistory() {
+  const { user } = useUser()
   const [filterPeriod, setFilterPeriod] = useState("all")
   const [presences, setPresences] = useState<Presence[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -41,7 +43,24 @@ export function AttendanceHistory() {
       // Handle pagination if api returns { data: [] }
       const data = Array.isArray(response) ? response : (response as any).data || []
 
-      setPresences(data)
+      // Filtrer pour les non-admins
+      let filteredData = data;
+      const isManager = user?.role === 'ADMIN' || user?.role === 'COORDINATION';
+
+      if (!isManager && user?.name) {
+        // On essaie de correspondre le nom de l'utilisateur avec le nom du moniteur
+        // C'est une approximation si on n'a pas l'ID ou l'email dans l'objet presence
+        // Normalement, user.name = "Prenom Nom"
+        const userNameLower = user.name.toLowerCase();
+
+        filteredData = data.filter((p: any) => {
+          const moniteurNomComplet = (p.moniteur_nom_complet || `${p.moniteur_prenom} ${p.moniteur_nom}`).toLowerCase();
+          // Vérifie si le nom complet contient le nom de l'user ou vice-versa pour être souple
+          return moniteurNomComplet.includes(userNameLower) || userNameLower.includes(moniteurNomComplet);
+        });
+      }
+
+      setPresences(filteredData)
     } catch (error) {
       console.error("Erreur chargement présences", error)
     } finally {
@@ -100,9 +119,9 @@ export function AttendanceHistory() {
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-4">
                   <div className={`flex h-10 w-10 items-center justify-center rounded-full ${record.statut === 'present' ? 'bg-green-100 text-green-600' :
-                      record.statut === 'absent' ? 'bg-red-100 text-red-600' :
-                        record.statut === 'retard' ? 'bg-orange-100 text-orange-600' :
-                          'bg-gray-100 text-gray-600'
+                    record.statut === 'absent' ? 'bg-red-100 text-red-600' :
+                      record.statut === 'retard' ? 'bg-orange-100 text-orange-600' :
+                        'bg-gray-100 text-gray-600'
                     }`}>
                     {record.statut === 'present' ? <CheckCircle2 className="h-5 w-5" /> : <User className="h-5 w-5" />}
                   </div>
