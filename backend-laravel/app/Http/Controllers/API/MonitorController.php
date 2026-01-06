@@ -79,6 +79,10 @@ class MonitorController extends Controller
             });
         }
 
+        if ($request->has('all') && $request->get('all') === 'true') {
+            return response()->json($query->orderBy('created_at', 'desc')->get());
+        }
+
         $perPage = $request->get('per_page', 15);
         $monitors = $query->orderBy('created_at', 'desc')->paginate($perPage);
 

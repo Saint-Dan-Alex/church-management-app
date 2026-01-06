@@ -13,8 +13,9 @@ export const monitorsService = {
   /**
    * Récupérer tous les moniteurs
    */
-  async getAll(params?: { per_page?: number; page?: number }): Promise<any> {
+  async getAll(params?: { per_page?: number; page?: number; all?: boolean }): Promise<any> {
     const queryParams = new URLSearchParams();
+    if (params?.all) queryParams.append('all', 'true');
     if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
     if (params?.page) queryParams.append('page', params.page.toString());
 
