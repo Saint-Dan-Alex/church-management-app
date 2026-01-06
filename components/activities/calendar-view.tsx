@@ -24,7 +24,7 @@ export function CalendarView() {
 
   // Roles qui peuvent voir toutes les activités (y compris celles réservées aux moniteurs)
   const monitorRoles = ['ADMIN', 'SUPER_ADMIN', 'COORDINATION', 'CHEF_SALLE', 'MONITEUR', 'FINANCIER', 'COM_ACTIVITES']
-  const isMonitor = user?.role && monitorRoles.includes(user.role)
+  const isMonitor = user?.role && monitorRoles.includes(user.role.toUpperCase())
 
   useEffect(() => {
     loadCategories()

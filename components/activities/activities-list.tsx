@@ -28,7 +28,7 @@ export function ActivitiesList() {
 
   // Roles qui peuvent voir toutes les activités
   const monitorRoles = ['ADMIN', 'SUPER_ADMIN', 'COORDINATION', 'CHEF_SALLE', 'MONITEUR', 'FINANCIER', 'COM_ACTIVITES']
-  const isMonitor = user?.role && monitorRoles.includes(user.role)
+  const isMonitor = user?.role && monitorRoles.includes(user.role.toUpperCase())
 
   useEffect(() => {
     loadActivities()
