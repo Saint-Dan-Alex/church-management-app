@@ -90,10 +90,15 @@ class UserSeeder extends Seeder
             ['email' => $email],
             [
                 'nom' => $nom,
+                'post_nom' => '',
                 'prenom' => $prenom,
                 'telephone' => '0000000000',
+                'adresse' => 'Adresse par défaut',
+                'date_naissance' => '1990-01-01',
                 'date_conversion' => now(),
                 'date_adhesion' => now(),
+                'etat_civil' => 'Célibataire',
+                'baptise_saint_esprit' => false,
             ]
         );
 
