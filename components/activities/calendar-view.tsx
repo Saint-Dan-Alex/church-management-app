@@ -23,7 +23,7 @@ export function CalendarView() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   // Roles qui peuvent voir toutes les activités (y compris celles réservées aux moniteurs)
-  const monitorRoles = ['ADMIN', 'SUPER_ADMIN', 'COORDINATION', 'CHEF_SALLE', 'MONITEUR', 'FINANCIER', 'COM_ACTIVITES']
+  const monitorRoles = ['ADMIN', 'SUPER_ADMIN', 'COORDINATION', 'CHEF_SALLE', 'MONITEUR', 'MONITOR', 'FINANCIER', 'COM_ACTIVITES']
   const isMonitor = user?.role && monitorRoles.includes(user.role.toUpperCase())
 
   useEffect(() => {
@@ -57,8 +57,6 @@ export function CalendarView() {
       // Dernier jour du mois (Local)
       const lastDayDate = new Date(year, month + 1, 0)
       const date_fin = `${lastDayDate.getFullYear()}-${String(lastDayDate.getMonth() + 1).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`
-
-      console.log("Chargement activités:", { date_debut, date_fin })
 
       const response = await activitiesService.getAll({
         date_debut,

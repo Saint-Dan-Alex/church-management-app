@@ -27,8 +27,12 @@ export function ActivitiesList() {
   const [isLoading, setIsLoading] = useState(true)
 
   // Roles qui peuvent voir toutes les activités
-  const monitorRoles = ['ADMIN', 'SUPER_ADMIN', 'COORDINATION', 'CHEF_SALLE', 'MONITEUR', 'FINANCIER', 'COM_ACTIVITES']
+  const monitorRoles = ['ADMIN', 'SUPER_ADMIN', 'COORDINATION', 'CHEF_SALLE', 'MONITEUR', 'MONITOR', 'FINANCIER', 'COM_ACTIVITES']
   const isMonitor = user?.role && monitorRoles.includes(user.role.toUpperCase())
+
+  // Roles qui peuvent voir les détails et gérer les activités
+  const managementRoles = ['ADMIN', 'SUPER_ADMIN', 'COORDINATION', 'COM_ACTIVITES']
+  const canManage = user?.role && managementRoles.includes(user.role.toUpperCase())
 
   useEffect(() => {
     loadActivities()
@@ -92,8 +96,8 @@ export function ActivitiesList() {
       {activities.map((activity) => (
         <Card
           key={activity.id}
-          className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-          onClick={() => router.push(`/activities/${activity.id}`)}
+          className={`p-6 hover:shadow-lg transition-shadow ${canManage ? 'cursor-pointer' : ''}`}
+          onClick={() => canManage && router.push(`/activities/${activity.id}`)}
         >
           <div className="flex items-start justify-between">
             <div className="space-y-3 flex-1">
@@ -125,48 +129,50 @@ export function ActivitiesList() {
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation()
-                      router.push(`/activities/${activity.id}`)
-                    }}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      Voir Détails
-                    </DropdownMenuItem>
-
-                    {can("activites.update") && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation()
-                          router.push(`/activities/${activity.id}/edit`)
-                        }}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Modifier
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    {can("activites.delete") && (
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={(e) => handleDelete(activity.id, e)}
+                {canManage && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <Trash className="mr-2 h-4 w-4" />
-                        Supprimer
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation()
+                        router.push(`/activities/${activity.id}`)
+                      }}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Voir Détails
                       </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+
+                      {can("activites.update") && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/activities/${activity.id}/edit`)
+                          }}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Modifier
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      {can("activites.delete") && (
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={(e) => handleDelete(activity.id, e)}
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          Supprimer
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
 
               <div className="flex flex-wrap gap-4 text-sm">

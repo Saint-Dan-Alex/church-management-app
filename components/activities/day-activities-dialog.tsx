@@ -7,6 +7,8 @@ import { Calendar, Clock, MapPin, Users, Eye } from "lucide-react"
 import { useRouter } from "next/navigation"
 import type { Activity } from "@/lib/services/activities.service"
 
+import { useUser } from "@/hooks/use-user"
+
 interface DayActivitiesDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
@@ -23,6 +25,11 @@ export function DayActivitiesDialog({
     categoryColors,
 }: DayActivitiesDialogProps) {
     const router = useRouter()
+    const { user } = useUser()
+
+    // Roles autorisés à voir le bouton "Voir détails"
+    const allowedRoles = ['ADMIN', 'SUPER_ADMIN', 'COORDINATION', 'COM_ACTIVITES']
+    const showDetailsButton = user?.role && allowedRoles.includes(user.role.toUpperCase())
 
     if (!date) return null
 
@@ -119,16 +126,18 @@ export function DayActivitiesDialog({
                                             <span className="text-sm text-gray-500">
                                                 Organisateur: {activity.organizer}
                                             </span>
-                                            <Button
-                                                size="sm"
-                                                onClick={() => {
-                                                    router.push(`/activities/${activity.id}`)
-                                                    onOpenChange(false)
-                                                }}
-                                            >
-                                                <Eye className="mr-2 h-4 w-4" />
-                                                Voir détails
-                                            </Button>
+                                            {showDetailsButton && (
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        router.push(`/activities/${activity.id}`)
+                                                        onOpenChange(false)
+                                                    }}
+                                                >
+                                                    <Eye className="mr-2 h-4 w-4" />
+                                                    Voir détails
+                                                </Button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
