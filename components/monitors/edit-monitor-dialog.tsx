@@ -23,6 +23,7 @@ import type { Monitor } from "@/types/monitor"
 import { monitorsService } from "@/lib/services/monitors.service"
 import { sallesService } from "@/lib/services/salles.service"
 import { rolesService } from "@/lib/services/roles.service"
+import { useUser } from "@/hooks/use-user"
 
 interface EditMonitorDialogProps {
   open: boolean
@@ -32,6 +33,7 @@ interface EditMonitorDialogProps {
 }
 
 export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditMonitorDialogProps) {
+  const { user } = useUser()
   const [formData, setFormData] = useState<Partial<Monitor>>({})
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -422,85 +424,87 @@ export function EditMonitorDialog({ open, onOpenChange, monitor, onSave }: EditM
               </div>
             </div>
 
-            {/* Affectation à une salle */}
-            <div className="space-y-4 border-t pt-4">
-              <h3 className="font-semibold text-gray-900">Affectation à une salle</h3>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="salleActuelleId">Salle</Label>
-                  <Select
-                    value={formData.salleActuelleId || ""}
-                    onValueChange={(value) => {
-                      const salle = salles.find(s => s.id === value)
-                      setFormData({
-                        ...formData,
-                        salleActuelleId: value === "none" ? undefined : value,
-                        salleActuelleNom: salle?.nom,
-                        dateAffectationActuelle: value !== "none" ? new Date().toISOString().split('T')[0] : undefined
-                      })
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner une salle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none" className="text-muted-foreground">
-                        Aucune salle
-                      </SelectItem>
-                      {salles.map((salle) => (
-                        <SelectItem key={salle.id} value={salle.id}>
-                          {salle.nom}
+            {/* Affectation à une salle - Visible uniquement pour ADMIN et COORDINATION */}
+            {(user?.role === 'ADMIN' || user?.role === 'COORDINATION') && (
+              <div className="space-y-4 border-t pt-4">
+                <h3 className="font-semibold text-gray-900">Affectation à une salle</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="salleActuelleId">Salle</Label>
+                    <Select
+                      value={formData.salleActuelleId || ""}
+                      onValueChange={(value) => {
+                        const salle = salles.find(s => s.id === value)
+                        setFormData({
+                          ...formData,
+                          salleActuelleId: value === "none" ? undefined : value,
+                          salleActuelleNom: salle?.nom,
+                          dateAffectationActuelle: value !== "none" ? new Date().toISOString().split('T')[0] : undefined
+                        })
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner une salle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none" className="text-muted-foreground">
+                          Aucune salle
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        {salles.map((salle) => (
+                          <SelectItem key={salle.id} value={salle.id}>
+                            {salle.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="roleActuel">Rôle dans la salle</Label>
+                    <Select
+                      value={formData.roleActuel || "none"}
+                      onValueChange={(value: string) =>
+                        setFormData({ ...formData, roleActuel: value === "none" ? undefined : value as any })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un rôle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roles.map((role) => (
+                          <SelectItem key={role.id} value={role.name}>
+                            {role.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="roleActuel">Rôle dans la salle</Label>
-                  <Select
-                    value={formData.roleActuel || "none"}
-                    onValueChange={(value: string) =>
-                      setFormData({ ...formData, roleActuel: value === "none" ? undefined : value as any })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un rôle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roles.map((role) => (
-                        <SelectItem key={role.id} value={role.name}>
-                          {role.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {formData.salleActuelleId && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="dateAffectationActuelle">Date d'affectation</Label>
+                    <Input
+                      id="dateAffectationActuelle"
+                      type="date"
+                      value={formData.dateAffectationActuelle as string || ""}
+                      onChange={(e) => setFormData({ ...formData, dateAffectationActuelle: e.target.value })}
+                    />
+                  </div>
+                )}
+                {formData.salleActuelleId && formData.salleActuelleNom && (
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <p className="text-sm text-blue-900">
+                      <span className="font-semibold">Affectation actuelle :</span> {formData.salleActuelleNom}
+                      {formData.roleActuel && (
+                        <span> - Rôle : <span className="font-semibold">
+                          {formData.roleActuel === "responsable" ? "Responsable" :
+                            formData.roleActuel === "adjoint" ? "Adjoint" : "Membre"}
+                        </span></span>
+                      )}
+                    </p>
+                  </div>
+                )}
               </div>
-              {formData.salleActuelleId && (
-                <div className="grid gap-2">
-                  <Label htmlFor="dateAffectationActuelle">Date d'affectation</Label>
-                  <Input
-                    id="dateAffectationActuelle"
-                    type="date"
-                    value={formData.dateAffectationActuelle as string || ""}
-                    onChange={(e) => setFormData({ ...formData, dateAffectationActuelle: e.target.value })}
-                  />
-                </div>
-              )}
-              {formData.salleActuelleId && formData.salleActuelleNom && (
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <p className="text-sm text-blue-900">
-                    <span className="font-semibold">Affectation actuelle :</span> {formData.salleActuelleNom}
-                    {formData.roleActuel && (
-                      <span> - Rôle : <span className="font-semibold">
-                        {formData.roleActuel === "responsable" ? "Responsable" :
-                          formData.roleActuel === "adjoint" ? "Adjoint" : "Membre"}
-                      </span></span>
-                    )}
-                  </p>
-                </div>
-              )}
-            </div>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
