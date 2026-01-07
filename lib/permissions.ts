@@ -301,10 +301,7 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
 
   [UserRole.PARENT]: [
     // Vue sur ses enfants uniquement
-    Permission.DASHBOARD_VIEW,
-    Permission.ENFANTS_READ, // Ses enfants seulement
-    Permission.ACTIVITES_READ,
-    Permission.PRESENCES_READ,
+    Permission.ACTIVITES_READ, // Activites publiques
     Permission.PAIEMENTS_READ, // Ses paiements seulement
     Permission.BLOG_READ,
     Permission.PHOTOS_READ,

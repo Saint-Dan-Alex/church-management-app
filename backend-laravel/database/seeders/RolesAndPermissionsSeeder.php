@@ -138,10 +138,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ]),
 
             'PARENT' => [
-                'dashboard.view',
-                'enfants.read',
                 'activites.read',
-                'presences.read',
                 'paiements.read',
                 'blog.read',
                 'photos.read',

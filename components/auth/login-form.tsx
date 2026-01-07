@@ -67,7 +67,12 @@ export function LoginForm() {
     toast.success("Connexion réussie")
     // Force hard navigation to ensure cookies are recognized by the server immediately
     setTimeout(() => {
-      window.location.href = "/dashboard"
+      // Redirection selon le rôle
+      if (user?.role === 'PARENT') {
+        window.location.href = "/activities"
+      } else {
+        window.location.href = "/dashboard"
+      }
     }, 500) // Petit délai pour laisser le toast s'afficher
   }
 
