@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -130,10 +131,12 @@ export function AlbumGrid({ refreshKey = 0, onUploadClick }: AlbumGridProps) {
                     <Folder className="h-16 w-16 text-gray-300 mb-4" />
                     <p className="text-gray-500 mb-4">Aucun album trouvé</p>
                     {onUploadClick && (
-                        <Button onClick={onUploadClick} size="sm">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Créer un album
-                        </Button>
+                        <PermissionGuard permission="photos.create">
+                            <Button onClick={onUploadClick} size="sm">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Créer un album
+                            </Button>
+                        </PermissionGuard>
                     )}
                 </div>
             ) : (

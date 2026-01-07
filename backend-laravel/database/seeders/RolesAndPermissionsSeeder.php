@@ -135,6 +135,8 @@ class RolesAndPermissionsSeeder extends Seeder
                 'activites.create', 'activites.update', 'activites.delete',
                 'presences.delete',
                 'teachings.create', 'teachings.update', 'teachings.delete',
+                'paiements.create', 'paiements.read', 'paiements.update', 'paiements.delete',
+                'depenses.create', 'depenses.read', 'depenses.update', 'depenses.delete',
             ]),
 
             'PARENT' => [

@@ -342,8 +342,8 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
                   <span className="hidden sm:inline">Présence</span>
                 </TabsTrigger>
 
-                {/* Onglet Paiements - Visible seulement si payante et permission */}
-                {activity.type === 'payante' && can('paiements.read') && (
+                {/* Onglet Paiements - Visible seulement si permission */}
+                {can('paiements.read') && (
                   <TabsTrigger
                     value="paiements"
                     className="rounded-none border-b-2 border-transparent px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all whitespace-nowrap"
@@ -406,7 +406,7 @@ export default function ActivityDetailsPage({ params }: { params: Promise<{ id: 
               />
             </TabsContent>
 
-            {activity.type === 'payante' && can('paiements.read') && (
+            {can('paiements.read') && (
               <TabsContent value="paiements">
                 <div className="flex justify-end mb-3 sm:mb-4">
                   {can('paiements.create') && (
