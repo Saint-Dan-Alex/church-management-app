@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, Search } from "lucide-react"
 import { activitiesService } from "@/lib/services/activities.service"
@@ -205,8 +204,8 @@ export function ManualPresenceForm({
   })
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-[70vh]">
-      <div className="px-4 py-4 border-b space-y-4">
+    <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
+      <div className="px-4 py-4 border-b space-y-4 shrink-0">
         <div className="flex items-center gap-4">
           <div className="grid gap-1.5 flex-1">
             <Label htmlFor="date-presence">Date de présence</Label>
@@ -234,7 +233,7 @@ export function ManualPresenceForm({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-4">
+      <div className="flex-1 overflow-y-auto p-4">
         {isLoadingPresences ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
@@ -323,7 +322,7 @@ export function ManualPresenceForm({
             </div>
           </div>
         )}
-      </ScrollArea>
+      </div>
 
       <div className="flex gap-2 p-4 border-t bg-gray-50/50">
         <Button type="button" variant="outline" onClick={onClose} className="flex-1">

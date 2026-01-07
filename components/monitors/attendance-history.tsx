@@ -43,20 +43,27 @@ export function AttendanceHistory() {
       // Handle pagination if api returns { data: [] }
       const data = Array.isArray(response) ? response : (response as any).data || []
 
-      // Filtrer pour les non-admins
+      // Filtrer pour les non-admins/managers
       let filteredData = data;
-      const isManager = user?.role === 'ADMIN' || user?.role === 'COORDINATION';
+
+      // Rôles pouvant voir tout l'historique (ou leur scope mais ici tout pour simplifier selon la demande)
+      // "il n ya que coordination, chef_salles, admin et com_activités"
+      const managerRoles = ['ADMIN', 'SUPER_ADMIN', 'COORDINATION', 'CHEF_SALLE', 'COM_ACTIVITES'];
+      const isManager = user?.role && managerRoles.includes(user.role.toUpperCase());
 
       if (!isManager && user?.name) {
-        // On essaie de correspondre le nom de l'utilisateur avec le nom du moniteur
-        // C'est une approximation si on n'a pas l'ID ou l'email dans l'objet presence
-        // Normalement, user.name = "Prenom Nom"
-        const userNameLower = user.name.toLowerCase();
-
         filteredData = data.filter((p: any) => {
-          const moniteurNomComplet = (p.moniteur_nom_complet || `${p.moniteur_prenom} ${p.moniteur_nom}`).toLowerCase();
-          // Vérifie si le nom complet contient le nom de l'user ou vice-versa pour être souple
-          return moniteurNomComplet.includes(userNameLower) || userNameLower.includes(moniteurNomComplet);
+          const moniteurNomComplet = (p.moniteur_nom_complet || `${p.moniteur_prenom || ''} ${p.moniteur_nom || ''}`).trim();
+
+          // Comparaison par tokens exacts pour éviter le problème "Dan" vs "Daniel"
+          const userTokens = user.name.toLowerCase().split(/\s+/).filter(Boolean);
+          const moniteurTokens = moniteurNomComplet.toLowerCase().split(/\s+/).filter(Boolean);
+
+          // Vérifie si l'un est inclus dans l'autre (match de tous les mots)
+          const userInMoniteur = userTokens.every(t => moniteurTokens.includes(t));
+          const moniteurInUser = moniteurTokens.every(t => userTokens.includes(t));
+
+          return userInMoniteur || moniteurInUser;
         });
       }
 
