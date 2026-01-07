@@ -32,7 +32,7 @@ export default function TeachingsPage() {
             <span className="hidden xs:inline">Exporter</span>
             <span className="xs:hidden">Export</span>
           </Button>
-          <PermissionGuard permission="blog.create">
+          <PermissionGuard permission="teachings.create">
             <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
               <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Nouvel Enseignement</span>

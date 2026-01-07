@@ -23,6 +23,7 @@ import { EditTeachingDialog } from "@/components/teachings/edit-teaching-dialog"
 import type { Teaching } from "@/types/teaching"
 import { teachingsService } from "@/lib/services"
 import { useToast } from "@/hooks/use-toast"
+import { useUser } from "@/hooks/use-user"
 import { ReportHeader } from "@/components/reports/report-header" // Added ReportHeader import
 
 export default function TeachingDetailsPage() {
@@ -30,6 +31,7 @@ export default function TeachingDetailsPage() {
   const params = useParams()
   const id = params.id as string
   const { toast } = useToast()
+  const { can } = useUser()
   const [teaching, setTeaching] = useState<Teaching | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -259,14 +261,18 @@ export default function TeachingDetailsPage() {
                 <Printer className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Imprimer</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)} className="text-xs sm:text-sm px-2 sm:px-3">
-                <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Modifier</span>
-              </Button>
-              <Button variant="destructive" size="sm" onClick={handleDelete} className="text-xs sm:text-sm px-2 sm:px-3">
-                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Supprimer</span>
-              </Button>
+              {can("teachings.update") && (
+                <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)} className="text-xs sm:text-sm px-2 sm:px-3">
+                  <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Modifier</span>
+                </Button>
+              )}
+              {can("teachings.delete") && (
+                <Button variant="destructive" size="sm" onClick={handleDelete} className="text-xs sm:text-sm px-2 sm:px-3">
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Supprimer</span>
+                </Button>
+              )}
             </div>
           </div>
 

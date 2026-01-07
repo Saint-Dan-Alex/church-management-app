@@ -85,7 +85,7 @@ const menuItems: MenuItem[] = [
     title: "Enseignements",
     url: "/teachings",
     icon: BookOpen,
-    permission: "blog.read", // Using blog permission for teachings as fallback
+    permission: "teachings.read",
   },
   {
     title: "Blog",

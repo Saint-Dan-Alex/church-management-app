@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { EditTeachingDialog } from "@/components/teachings/edit-teaching-dialog"
 import { teachingsService } from "@/lib/services"
 import { useToast } from "@/hooks/use-toast"
+import { useUser } from "@/hooks/use-user"
 import { Teaching } from "@/types/teaching"
 
 interface TeachingListProps {
@@ -20,6 +21,7 @@ interface TeachingListProps {
 export function TeachingList({ searchQuery, refreshKey = 0 }: TeachingListProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const { can } = useUser()
   const [teachings, setTeachings] = useState<Teaching[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -167,25 +169,31 @@ export function TeachingList({ searchQuery, refreshKey = 0 }: TeachingListProps)
                     <Eye className="mr-2 h-4 w-4" />
                     Voir détails
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleEdit(teaching)
-                    }}
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Modifier
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDelete(teaching.id, teaching.theme)
-                    }}
-                  >
-                    <Trash className="mr-2 h-4 w-4" />
-                    Supprimer
-                  </DropdownMenuItem>
+
+                  {can("teachings.update") && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleEdit(teaching)
+                      }}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Modifier
+                    </DropdownMenuItem>
+                  )}
+
+                  {can("teachings.delete") && (
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(teaching.id, teaching.theme)
+                      }}
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

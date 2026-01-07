@@ -44,6 +44,9 @@ class RolesAndPermissionsSeeder extends Seeder
             // Caisse (Cotisations)
             'caisse.create', 'caisse.read', 'caisse.update', 'caisse.delete',
 
+            // Enseignements
+            'teachings.create', 'teachings.read', 'teachings.update', 'teachings.delete',
+
             // Blog
             'blog.create', 'blog.read', 'blog.update', 'blog.delete',
 
@@ -85,6 +88,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'depenses.create', 'depenses.read', 'depenses.update',
                 'caisse.create', 'caisse.read', 'caisse.update', 'caisse.delete',
                 'blog.create', 'blog.read', 'blog.update',
+                'teachings.create', 'teachings.read', 'teachings.update', 'teachings.delete',
                 'photos.create', 'photos.read', 'photos.update',
                 'videos.create', 'videos.read', 'videos.update',
                 'stats.view', 'reports.view',
@@ -100,6 +104,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'paiements.read',
                 'depenses.create', 'depenses.read',
                 'blog.read',
+                'teachings.read',
                 'photos.create', 'photos.read',
                 'videos.read',
             ],
@@ -113,6 +118,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'presences.create', 'presences.read', 'presences.update',
                 'salles.read',
                 'blog.read',
+                'teachings.read',
                 'photos.read',
                 'videos.read',
             ],
@@ -128,6 +134,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'COM_ACTIVITES' => array_merge($moniteurPermissions, [
                 'activites.create', 'activites.update', 'activites.delete',
                 'presences.delete',
+                'teachings.create', 'teachings.update', 'teachings.delete',
             ]),
 
             'PARENT' => [
